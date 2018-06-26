@@ -1,2 +1,4 @@
-config.ini.example
+#General
 
+#Python stuff
+*.pyc
