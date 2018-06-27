@@ -1,0 +1,3 @@
+vncdotool
+opencv-python
+pytesseract
