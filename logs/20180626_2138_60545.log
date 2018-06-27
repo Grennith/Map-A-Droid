@@ -1,0 +1,16 @@
+2018-06-26 21:38:07,974 [        MainThread][         start][    INFO] Starting TheRaidMap
+2018-06-26 21:38:07,975 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x10e1e8ab8>
+2018-06-26 21:38:08,296 [           Twisted][       _legacy][    INFO] Using protocol version 3.800
+2018-06-26 21:38:08,408 [           Twisted][       _legacy][    INFO] Cannot connect password check failed!
+2018-06-26 21:38:08,409 [           Twisted][       _legacy][    INFO] Stopping factory <client.VNCDoToolFactory instance at 0x10e1e8ab8>
+2018-06-26 21:38:17,976 [        MainThread][         start][   ERROR] Uncaught exception
+Traceback (most recent call last):
+  File "start.py", line 101, in <module>
+    main()
+  File "start.py", line 65, in main
+    getVNCPic()
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/getVNCPic.py", line 166, in getVNCPic
+    client1.captureScreen('screenshot.png')
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/getVNCPic.py", line 105, in proxy_call
+    raise TimeoutError("Timeout while waiting for client response")
+TimeoutError: Timeout while waiting for client response

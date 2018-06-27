@@ -1,0 +1,5 @@
+2018-06-26 21:35:06,939 [        MainThread][         start][    INFO] Starting TheRaidMap
+2018-06-26 21:35:06,940 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x10f030ab8>
+2018-06-26 21:35:07,271 [           Twisted][       _legacy][    INFO] Using protocol version 3.800
+2018-06-26 21:35:07,387 [           Twisted][       _legacy][    INFO] Cannot connect password check failed!
+2018-06-26 21:35:07,387 [           Twisted][       _legacy][    INFO] Stopping factory <client.VNCDoToolFactory instance at 0x10f030ab8>

@@ -1,0 +1,10 @@
+2018-06-26 21:57:52,218 [        MainThread][         start][    INFO] Starting TheRaidMap
+2018-06-26 21:57:52,219 [        MainThread][         start][   ERROR] Uncaught exception
+Traceback (most recent call last):
+  File "start.py", line 103, in <module>
+    main()
+  File "start.py", line 67, in main
+    check_login()
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/detect_text.py", line 12, in check_login
+    raidtimer = col[190:510, 700:800]
+TypeError: 'PngImageFile' object has no attribute '__getitem__'

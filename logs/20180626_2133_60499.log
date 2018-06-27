@@ -1,0 +1,15 @@
+2018-06-26 21:33:24,919 [        MainThread][         start][    INFO] Starting TheRaidMap
+2018-06-26 21:33:24,923 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x10f7777e8>
+2018-06-26 21:33:54,926 [           Twisted][       _legacy][    INFO] Stopping factory <client.VNCDoToolFactory instance at 0x10f7777e8>
+2018-06-26 21:33:54,927 [        MainThread][         start][   ERROR] Uncaught exception
+Traceback (most recent call last):
+  File "start.py", line 101, in <module>
+    main()
+  File "start.py", line 65, in main
+    getVNCPic()
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/getVNCPic.py", line 166, in getVNCPic
+    client1.captureScreen('screenshot.png')
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/getVNCPic.py", line 108, in proxy_call
+    raise VNCDoException(result)
+VNCDoException: [Failure instance: Traceback (failure with no frames): <class 'twisted.internet.error.TimeoutError'>: User timeout caused connection failure.
+]

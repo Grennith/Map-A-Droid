@@ -1,0 +1,3 @@
+2018-06-26 22:49:34,759 [        MainThread][         start][    INFO] Starting TheRaidMap
+2018-06-26 22:49:34,760 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x11b301b48>
+2018-06-26 22:49:35,009 [            VNCPic][       _legacy][    INFO] Using protocol version 3.800

@@ -1,0 +1,20 @@
+2018-06-26 22:37:54,914 [        MainThread][         start][    INFO] Starting TheRaidMap
+2018-06-26 22:37:54,916 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x106bdba70>
+2018-06-26 22:37:55,154 [            VNCPic][       _legacy][    INFO] Using protocol version 3.800
+2018-06-26 22:37:56,924 [            VNCPic][       _legacy][    INFO] Stopping factory <client.VNCDoToolFactory instance at 0x106bdba70>
+2018-06-26 22:37:56,925 [            VNCPic][       _legacy][    INFO] Main loop terminated.
+2018-06-26 22:37:57,467 [        MainThread][   detect_text][    INFO] Text:O. K.
+2018-06-26 22:37:57,468 [        MainThread][   detect_text][    INFO] Loginbutton gefunden
+2018-06-26 22:38:07,471 [        MainThread][         start][   ERROR] Uncaught exception
+Traceback (most recent call last):
+  File "start.py", line 103, in <module>
+    main()
+  File "start.py", line 67, in main
+    check_login()
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/detect_text.py", line 28, in check_login
+    clickVNC(750, 340)
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/getVNCPic.py", line 179, in clickVNC
+    client1.mouseMove(x, y).mousePress(1)
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/getVNCPic.py", line 105, in proxy_call
+    raise TimeoutError("Timeout while waiting for client response")
+TimeoutError: Timeout while waiting for client response

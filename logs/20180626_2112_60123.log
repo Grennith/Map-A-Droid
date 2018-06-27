@@ -1,0 +1,9 @@
+2018-06-26 21:12:52,166 [        MainThread][         start][   ERROR] Uncaught exception
+Traceback (most recent call last):
+  File "start.py", line 99, in <module>
+    main()
+  File "start.py", line 62, in main
+    set_log_and_verbosity(log)
+  File "start.py", line 91, in set_log_and_verbosity
+    t = Thread(target=log_resource_usage_loop, name='res-usage')
+NameError: global name 'Thread' is not defined

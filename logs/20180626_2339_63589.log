@@ -1,0 +1,31 @@
+2018-06-26 23:39:33,894 [        MainThread][         start][    INFO] Starting TheRaidMap
+2018-06-26 23:39:33,896 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x1178c4e18>
+2018-06-26 23:39:34,190 [            VNCPic][       _legacy][    INFO] Using protocol version 3.800
+2018-06-26 23:39:35,912 [        MainThread][   detect_text][    INFO] Check for Loginbutton - start ...
+2018-06-26 23:39:36,166 [        MainThread][   detect_text][   ERROR] 
+2018-06-26 23:39:36,166 [        MainThread][   detect_text][    INFO] Check for Loginbutton - finished...
+2018-06-26 23:39:36,166 [        MainThread][   detect_text][    INFO] Check for Messagebox - start ...
+2018-06-26 23:39:36,427 [        MainThread][   detect_text][   ERROR] 
+2018-06-26 23:39:36,427 [        MainThread][   detect_text][    INFO] Found Messagebox - closing ...
+2018-06-26 23:39:36,428 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x117977f38>
+2018-06-26 23:39:36,642 [            VNCPic][       _legacy][    INFO] Using protocol version 3.800
+2018-06-26 23:39:37,114 [            VNCPic][       _legacy][    INFO] Stopping factory <client.VNCDoToolFactory instance at 0x1178c4e18>
+2018-06-26 23:39:37,115 [            VNCPic][       _legacy][    INFO] Stopping factory <client.VNCDoToolFactory instance at 0x117977f38>
+2018-06-26 23:39:37,115 [            VNCPic][       _legacy][    INFO] Main loop terminated.
+2018-06-26 23:39:37,116 [        MainThread][   detect_text][    INFO] Check for Messagebox - finished...
+2018-06-26 23:39:37,116 [        MainThread][   detect_text][    INFO] Check for Xbutton - start ...
+2018-06-26 23:39:37,381 [        MainThread][   detect_text][   ERROR] X
+2018-06-26 23:39:37,381 [        MainThread][   detect_text][    INFO] Found Xbutton - closing ...
+2018-06-26 23:39:47,383 [        MainThread][         start][   ERROR] Uncaught exception
+Traceback (most recent call last):
+  File "start.py", line 105, in <module>
+    main()
+  File "start.py", line 69, in main
+    check_Xbutton()
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/detect_text.py", line 64, in check_Xbutton
+    rightClickVNC()
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/getVNCPic.py", line 191, in rightClickVNC
+    client1.mousePress(3)
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/getVNCPic.py", line 105, in proxy_call
+    raise TimeoutError("Timeout while waiting for client response")
+TimeoutError: Timeout while waiting for client response

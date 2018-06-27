@@ -1,2 +1,3 @@
-config.ini.example
-
+config.ini
+*.jpg
+*.png

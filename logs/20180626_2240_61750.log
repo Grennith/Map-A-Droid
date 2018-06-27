@@ -1,0 +1,19 @@
+2018-06-26 22:40:09,250 [        MainThread][         start][    INFO] Starting TheRaidMap
+2018-06-26 22:40:09,251 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x105f40ab8>
+2018-06-26 22:40:09,424 [            VNCPic][       _legacy][    INFO] Using protocol version 3.800
+2018-06-26 22:40:11,976 [        MainThread][   detect_text][    INFO] Text:O. K.
+2018-06-26 22:40:11,976 [        MainThread][   detect_text][    INFO] Loginbutton gefunden
+2018-06-26 22:40:11,977 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x105fe1cb0>
+2018-06-26 22:40:11,978 [        MainThread][         start][   ERROR] Uncaught exception
+Traceback (most recent call last):
+  File "start.py", line 103, in <module>
+    main()
+  File "start.py", line 67, in main
+    check_login()
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/detect_text.py", line 28, in check_login
+    clickVNC(750, 340)
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/getVNCPic.py", line 179, in clickVNC
+    client1.move(x, y).click(1)
+  File "/Users/fameitelhuber/Desktop/TheRaidMapper/getVNCPic.py", line 86, in __getattr__
+    method = getattr(self.factory.protocol, attr)
+AttributeError: class VNCDoToolClient has no attribute 'move'
