@@ -1,7 +1,0 @@
-2018-06-26 22:31:10,388 [        MainThread][         start][    INFO] Starting TheRaidMap
-2018-06-26 22:31:11,010 [        MainThread][   detect_text][    INFO] Text:O. K.
-2018-06-26 22:31:11,010 [        MainThread][   detect_text][    INFO] Loginbutton gefunden
-2018-06-26 22:31:11,012 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x10d5110e0>
-2018-06-26 22:31:11,255 [            VNCPic][       _legacy][    INFO] Using protocol version 3.800
-2018-06-26 22:31:11,406 [            VNCPic][       _legacy][    INFO] Stopping factory <client.VNCDoToolFactory instance at 0x10d5110e0>
-2018-06-26 22:31:11,406 [            VNCPic][       _legacy][    INFO] Main loop terminated.

@@ -1,5 +1,0 @@
-2018-06-26 21:43:24,093 [        MainThread][         start][    INFO] Starting TheRaidMap
-2018-06-26 21:43:24,094 [        MainThread][       _legacy][    INFO] Starting factory <client.VNCDoToolFactory instance at 0x10ec24ab8>
-2018-06-26 21:43:24,293 [            VNCPic][       _legacy][    INFO] Using protocol version 3.800
-2018-06-26 21:43:25,904 [            VNCPic][       _legacy][    INFO] Stopping factory <client.VNCDoToolFactory instance at 0x10ec24ab8>
-2018-06-26 21:43:25,905 [            VNCPic][       _legacy][    INFO] Main loop terminated.

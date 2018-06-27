@@ -1,4 +1,8 @@
+#General
 config.ini
 *.jpg
 *.png
 *.log
+
+#Python stuff
+*.pyc

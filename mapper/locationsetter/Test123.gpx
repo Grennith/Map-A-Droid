@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpsies="https://www.gpsies.com/GPX/1/0" creator="GPSies https://www.gpsies.com - test123" version="1.1" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd https://www.gpsies.com/GPX/1/0 https://www.gpsies.com/gpsies.xsd">
+  <metadata>
+    <name>test123</name>
+    <link href="https://www.gpsies.com/">
+      <text>test123 on GPSies.com</text>
+    </link>
+    <time>2018-06-22T22:13:42Z</time>
+  </metadata>
+  <trk>
+    <name>test123 on GPSies.com</name>
+    <trkseg>
+      <trkpt lat="49.01211905" lon="8.400871753">
+        <ele>117.00000</ele>
+        <time>2010-01-01T00:00:00Z</time>
+      </trkpt>
+      <trkpt lat="49.01389235" lon="8.404347896">
+        <ele>117.00000</ele>
+        <time>2010-01-01T00:00:46Z</time>
+      </trkpt>
+      <trkpt lat="49.01195016" lon="8.407137393">
+        <ele>120.00000</ele>
+        <time>2010-01-01T00:01:28Z</time>
+      </trkpt>
+      <trkpt lat="49.01082422" lon="8.405249118">
+        <ele>118.00000</ele>
+        <time>2010-01-01T00:01:55Z</time>
+      </trkpt>
+      <trkpt lat="49.01071162" lon="8.402416706">
+        <ele>119.00000</ele>
+        <time>2010-01-01T00:02:25Z</time>
+      </trkpt>
+      <trkpt lat="49.01090866" lon="8.400721549">
+        <ele>121.00000</ele>
+        <time>2010-01-01T00:02:43Z</time>
+      </trkpt>
+      <trkpt lat="49.01183756" lon="8.401172161">
+        <ele>117.00000</ele>
+        <time>2010-01-01T00:02:59Z</time>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
+
