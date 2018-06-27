@@ -18,8 +18,8 @@ from twisted.internet.defer import maybeDeferred
 from twisted.python.log import PythonLoggingObserver
 from twisted.python.failure import Failure
 from utils import get_args
-import command
-from client import VNCDoToolFactory, factory_connect
+from vnc import command
+from vnc.client import VNCDoToolFactory, factory_connect
 
 __all__ = ['connect']
 
