@@ -27,6 +27,7 @@ def check_login():
     
     log.info('Check for Loginbutton - finished...')
 
+
 def check_message():
     log.info('Check for Messagebox - start ...')
     col = cv2.imread("screenshot.png")
@@ -44,8 +45,63 @@ def check_message():
         rightClickVNC()
         
     log.info('Check for Messagebox - finished...')
+
+def check_raidscreen():
+    log.info('Check for Raidscreen - start ...')
+    col = cv2.imread("screenshot.png")
+    raidtimer = col[350:400, 450:600]
+    cv2.imwrite("message.png", raidtimer)
+    col = Image.open("message.png")
+    gray = col.convert('L')
+    bw = gray.point(lambda x: 0 if x<210 else 255, '1')
+    bw.save("cropped_message_bw.png")
     
+    timer2 = pytesseract.image_to_string(Image.open("cropped_message_bw.png"), config='-c tessedit_char_whitelist=RAID -psm 7')
+    log.error(timer2)
+    if 'RAID' not in timer2:
+        log.info('Start Raidscreen ...')
+        clickVNC(600, 1170)
+        clickVNC(500, 370)
+    else:
+        clickVNC(500, 370)    
+    log.info('Check for Raidscreen - finished...')
+
+def check_quitbutton():
+    log.info('Check for Quitbutton - start ...')
+    col = cv2.imread("screenshot.png")
+    raidtimer = col[780:830, 240:480]
+    cv2.imwrite("speedmessage.png", raidtimer)
+    col = Image.open("speedmessage.png")
+    gray = col.convert('L')
+    bw = gray.point(lambda x: 0 if x<210 else 255, '1')
+    bw.save("cropped_quitmessage_bw.png")
     
+    timer2 = pytesseract.image_to_string(Image.open("cropped_quitmessage_bw.png"),config='-psm 7')
+    log.error(timer2)
+    if len(timer2) > 1:
+        log.info('Found Quitbutton - closing ...')
+        rightClickVNC()
+        
+    log.info('Check for Quitbutton - finished...') 
+
+def check_speedmessage():
+    log.info('Check for Speedmessage - start ...')
+    col = cv2.imread("screenshot.png")
+    raidtimer = col[865:915, 190:530]
+    cv2.imwrite("speedmessage.png", raidtimer)
+    col = Image.open("speedmessage.png")
+    gray = col.convert('L')
+    bw = gray.point(lambda x: 0 if x<210 else 255, '1')
+    bw.save("cropped_speedmessage_bw.png")
+    
+    timer2 = pytesseract.image_to_string(Image.open("cropped_speedmessage_bw.png"),config='-psm 7')
+    log.error(timer2)
+    if len(timer2) > 10:
+        log.info('Found Speedmessage - closing ...')
+        clickVNC(900, 400)
+        
+    log.info('Check for Speedmessage - finished...')  
+
 def check_Xbutton():
     log.info('Check for Xbutton - start ...')
     col = cv2.imread("screenshot.png")
@@ -65,7 +121,7 @@ def check_Xbutton():
     gray = col.convert('L')
     bw = gray.point(lambda x: 0 if x<210 else 255, '1')
     bw.save("cropped_raidscreen_bw.png")
-    timer3 = pytesseract.image_to_string(Image.open("cropped_raidscreen_bw.png"), config='-psm 4')
+    timer3 = pytesseract.image_to_string(Image.open("cropped_raidscreen_bw.png"), config='-c tessedit_char_whitelist=RAID -psm 7')
     
     log.error(timer2)
     log.error(timer3)

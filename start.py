@@ -1,12 +1,14 @@
 import time
-#import asyncio
+from threading import Thread, Event
 import logging
 from colorlog import ColoredFormatter
 from utils import get_args
 import sys
 import os
 from getVNCPic import getVNCPic
-from detect_text import check_login, check_message, check_Xbutton
+from detect_text import check_login, check_message, check_Xbutton, check_speedmessage, check_quitbutton, check_raidscreen
+from copyMons import copyMons
+from  scanner import start_detect
 
 class LogFilter(logging.Filter):
 
@@ -63,10 +65,30 @@ def main():
     print(args.vncip)
     set_log_and_verbosity(log)
     log.info("Starting TheRaidMap")
-    getVNCPic()
-    check_login()
-    check_message()
-    check_Xbutton()
+  
+    # Check for MonPics 
+    copyMons()
+
+    #thread.start_new_thread(main_thread, ('test'))
+
+    t = Thread(target=main_thread,
+                       name='main')
+    t.daemon = True
+    t.start()
+    log.info('Starting Thread....')
+    while True:
+        pass
+    #loop = asyncio.get_event_loop()
+    #tasks = [
+    #    asyncio.async(getVNCPic()),
+    #    asyncio.async(check_login()),
+    #    asyncio.async(check_message()),
+    #    asyncio.async(check_Xbutton())]
+
+    #loop.run_until_complete(asyncio.wait(tasks))
+    #loop.run_forever()
+    #loop.close()
+
     # Hier muss noch der Async Job starter rein. Aktuell nur einzelne Jobs zum testen
 
     
@@ -101,6 +123,18 @@ def set_log_and_verbosity(log):
             t.start()
     else:
             log.setLevel(logging.INFO)
+
+def main_thread():
+    while True:
+        getVNCPic()
+        check_login()
+        check_quitbutton()
+        check_message()
+        check_Xbutton()
+        check_speedmessage()
+        check_raidscreen()
+        start_detect()
+        time.sleep(10)
 
 
 if __name__ == '__main__':

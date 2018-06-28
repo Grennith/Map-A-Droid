@@ -155,7 +155,6 @@ def connect(server, password=None,
 
     return client
 
-
 def getVNCPic():
     import sys
     args = get_args()
@@ -165,9 +164,10 @@ def getVNCPic():
 
     client1.captureScreen('screenshot.png')
 
-    #client1.disconnect()
+    client1.disconnect()
 
     #shutdown()
+
     
 def clickVNC(x, y):
     args = get_args()
@@ -180,7 +180,8 @@ def clickVNC(x, y):
 
     client1.disconnect()
 
-    shutdown()   
+    #shutdown()   
+
 
 def rightClickVNC():
     args = get_args()
@@ -192,7 +193,8 @@ def rightClickVNC():
 
     client1.disconnect()
 
-    shutdown()  
+    #shutdown()  
+
 
 if __name__ == '__main__':
     import sys  
