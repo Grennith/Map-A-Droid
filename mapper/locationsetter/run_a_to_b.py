@@ -105,10 +105,15 @@ def start_geofix(args):
             #print(curr_lat)
             if s in rlist:
                 x = s.recv(1024)
-                if "KO: password required" in x:
-                    s.close()
-                    print("Password protection is enabled MockGeoFix settings. This is not supported.")
-                    sys.exit(2)
+                if "KO: password required. Use 'password' or 'auth'" in x:
+                    #s.close()
+                    if (args.password and len(args.password) > 0):
+                        s.send("auth %s\r\n" % (args.password))
+                    else:
+                        print("Password protection is enabled but no password was set.")
+                        s.close()
+                        thread.interrupt_main()
+                        sys.exit(1)
                 if x == '':
                     s.close()
                     print("Connection closed.")
@@ -130,6 +135,8 @@ if __name__ == '__main__':
     args_parser.add_argument("-c", "--start", required=True)
     args_parser.add_argument("-s", "--speed", help="speed in km/h (takes precedence over -S)",
                              required=True, type=float)
+    args_parser.add_argument("-P", "--password", help="Password to auth with",
+                            required=False)
     args = args_parser.parse_args()
 
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
