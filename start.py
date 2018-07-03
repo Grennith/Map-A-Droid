@@ -59,14 +59,14 @@ log.addHandler(stdout_hdlr)
 log.addHandler(stderr_hdlr)
 
 def main():
-    
+
     sys.excepthook = handle_exception
     args = get_args()
     print(args.vncip)
     set_log_and_verbosity(log)
     log.info("Starting TheRaidMap")
-  
-    # Check for MonPics 
+
+    # Check for MonPics
     runAll()
 
     #thread.start_new_thread(main_thread, ('test'))
@@ -91,15 +91,15 @@ def main():
 
     # Hier muss noch der Async Job starter rein. Aktuell nur einzelne Jobs zum testen
 
-    
+
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
 
     log.error("Uncaught exception", exc_info=(
-        exc_type, exc_value, exc_traceback))    
-    
+        exc_type, exc_value, exc_traceback))
+
 def set_log_and_verbosity(log):
     # Always write to log file.
     args = get_args()
