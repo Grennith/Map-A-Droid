@@ -3,6 +3,7 @@ config.ini
 *.jpg
 *.png
 *.log
+.DS_Store
 
 #Python stuff
 *.pyc
