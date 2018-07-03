@@ -24,7 +24,8 @@ from vnc.client import VNCDoToolFactory, factory_connect
 __all__ = ['connect']
 
 log = logging.getLogger(__name__)
-
+args = get_args()
+server = str(args.vncip) + ':' + str(args.vncscreen) + ':' + str(args.vncport)
 _THREAD = None
 
 
@@ -155,14 +156,13 @@ def connect(server, password=None,
 
     return client
 
-def getVNCPic():
+def getVNCPic(filename):
     import sys
-    args = get_args()
-    server = str(args.vncip) + ':' + str(args.vncscr) + ':' + str(args.vncprt)
+
     password = args.vncpwd
     client1 = connect(server, password, timeout=10)
 
-    client1.captureScreen('screenshot.png')
+    client1.captureScreen(filename)
 
     client1.disconnect()
 
@@ -170,13 +170,11 @@ def getVNCPic():
 
     
 def clickVNC(x, y):
-    args = get_args()
-    server = str(args.vncip) + ':' + str(args.vncscr) + ':' + str(args.vncprt)
     password = args.vncpwd
     client1 = connect(server, password, timeout=10)
 
-    client1.mouseMove(x, y)
-    client1.mousePress(1)
+    client1.mouseMove(x, y).mousePress(1)
+
 
     client1.disconnect()
 
@@ -184,12 +182,12 @@ def clickVNC(x, y):
 
 
 def rightClickVNC():
-    args = get_args()
-    server = str(args.vncip) + ':' + str(args.vncscr) + ':' + str(args.vncprt)
+    
+    
     password = args.vncpwd
     client1 = connect(server, password, timeout=10)
 
-    client1.mousePress(3)
+    client1.mousePress(2)
 
     client1.disconnect()
 

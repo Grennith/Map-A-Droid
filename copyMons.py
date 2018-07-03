@@ -5,8 +5,11 @@ import imutils
 import os
 import os.path
 import logging
+from utils import get_args
 
 log = logging.getLogger(__name__)
+
+args = get_args()
 
 def copyMons():
     
@@ -19,8 +22,8 @@ def copyMons():
         LOG.info('mon_img directory created')
         os.makedirs(filePath)
             
-    assetPath = '../PogoAssets/decrypted_assets/'
-    raidMons = ["50", "150", "350", "95", "378"]
+    assetPath = args.pogoasset
+    raidMons = ["68", "142", "90", "378", "382", "125", "303", "129", "359", "248", "95", "185", "306", "76", "112", "310", "138", "140", "320", '135', '185']
     
     if not os.path.exists(assetPath):
         log.error('PogoAssets not found')
@@ -29,13 +32,13 @@ def copyMons():
     for mon in raidMons:
         
         mon = '{:03d}'.format(int(mon))
-        monFile = monImgPath + 'mon_' + str(mon) + '.png'
+        monFile = monImgPath + '_mon_' + str(mon) + '_.png'
         
         if not os.path.isfile(monFile):
             
             log.info('Processing Pokedex Nr: ' + str(mon))
             
-            monFileAsset = assetPath + 'pokemon_icon_' + str(mon) + '_00.png'
+            monFileAsset = assetPath + 'decrypted_assets/pokemon_icon_' + str(mon) + '_00.png'
             
             if not os.path.isfile(monFileAsset):
                 log.error('File ' + str(monFileAsset) + ' not found')
@@ -49,12 +52,46 @@ def copyMons():
             monAsset = cv2.inRange(monAsset,np.array([255,255,255]),np.array([255,255,255]))
             cv2.imwrite(monFile, monAsset)
             crop = cv2.imread(monFile,3)        
-            crop = crop[0:int(height), 0:int(width/2)]
+            crop = crop[0:int(height), 0:int((width/6)*4)]
             cv2.imwrite(monFile, crop)
             log.info('Processing Pokemon Nr: ' + str(mon) + ' finished')
 
 
-def read_transparent_png(assetFile, monFile):
+def copyEggs():
+    from shutil import copyfile
+    
+    log.info('Processing Eggs')
+    
+    eggImgPath = os.getcwd() + '/mon_img/'
+    filePath = os.path.dirname(eggImgPath)
+    
+    if not os.path.exists(filePath):
+        LOG.info('mon_img directory created')
+        os.makedirs(filePath)
+            
+    assetPath = args.pogoasset
+    eggIcons = ['ic_raid_egg_normal.png', 'ic_raid_egg_rare.png', 'ic_raid_egg_legendary.png']
+    i = 1
+    for egg in eggIcons:
+        
+        eggFile = eggImgPath + str('_egg_') + str(i) + '_.png'
+
+        if not os.path.isfile(eggFile):
+            
+            log.info('Processing Egg File: ' + str(egg))
+            
+            eggFileAsset = assetPath + 'static_assets/png/'+ str(egg)
+            
+            if not os.path.isfile(eggFileAsset):
+                log.error('File ' + str(eggFileAsset) + ' not found')
+                exit(0)
+              
+            read_transparent_png(eggFileAsset, eggFile)
+              
+            log.info('Processing Eggfile: ' + str(egg) + ' finished')
+            i = i +1
+
+def read_transparent_png(assetFile, saveFile):
     image_4channel = cv2.imread(assetFile, cv2.IMREAD_UNCHANGED)
     alpha_channel = image_4channel[:,:,3]
     rgb_channels = image_4channel[:,:,:3]
@@ -68,11 +105,13 @@ def read_transparent_png(assetFile, monFile):
     white = white_background_image.astype(np.float32) * (1 - alpha_factor)
     final_image = base + white
     
-    cv2.imwrite(monFile,final_image.astype(np.uint8))
+    cv2.imwrite(saveFile,final_image.astype(np.uint8))
     
     return assetFile 
+
+def runAll():
+    copyMons()
+    copyEggs()    
      
 if __name__ == '__main__':
-    copyMons()
-
-    
+    runAll()

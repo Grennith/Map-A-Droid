@@ -7,7 +7,7 @@ import sys
 import os
 from getVNCPic import getVNCPic
 from detect_text import check_login, check_message, check_Xbutton, check_speedmessage, check_quitbutton, check_raidscreen
-from copyMons import copyMons
+from copyMons import runAll
 from  scanner import start_detect
 
 class LogFilter(logging.Filter):
@@ -67,7 +67,7 @@ def main():
     log.info("Starting TheRaidMap")
   
     # Check for MonPics 
-    copyMons()
+    runAll()
 
     #thread.start_new_thread(main_thread, ('test'))
 
@@ -126,15 +126,15 @@ def set_log_and_verbosity(log):
 
 def main_thread():
     while True:
-        getVNCPic()
-        check_login()
-        check_quitbutton()
-        check_message()
-        check_Xbutton()
-        check_speedmessage()
-        check_raidscreen()
-        start_detect()
-        time.sleep(10)
+        getVNCPic('screenshot.png')
+        check_login('screenshot.png', 123)
+        check_message('screenshot.png', 123)
+        check_Xbutton('screenshot.png', 123)
+        check_speedmessage('screenshot.png', 123)
+        check_quitbutton('screenshot.png', 123)
+        check_raidscreen('screenshot.png', 123)
+        start_detect('screenshot.png', 123)
+        time.sleep(2)
 
 
 if __name__ == '__main__':

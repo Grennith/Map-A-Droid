@@ -3,13 +3,13 @@ import os
 import numpy as np
 import imutils
 
-def fort_image_matching(url_img_name, fort_img_name, gym):
+def fort_image_matching(url_img_name, fort_img_name, zoom, ttest):
     url_img = cv2.imread(url_img_name,3)
     fort_img = cv2.imread(fort_img_name,3)
     height, width, channels = url_img.shape
     height_f, width_f, channels_f = fort_img.shape
     
-    if gym == True:
+    if zoom == True:
         if width_f == 160:
             fort_img = cv2.resize(fort_img,None,fx=3, fy=3, interpolation = cv2.INTER_NEAREST)
         else:
@@ -37,18 +37,18 @@ def fort_image_matching(url_img_name, fort_img_name, gym):
             
         result = cv2.matchTemplate(resized, crop, cv2.TM_CCOEFF_NORMED)
         (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
-
+        #print maxVal
         if found is None or maxVal > found[0]:
 	        found = (maxVal, maxLoc, r)
         
         
-    if found[0] < 0.8:
+    if found[0] < ttest:
         return 0.0   
 
     return found[0]
 
 if __name__ == '__main__':
-    fort_id = 'raidboss3'
+    fort_id = 'raid1'
     fort_img_path = os.getcwd() + '/' + str(fort_id) + '.jpg'
-    url_img_path = os.getcwd() + '/pokemon_icon_095_00.png'
-    print(fort_image_matching(url_img_path,fort_img_path,False))
+    url_img_path = os.getcwd() + '/mon_img/ic_raid_egg_rare.png'
+    print(fort_image_matching(url_img_path,fort_img_path,True))

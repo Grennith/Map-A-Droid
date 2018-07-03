@@ -20,10 +20,10 @@ def memoize(function):
 
 @memoize
 def get_args():
-    defaultconfig = []
+    defaultconfigfiles = []
     if '-cf' not in sys.argv and '--config' not in sys.argv:
         defaultconfigfiles = [os.getenv('THERAIDMAPPER_CONFIG', os.path.join(
-        os.path.dirname(__file__), 'config.ini'))]   
+            os.path.dirname(__file__), 'config.ini'))]   
     parser = configargparse.ArgParser(
         default_config_files=defaultconfigfiles,
         auto_env_var_prefix='THERAIDMAPPER_')
@@ -31,12 +31,25 @@ def get_args():
             is_config_file=True, help='Set configuration file')
     parser.add_argument('-vncip', '--vncip', required=True,
             help=('IP Address of VNC Server on Device.'))
-    parser.add_argument('-vncscreen', '--vncscr', type=int, default=None, required=False,
+    parser.add_argument('-vncscr', '--vncscreen', type=int, default=None, required=False,
             help=('Screen Number of VNC Server on Device.'))
-    parser.add_argument('-vncport', '--vncprt', type=int, required=True,
+    parser.add_argument('-vncprt', '--vncport', type=int, required=True,
             help=('Port of VNC Server on Device.'))
     parser.add_argument('-vncpassw', '--vncpwd', required=True,
             help=('Password of VNC Server on Device.'))
+    parser.add_argument('-dbip', '--dbip', required=True,
+            help=('IP of MySql Server.'))
+    parser.add_argument('-dbuser', '--dbusername', required=True,
+            help=('Username of MySql Server.'))
+    parser.add_argument('-dbpassw', '--dbpassword', required=True,
+            help=('Password of MySql Server.'))
+    parser.add_argument('-dbname', '--dbname', required=True,
+            help=('Name of MySql Databsae.'))
+    parser.add_argument('-dbport', '--dbport', type=int, default=3306,
+            help=('Port of MySql Server.'))
+    parser.add_argument('-pgasset', '--pogoasset', required=True,
+            help=('Path to Pogo Asset.'
+                  'See https://github.com/ZeChrales/PogoAssets/'))        
     parser.add_argument('--no-file-logs',
                         help=('Disable logging to files. ' +
                               'Does not disable --access-logs.'),

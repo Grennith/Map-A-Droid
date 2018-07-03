@@ -1,0 +1,12 @@
+vncip: 
+#vncscreen:
+vncport: 
+vncpwd: 
+
+dbip: 
+dbusername: 
+dbpassword: 
+dbname:
+#dbport:
+
+pogoasset: 
