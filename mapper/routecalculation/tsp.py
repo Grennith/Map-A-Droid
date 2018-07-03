@@ -106,7 +106,7 @@ def main():
 
     route = json.dumps(sol_best.tolist())
     payloads = [ costs[-1], route, markov_step ]
-    
+
     # Save the result to sqlite
     #save_sqlite(payloads)
 
