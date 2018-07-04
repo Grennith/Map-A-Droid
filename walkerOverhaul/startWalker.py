@@ -212,7 +212,7 @@ def main_thread():
             pogoWindowManager.checkMessage('screenshot.png', 123)
             pogoWindowManager.checkClosebutton('screenshot.png', 123)
             pogoWindowManager.checkSpeedmessage('screenshot.png', 123)
-            pogoWindowManager.checkQuitbutton('screenshot.png', 123)
+            #pogoWindowManager.checkQuitbutton('screenshot.png', 123)
             pogoWindowManager.checkRaidscreen('screenshot.png', 123)
 
 
