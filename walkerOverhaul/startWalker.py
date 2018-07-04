@@ -90,7 +90,8 @@ def main():
     t.start()
     log.info('Starting Thread....')
     while True:
-        pass
+        time.sleep(10)
+        #pass
     #loop = asyncio.get_event_loop()
     #tasks = [
     #    asyncio.async(getVNCPic()),
@@ -207,16 +208,35 @@ def main_thread():
 
             #ok, we should be at the next gym, check for errors and stuff
             #TODO: improve errorhandling by checking results and trying again and again
+            #not using continue to always take a new screenshot...
             vncWrapper.getScreenshot('screenshot.png')
-            pogoWindowManager.checkLogin('screenshot.png', 123)
-            pogoWindowManager.checkMessage('screenshot.png', 123)
-            pogoWindowManager.checkClosebutton('screenshot.png', 123)
-            pogoWindowManager.checkSpeedmessage('screenshot.png', 123)
-            #pogoWindowManager.checkQuitbutton('screenshot.png', 123)
-            pogoWindowManager.checkRaidscreen('screenshot.png', 123)
+            while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123)):
+                #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
+                found =  pogoWindowManager.checkLogin('screenshot.png', 123)
+                if not found and pogoWindowManager.checkMessage('screenshot.png', 123):
+                    log.error("Message found")
+                    found = True
+                if not found and pogoWindowManager.checkClosebutton('screenshot.png', 123):
+                    log.error("closebutton found")
+                    found = True
+                if not found and pogoWindowManager.checkSpeedmessage('screenshot.png', 123):
+                    log.error("speedmessage found")
+                    found = True
+                #if pogoWindowManager.checkQuitbutton('screenshot.png', 123):
+                #    log.error("Quit message found")
+                #    continue
+                log.error(not found)
+                if not found:
+                    pogoWindowManager.checkNearby('screenshot.png', 123)
+                vncWrapper.getScreenshot('screenshot.png')
+                #vncWrapper.getScreenshot('screenshot.png')
+                #pogoWindowManager.checkQuitbutton('screenshot.png', 123)
+                #pogoWindowManager.checkRaidscreen('screenshot.png', 123)
+                #vncWrapper.getScreenshot('screenshot.png')
 
-
+            #TODO: take screenshot of raidscreen?
             #we should now see the raidscreen, let's take a screenshot of it
+            time.sleep(2)
             log.info("Saving raid screenshot")
             vncWrapper.getScreenshot('screenshots/nextRaidscreen' + str(time.time()) + '.jpg')
 

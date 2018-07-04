@@ -41,6 +41,8 @@ class PogoWindows:
             self.vncWrapper.clickVNC(340, 750) #TODO: adaptive to resolution
             os.remove(filename)
             result = True
+        else:
+            log.error('No login detected')
         os.remove("temp/" + str(hash) + "_login.png")
         os.remove("temp/" + str(hash) + "_cropped_login_bw.png")
         return result
@@ -62,16 +64,17 @@ class PogoWindows:
         text = image_to_string(Image.open("temp/" + str(hash) + "_cropped_message_bw.png"),config='-psm 10')
         log.error(text)
         if len(text) > 1:
-            log.info('Found Messagebox - closing ...')
+            log.error('Found Messagebox - closing ...')
             self.vncWrapper.rightClickVnc()
             os.remove(filename)
             result = True
+        else:
+            log.error('No message found')
         os.remove("temp/" + str(hash) + "_cropped_message_bw.png")
         os.remove("temp/" + str(hash) + "_message.png")
         return result
 
-    #assumes we are on the general view of the game
-    def checkRaidscreen(self, filename, hash):
+    def __checkRaidTabOnScreen(self, filename, hash):
         if not os.path.isfile(filename):
             return False
 
@@ -86,17 +89,37 @@ class PogoWindows:
 
         text = image_to_string(Image.open("temp/" + str(hash) + "_cropped_message_bw.png"), config='-c tessedit_char_whitelist=RAID -psm 7')
         log.error(text)
-        if 'RAID' not in text:
-            log.info('Raidscreen not running...')
-            self.vncWrapper.clickVnc(600, 1170) #TODO: adaptive to resolution
-            self.vncWrapper.clickVnc(500, 370) #TODO: adaptive to resolution
-            os.remove(filename)
-        else:
-            self.vncWrapper.clickVnc(500, 370) #TODO: adaptive to resolution
 
         os.remove('temp/' + str(hash) + '_cropped_message_bw.png')
         os.remove('temp/' + str(hash) + '_message.png')
-        return True
+        #os.remove(filename)
+        return 'RAID' in text
+
+    #assumes we are on the general view of the game
+    def checkRaidscreen(self, filename, hash):
+        result = False
+        if self.__checkRaidTabOnScreen(filename, hash):
+            #RAID Tab visible
+            self.vncWrapper.clickVnc(500, 370) #TODO: adaptive to resolution
+            log.error('Raidscreen found')
+            result = True
+        else:
+            log.error('No Raidscreen found')
+
+        return result
+
+    def checkNearby(self, filename, hash):
+        result = False
+        if not self.__checkRaidTabOnScreen(filename, hash):
+            #RAID Tab not visible => not on Nearby screen
+            log.info('Raidscreen not running...')
+            self.vncWrapper.clickVnc(600, 1170) #TODO: adaptive to resolution
+            self.vncWrapper.clickVnc(500, 370) #TODO: adaptive to resolution
+            result = False
+        else:
+            log.error('Nearby already open')
+            result = True
+        return result
 
     def checkQuitbutton(self, filename, hash):
         result = False
@@ -119,6 +142,8 @@ class PogoWindows:
             self.vncWrapper.rightClickVnc()
             os.remove(filename)
             result = True
+        else:
+            log.error('No quit-button found found')
 
         os.remove("temp/" + str(hash) + "_cropped_quitmessage_bw.png")
         os.remove("temp/" + str(hash) + "_quitbutton.png")
@@ -146,7 +171,8 @@ class PogoWindows:
             self.vncWrapper.clickVnc(880, 450) #TODO: adaptive to resolution
             os.remove(filename)
             result = True
-
+        else:
+            log.error('No speedmessage found')
         os.remove("temp/" + str(hash) + "_cropped_speedmessage_bw.png")
         os.remove("temp/" + str(hash) + "_speedmessage.png")
         return result
@@ -183,7 +209,8 @@ class PogoWindows:
             self.vncWrapper.rightClickVnc()
             os.remove(filename)
             result = True
-
+        else:
+            log.error('No closebutton found')
         os.remove("temp/" + str(hash) + "_cropped_raidscreen_bw.png")
         os.remove("temp/" + str(hash) + "_cropped_xbutton_bw.png")
         os.remove("temp/" + str(hash) + "_raidscreen.png")
