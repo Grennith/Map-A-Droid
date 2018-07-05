@@ -194,7 +194,7 @@ def start_detect(filename, hash):
                         gymID = gymSplit[2]
                 
                 if gymfound == 1:
-                    imageHash('temp/" + str(hash) + "_raid' + str(i) +'.jpg', gymID, True)        
+                    imageHash('temp/' + str(hash) + '_raid' + str(i) +'.jpg', gymID, True)        
                         
             else:
                 gymfound = 1
@@ -213,17 +213,17 @@ def start_detect(filename, hash):
                 monHash = imageHashExists("temp/" + str(hash) + "_raidboss" + str(i) +".jpg", False)
                 if not monHash: 
                     for file in glob.glob("mon_img/_mon_*.png"): 
-                        find_mon = mt.fort_image_matching(file, "temp/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 0.85)
+                        find_mon = mt.fort_image_matching(file, "temp/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 0.7)
                         if foundmon is None or find_mon > foundmon[0]:
                             foundmon = find_mon, file
  
-                        if not foundmon is None and foundmon[0]>0.85 and len(raidtext) > 0:
+                        if not foundmon is None and foundmon[0]>0.7 and len(raidtext) > 0:
                             monfound = 1   
                             monSplit = foundmon[1].split('_')
                             monID = monSplit[3]  
                               
                     if monfound == 1:
-                        imageHash('temp/" + str(hash) + "_raidboss' + str(i) +'.jpg', monID, False)
+                        imageHash('temp/' + str(hash) + '_raidboss' + str(i) +'.jpg', monID, False)
                 else:
                     monfound = 1
                     monID = monHash
@@ -323,7 +323,7 @@ def start_detect(filename, hash):
                             
             if unknownmonfound == 0:
                 name22 = time.time()
-                cv2.imwrite("unknown/mon_" + str(name22) +".jpg", output)	
+                cv2.imwrite("unknown/mon_" + str(name22) +".jpg", monAsset)	
                 
         gymfound = None
         foundmon = None  
@@ -334,8 +334,8 @@ def start_detect(filename, hash):
         lvlfound = None
         i = i + 1
         
-    for file in glob.glob("temp/" + str(hash) + "_*raid*.jpg"):
-        os.remove(file)
+    #for file in glob.glob("temp/" + str(hash) + "_*raid*.jpg"):
+        #os.remove(file)
     os.remove("temp/" + str(hash) + "_cropped_emptyraid_bw.png")
     os.remove("temp/" + str(hash) + "_emptyraid.png")
 

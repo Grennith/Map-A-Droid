@@ -43,16 +43,23 @@ class MonRaidImages(object):
                 if not os.path.isfile(monFileAsset):
                     log.error('File ' + str(monFileAsset) + ' not found')
                     exit(0)
-
-
-                MonRaidImages.read_transparent_png(monFileAsset, monFile)
+                
+                copyfile(monFileAsset, monFile)
+            
+                image = Image.open(monFile)
+                image.convert("RGBA")
+                canvas = Image.new('RGBA', image.size, (255,255,255,255)) # Empty canvas colour (r,g,b,a)
+                canvas.paste(image, mask=image) # Paste the image onto the canvas, using it's alpha channel as mask
+                canvas.save(monFile, format="PNG")
 
                 monAsset = cv2.imread(monFile,3)
                 height, width, channels = monAsset.shape
-                monAsset = cv2.inRange(monAsset,np.array([255,255,255]),np.array([255,255,255]))
+                monAsset = cv2.inRange(monAsset,np.array([240,240,240]),np.array([255,255,255]))
                 cv2.imwrite(monFile, monAsset)
                 crop = cv2.imread(monFile,3)
                 crop = crop[0:int(height), 0:int((width/6)*4)]
+                kernel = np.ones((3,3),np.uint8)
+                crop = cv2.erode(crop,kernel,iterations = 1)
                 cv2.imwrite(monFile, crop)
                 log.info('Processing Pokemon Nr: ' + str(mon) + ' finished')
 
