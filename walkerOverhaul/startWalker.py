@@ -11,6 +11,9 @@ import math
 #from copyMons import copyMons
 #from  scanner import start_detect
 
+from multiprocessing import Pool
+from copyMons import MonRaidImages
+from  scanner import Scanner
 #internal imports
 
 #import sys
@@ -83,6 +86,8 @@ def main():
     log.info("Starting TheRaidMap")
 
     #thread.start_new_thread(main_thread, ('test'))
+    # Check for MonPics
+    MonRaidImages.runAll(args.pogoasset)
 
     t = Thread(target=main_thread,
                        name='main')
@@ -158,13 +163,16 @@ def getDistanceOfTwoPointsInMeters(startLat, startLng, destLat, destLng):
     distanceInMeters = distance * 1000
     return distanceInMeters
 
-
+def printHi():
+    log.error("Finished analyzing screenshot")
 
 def main_thread():
     vncWrapper = VncWrapper(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
     telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
     pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
+    scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname)
+
 
     route = getJsonRoute(args.file)
     lastPogoRestart = time.time()
@@ -172,6 +180,7 @@ def main_thread():
     #sys.exit(0)
     log.info(args.max_distance)
 
+    pool = Pool(processes=5)              # Start a worker processes.
     while True:
         log.info("Next round")
         lastLat = 0.0
@@ -238,11 +247,14 @@ def main_thread():
             #we should now see the raidscreen, let's take a screenshot of it
             time.sleep(2)
             log.info("Saving raid screenshot")
-            vncWrapper.getScreenshot('screenshots/nextRaidscreen' + str(time.time()) + '.jpg')
-
+            curTime = time.time()
+            vncWrapper.getScreenshot('/home/till/git/pogo/TheRaidMapper/walkerOverhaul/screenshots/nextRaidscreen' + str(curTime) + '.jpg')
+            #start_detect()
+            #result = pool.apply_async(scanner.start_detect, ['screenshots/nextRaidscreen' + str(time.time()) + '.jpg', 123], printHi) # Evaluate "f(10)" asynchronously calling callback when finished.
+            scanner.start_detect('/home/till/git/pogo/TheRaidMapper/walkerOverhaul/screenshots/nextRaidscreen' + str(curTime) + '.jpg', 123)
             #we got the latest raids. To avoid the mobile from killing apps,
             #let's restart pogo every 90minutes or whatever TODO: consider args
-            curTime = time.time()
+            #curTime = time.time()
             if (curTime - lastPogoRestart >= (90 * 60)):
                 #time for a restart
                 successfulRestart = telnMore.restartApp("com.nianticlabs.pokemongo")

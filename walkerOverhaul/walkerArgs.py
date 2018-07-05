@@ -74,6 +74,10 @@ def parseArgs():
         type = int
     )
 
+    argParser.add_argument('-pgasset', '--pogoasset', required=True,
+            help=('Path to Pogo Asset.'
+                  'See https://github.com/ZeChrales/PogoAssets/'))
+
     argParser.add_argument('--no-file-logs',
                         help=('Disable logging to files. ' +
                               'Does not disable --access-logs.'),
@@ -88,6 +92,17 @@ def parseArgs():
                               ' python time module docs for details.'
                               ' Default: %%Y%%m%%d_%%H%%M_<SN>.log.'),
                         default='%Y%m%d_%H%M_<SN>.log'),
+
+    argParser.add_argument('-dbip', '--dbip', required=True,
+            help=('IP of MySql Server.'))
+    argParser.add_argument('-dbuser', '--dbusername', required=True,
+            help=('Username of MySql Server.'))
+    argParser.add_argument('-dbpassw', '--dbpassword', required=True,
+            help=('Password of MySql Server.'))
+    argParser.add_argument('-dbname', '--dbname', required=True,
+            help=('Name of MySql Databsae.'))
+    argParser.add_argument('-dbport', '--dbport', type=int, default=3306,
+            help=('Port of MySql Server.'))
 
     verbose = argParser.add_mutually_exclusive_group()
     verbose.add_argument('-v',
