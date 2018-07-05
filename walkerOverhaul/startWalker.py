@@ -248,10 +248,10 @@ def main_thread():
             time.sleep(2)
             log.info("Saving raid screenshot")
             curTime = time.time()
-            vncWrapper.getScreenshot('/home/till/git/pogo/TheRaidMapper/walkerOverhaul/screenshots/nextRaidscreen' + str(curTime) + '.jpg')
+            vncWrapper.getScreenshot('screenshots/nextRaidscreen' + str(curTime) + '.jpg')
             #start_detect()
             #result = pool.apply_async(scanner.start_detect, ['screenshots/nextRaidscreen' + str(time.time()) + '.jpg', 123], printHi) # Evaluate "f(10)" asynchronously calling callback when finished.
-            scanner.start_detect('/home/till/git/pogo/TheRaidMapper/walkerOverhaul/screenshots/nextRaidscreen' + str(curTime) + '.jpg', 123)
+            scanner.start_detect('screenshots/nextRaidscreen' + str(curTime) + '.jpg', 123)
             #we got the latest raids. To avoid the mobile from killing apps,
             #let's restart pogo every 90minutes or whatever TODO: consider args
             #curTime = time.time()
