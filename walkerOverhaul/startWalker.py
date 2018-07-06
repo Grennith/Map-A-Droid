@@ -6,6 +6,10 @@ from walkerArgs import parseArgs
 import sys
 import os
 import math
+from watchdog.observers import Observer  
+from watchdog.events import PatternMatchingEventHandler  
+from shutil import copyfile
+
 #from vnc import vncWrapper
 #from detect_text import check_login, check_message, check_Xbutton, check_speedmessage, check_quitbutton, check_raidscreen
 #from copyMons import copyMons
@@ -14,6 +18,7 @@ import math
 from multiprocessing import Pool
 from copyMons import MonRaidImages
 from  scanner import Scanner
+from fileObserver import checkScreenshot
 #internal imports
 
 #import sys
@@ -25,9 +30,6 @@ from vnc.vncWrapper import VncWrapper
 from telnet.telnetGeo import TelnetGeo
 from telnet.telnetMore import TelnetMore
 from ocr.pogoWindows import PogoWindows
-
-from ocr.pogoWindows import PogoWindows
-
 
 class LogFilter(logging.Filter):
 
@@ -87,11 +89,19 @@ def main():
 
     #thread.start_new_thread(main_thread, ('test'))
     # Check for MonPics
+
     MonRaidImages.runAll(args.pogoasset)
 
-    t = Thread(target=main_thread,
-                       name='main')
+
+    
+    t = Thread(target=main_thread, name='main')
     t.daemon = True
+    
+    
+    t_observ = Thread(name='test123', target=observer)
+    t_observ.daemon = True
+    
+    t_observ.start()
     t.start()
     log.info('Starting Thread....')
     while True:
@@ -168,8 +178,8 @@ def printHi():
 
 def main_thread():
     vncWrapper = VncWrapper(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
-    telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
-    telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
+    #telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
+    #telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
     pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
     scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname)
 
@@ -209,16 +219,16 @@ def main_thread():
                 (args.max_distance and distance > args.max_distance)
                     or (lastLat == 0.0 and lastLng == 0.0)):
                 log.info("Teleporting")
-                telnGeo.setLocation(curLat, curLng, 0)
+                #telnGeo.setLocation(curLat, curLng, 0)
             else:
                 log.info("Walking")
                 log.info(args.speed)
-                telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
+                #telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
 
             #ok, we should be at the next gym, check for errors and stuff
             #TODO: improve errorhandling by checking results and trying again and again
             #not using continue to always take a new screenshot...
-            vncWrapper.getScreenshot('screenshot.png')
+            #vncWrapper.getScreenshot('screenshot.png')
             while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123)):
                 #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
                 found =  pogoWindowManager.checkLogin('screenshot.png', 123)
@@ -237,7 +247,7 @@ def main_thread():
                 log.error(not found)
                 if not found:
                     pogoWindowManager.checkNearby('screenshot.png', 123)
-                vncWrapper.getScreenshot('screenshot.png')
+                ######vncWrapper.getScreenshot('screenshot.png')
                 #vncWrapper.getScreenshot('screenshot.png')
                 #pogoWindowManager.checkQuitbutton('screenshot.png', 123)
                 #pogoWindowManager.checkRaidscreen('screenshot.png', 123)
@@ -248,10 +258,11 @@ def main_thread():
             time.sleep(2)
             log.info("Saving raid screenshot")
             curTime = time.time()
-            vncWrapper.getScreenshot('screenshots/nextRaidscreen' + str(curTime) + '.jpg')
+            copyfile('screenshot.png', 'screenshots/nextRaidscreen' + str(curTime) + '.jpg')
+            ####vncWrapper.getScreenshot('screenshots/nextRaidscreen' + str(curTime) + '.jpg')
             #start_detect()
             #result = pool.apply_async(scanner.start_detect, ['screenshots/nextRaidscreen' + str(time.time()) + '.jpg', 123], printHi) # Evaluate "f(10)" asynchronously calling callback when finished.
-            scanner.start_detect('screenshots/nextRaidscreen' + str(curTime) + '.jpg', 123)
+            #######scanner.start_detect('screenshots/nextRaidscreen' + str(curTime) + '.jpg', 123)
             #we got the latest raids. To avoid the mobile from killing apps,
             #let's restart pogo every 90minutes or whatever TODO: consider args
             #curTime = time.time()
@@ -275,6 +286,15 @@ def main_thread():
         #start_detect()
         #time.sleep(10)
 
+def observer():
+    
+        
+        log.info('Starting FileObserver')
+        observer = Observer()
+        observer.schedule(checkScreenshot(), path='screenshots/')
+        observer.start()
+
+        #observer.join()
 
 if __name__ == '__main__':
     main()

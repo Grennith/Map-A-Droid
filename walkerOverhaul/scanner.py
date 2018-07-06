@@ -159,10 +159,6 @@ class Scanner:
             bw.save("temp/" + str(hash) + "_raidtimer" + str(i) +".jpg")
             timer = pytesseract.image_to_string(Image.open("temp/" + str(hash) + "_raidtimer" + str(i) +".jpg"),config='--psm=7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
 
-            log.error(len(raidtext))
-            log.error(len(raidtext))
-            log.error(len(raidtext))
-            log.error(len(raidtext))
             if len(raidtext) > 0:
                 for file in glob.glob("mon_img/_egg_*.png"):
                     find_egg = mt.fort_image_matching(file, "temp/" + str(hash) + "_raid" + str(i) +".jpg", True, 0.9)
@@ -212,16 +208,8 @@ class Scanner:
                     gymfound = 1
                     gymID = gymHash
 
-                log.error("RAIDLEVELREADING REACHED")
-                log.error("RAIDLEVELREADING REACHED")
-                log.error("RAIDLEVELREADING REACHED")
-                log.error("RAIDLEVELREADING REACHED")
-                log.error("RAIDLEVELREADING REACHED")
+
                 for file in glob.glob("mon_img/_raidlevel_*.jpg"):
-                    log.error("LOADING FILE")
-                    log.error("LOADING FILE")
-                    log.error("LOADING FILE")
-                    log.error("LOADING FILE")
                     find_lvl = mt.fort_image_matching(file, "temp/" + str(hash) + "_raidlevel" + str(i) +".jpg", False, 0.5)
                     if foundlvl is None or find_lvl > foundlvl[0]:
     	    	    	foundlvl = find_lvl, file
