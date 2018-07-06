@@ -233,11 +233,11 @@ class Scanner:
                     monHash = self.imageHashExists("temp/" + str(hash) + "_raidboss" + str(i) +".jpg", False)
                     if not monHash:
                         for file in glob.glob("mon_img/_mon_*.png"):
-                            find_mon = mt.fort_image_matching(file, "temp/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 0.85)
+                            find_mon = mt.fort_image_matching(file, "temp/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 0.7)
                             if foundmon is None or find_mon > foundmon[0]:
                                 foundmon = find_mon, file
 
-                            if not foundmon is None and foundmon[0]>0.85 and len(raidtext) > 0:
+                            if not foundmon is None and foundmon[0]>0.7 and len(raidtext) > 0:
                                 monfound = 1
                                 monSplit = foundmon[1].split('_')
                                 monID = monSplit[3]
@@ -309,7 +309,11 @@ class Scanner:
                 foundegg = None
                 foundlvl = None
             else:
-                log.error('Raid ' + str(i) + ' | empty')
+                if i == 1:
+                    log.error('No active Raids ' + str(i) + ' | empty')
+                    break
+                else:
+                    log.error('Raid ' + str(i) + ' | empty')
 
     ##############################################
             if gymfound == 0 and len(raidtext) > 0:
@@ -342,7 +346,7 @@ class Scanner:
 
                 if unknownmonfound == 0:
                     name22 = time.time()
-                    cv2.imwrite("unknown/mon_" + str(name22) +".jpg", output)
+                    cv2.imwrite("unknown/mon_" + str(name22) +".jpg", monAsset)
 
             gymfound = None
             foundmon = None
