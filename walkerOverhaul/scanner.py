@@ -24,17 +24,23 @@ import mysql.connector;
 log = logging.getLogger(__name__)
 
 class Scanner:
-    def __init__(self, dbIp, dbPort, dbUser, dbPassword, dbName, tempPath):
+    def __init__(self, dbIp, dbPort, dbUser, dbPassword, dbName, tempPath, unknownPath, timezone):
         self.dbIp = dbIp
         self.dbPort = dbPort
         self.dbUser = dbUser
         self.dbPassword = dbPassword
         self.dbName = dbName
         self.tempPath = tempPath
-
+        self.unknownPath = unknownPath
+        self.timezone = timezone
+        
         if not os.path.exists(self.tempPath):
             log.info('Temp directory created')
             os.makedirs(self.tempPath)
+            
+        if not os.path.exists(self.unknownPath):
+            log.info('Unknow directory created')
+            os.makedirs(self.unknownPath)
 
         if not os.path.exists('hash'):
             log.info('Hash directory created')
@@ -45,9 +51,9 @@ class Scanner:
         now = datetime.datetime.now()
         date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
         date_plus_45 = now + datetime.timedelta(minutes = 45)
-        today1 = date1 + " " + str(now.hour-2) + ":" + str(now.minute) + ":" + str(now.second)
-        today2 = date1 + " " + str(now.hour-2) + ":" + str(now.minute) + ":" + str(now.second)
-        fakeed = date1 + " " + str(date_plus_45.hour-2) + ":" + str(date_plus_45.minute) + ":" + str(date_plus_45.second)
+        today1 = date1 + " " + str(now.hour + (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
+        today2 = date1 + " " + str(now.hour+ (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
+        fakeed = date1 + " " + str(date_plus_45.hour+ (self.timezone)) + ":" + str(date_plus_45.minute) + ":" + str(date_plus_45.second)
         try:
             connection = mysql.connector.connect(host = self.dbIp, user = self.dbUser, passwd = self.dbPassword, db = self.dbName, port = self.dbPort)
         except:
@@ -172,7 +178,6 @@ class Scanner:
                 if "R" not in timer:
                     raidstart = date1 + " 21:59"
                     raidend = date1 + " 22:59"
-                    print timer
                     try:
                         aab = datetime.datetime(100,1,1,int(timer[:2]),int(timer[-2:]),00)
                         bba = aab - datetime.timedelta(minutes = 120) # days, seconds, then other fields.
@@ -189,8 +194,7 @@ class Scanner:
                 else:
                     raidstart = "-"
 
-                print raidstart
-                gymHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", True)
+                gymHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", True, 'gym')
                 if not gymHash:
                     for file in glob.glob("gym_img/*.jpg"):
                         find_gym = mt.fort_image_matching(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", file, True, 0.7)
@@ -203,7 +207,7 @@ class Scanner:
                             gymID = gymSplit[2]
 
                     if gymfound == 1:
-                        self.imageHash('temp/' + str(hash) + '_raid' + str(i) +'.jpg', gymID, True)
+                        self.imageHash('temp/' + str(hash) + '_raid' + str(i) +'.jpg', gymID, True, 'gym')
 
                 else:
                     gymfound = 1
@@ -219,7 +223,7 @@ class Scanner:
                     lvlfound = 1
 
                 if eggfound == 0:
-                    monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False)
+                    monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 'mon')
                     if not monHash:
                         for file in glob.glob("mon_img/_mon_*.png"):
                             find_mon = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 0.7)
@@ -232,7 +236,7 @@ class Scanner:
                                 monID = monSplit[3]
 
                         if monfound == 1:
-                            self.imageHash('temp/' + str(hash) + '_raidboss' + str(i) +'.jpg', monID, False)
+                            self.imageHash('temp/' + str(hash) + '_raidboss' + str(i) +'.jpg', monID, False, 'mon')
                     else:
                         monfound = 1
                         monID = monHash
@@ -307,7 +311,7 @@ class Scanner:
     ##############################################
             if gymfound == 0 and len(raidtext) > 0:
                 unknowngymfound = 0
-                for file in glob.glob("unknown/gym_*.jpg"):
+                for file in glob.glob(self.unknownPath + "/gym_*.jpg"):
                             foundunknowngym = mt.fort_image_matching(self.tempPath + "/" + str(hash) + "_raidpic" + str(i) +".jpg", file, True, 0.8)
                             if foundgym is None or foundunknowngym > foundgym[0]:
                 	    		foundgym = foundunknowngym, file
@@ -318,11 +322,11 @@ class Scanner:
 
                 if unknowngymfound == 0:
                     name22 = time.time()
-                    cv2.imwrite("unknown/gym_" + str(name22) +".jpg", raidpic)
+                    cv2.imwrite(self.unknownPath + "/gym_" + str(name22) +".jpg", raidpic)
 
             if monfound == 0 and len(raidtext) > 0 and eggfound == 0:
                 unknownmonfound = 0
-                for file in glob.glob("unknown/mon_*.jpg"):
+                for file in glob.glob(self.unknownPath + "/mon_*.jpg"):
 
                             foundunknownmon = mt.fort_image_matching(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", file, False, 0.8)
                             if foundmon is None or foundunknownmon > foundmon[0]:
@@ -335,7 +339,7 @@ class Scanner:
 
                 if unknownmonfound == 0:
                     name22 = time.time()
-                    cv2.imwrite("unknown/mon_" + str(name22) +".jpg", monAsset)
+                    cv2.imwrite(self.unknownPath + "/mon_" + str(name22) +".jpg", monAsset)
 
             gymfound = None
             foundmon = None
@@ -352,7 +356,7 @@ class Scanner:
         os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
 
 
-    def imageHashExists(self, image, zoom, hashSize=8):
+    def imageHashExists(self, image, zoom, type, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -363,13 +367,13 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        for file in glob.glob('hash/*' + str(imageHash) + '_*'):
+        for file in glob.glob('hash/*' + str(imageHash) + '_' + str(type) + '_*'):
                     Split = file.split('_')
                     return Split[2]
 
         return False
 
-    def imageHash(self, image, id, zoom, hashSize=8):
+    def imageHash(self, image, id, zoom, type, hashSize=8):
         image2 = cv2.imread(image, 3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -381,6 +385,6 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        file = open('hash/_' + str(imageHash) + '_' + str(id) + '_','w')
+        file = open('hash/_' + str(imageHash) + '_' + str(id) + '_' + str(type) + '_','w')
         file.write(id)
         file.close()

@@ -16,7 +16,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         curTime = time.time()
         # the file will be processed there
         log.info(event.src_path)  # print now only for degug
-        scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path)
+        scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path, args.unknown_path, args.timezone)
         t_scanner = Thread(scanner.start_detect(event.src_path, str(curTime)),
                            name='scanner')
         t_scanner.daemon = True

@@ -31,4 +31,7 @@ file:
 pogoasset:
 #temp_path:
 #raidscreen_path:
+#unknown_path:
 
+#timezone
+timezone:

@@ -78,7 +78,7 @@ def parseArgs():
             help=('Use this instance only for OCR.'))     
             
             
-    #etc
+    #folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
             help=('Temp Folder for OCR Scanning. Defaul: temp'))    
        
@@ -87,8 +87,16 @@ def parseArgs():
                   'See https://github.com/ZeChrales/PogoAssets/')) 
                   
     parser.add_argument('-rscrpath', '--raidscreen_path', default='screenshots',
-            help=('Folder for processed Raidscreens. Default: screenshots'))          
+            help=('Folder for processed Raidscreens. Default: screenshots'))    
+        
+    parser.add_argument('-unkpath', '--unknown_path', default='unknown',
+            help=('Folder for unknows Gyms or Mons. Default: unknown'))       
     
+    
+    #timezone
+    parser.add_argument('-tz', '--timezone', type=int, required=True,
+            help=('Hours Difference to GMT0. f.e.: +2 for Berlin/Germany'))  
+   
     #log settings      
     parser.add_argument('--no-file-logs',
                         help=('Disable logging to files. ' +
