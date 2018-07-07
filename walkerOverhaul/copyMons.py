@@ -6,7 +6,6 @@ import os
 import os.path
 import logging
 from shutil import copyfile
-from utils import get_args
 from PIL import Image
 
 log = logging.getLogger(__name__)
