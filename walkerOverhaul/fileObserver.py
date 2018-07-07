@@ -13,18 +13,10 @@ class checkScreenshot(PatternMatchingEventHandler):
     patterns = ['*.jpg']
     
     def process(self, event):
-        """
-        event.event_type 
-            'modified' | 'created' | 'moved' | 'deleted'
-        event.is_directory
-            True | False
-        event.src_path
-            path/to/observed/file
-        """
         curTime = time.time()
         # the file will be processed there
         log.info(event.src_path)  # print now only for degug
-        scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname)
+        scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path)
         t_scanner = Thread(scanner.start_detect(event.src_path, str(curTime)),
                            name='scanner')
         t_scanner.daemon = True

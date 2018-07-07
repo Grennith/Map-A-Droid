@@ -87,39 +87,28 @@ def main():
     set_log_and_verbosity(log)
     log.info("Starting TheRaidMap")
 
-    #thread.start_new_thread(main_thread, ('test'))
-    # Check for MonPics
+    if not os.path.exists(args.raidscreen_path):
+        log.info('Raidscreen directory created')
+        os.makedirs(args.raidscreen_path)
 
     MonRaidImages.runAll(args.pogoasset)
 
 
+    if not args.only_ocr:
+        log.info('Starting Scanning Thread....')
+        t = Thread(target=main_thread, name='main')
+        t.daemon = True
+        t.start()
     
-    t = Thread(target=main_thread, name='main')
-    t.daemon = True
+    if not args.only_scan:
+        log.info('Starting OCR Thread....')
+        t_observ = Thread(name='observer', target=observer(args.raidscreen_path))
+        t_observ.daemon = True
+        t_observ.start()
     
     
-    t_observ = Thread(name='test123', target=observer)
-    t_observ.daemon = True
-    
-    t_observ.start()
-    t.start()
-    log.info('Starting Thread....')
     while True:
         time.sleep(10)
-        #pass
-    #loop = asyncio.get_event_loop()
-    #tasks = [
-    #    asyncio.async(getVNCPic()),
-    #    asyncio.async(check_login()),
-    #    asyncio.async(check_message()),
-    #    asyncio.async(check_Xbutton())]
-
-    #loop.run_until_complete(asyncio.wait(tasks))
-    #loop.run_forever()
-    #loop.close()
-
-    # Hier muss noch der Async Job starter rein. Aktuell nur einzelne Jobs zum testen
-
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
@@ -181,7 +170,7 @@ def main_thread():
     #telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
     #telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
     pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
-    scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname)
+    #scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname)
 
 
     route = getJsonRoute(args.file)
@@ -258,7 +247,7 @@ def main_thread():
             time.sleep(2)
             log.info("Saving raid screenshot")
             curTime = time.time()
-            copyfile('screenshot.png', 'screenshots/nextRaidscreen' + str(curTime) + '.jpg')
+            copyfile('screenshot.png', args.raidscreen_path + '/Raidscreen' + str(curTime) + '.jpg')
             ####vncWrapper.getScreenshot('screenshots/nextRaidscreen' + str(curTime) + '.jpg')
             #start_detect()
             #result = pool.apply_async(scanner.start_detect, ['screenshots/nextRaidscreen' + str(time.time()) + '.jpg', 123], printHi) # Evaluate "f(10)" asynchronously calling callback when finished.
@@ -286,15 +275,10 @@ def main_thread():
         #start_detect()
         #time.sleep(10)
 
-def observer():
-    
-        
-        log.info('Starting FileObserver')
-        observer = Observer()
-        observer.schedule(checkScreenshot(), path='screenshots/')
-        observer.start()
-
-        #observer.join()
+def observer(scrPath):
+    observer = Observer()
+    observer.schedule(checkScreenshot(), path=scrPath)
+    observer.start()
 
 if __name__ == '__main__':
     main()

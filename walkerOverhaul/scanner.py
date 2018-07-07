@@ -24,16 +24,17 @@ import mysql.connector;
 log = logging.getLogger(__name__)
 
 class Scanner:
-    def __init__(self, dbIp, dbPort, dbUser, dbPassword, dbName):
+    def __init__(self, dbIp, dbPort, dbUser, dbPassword, dbName, tempPath):
         self.dbIp = dbIp
         self.dbPort = dbPort
         self.dbUser = dbUser
         self.dbPassword = dbPassword
         self.dbName = dbName
+        self.tempPath = tempPath
 
-        if not os.path.exists('temp'):
+        if not os.path.exists(self.tempPath):
             log.info('Temp directory created')
-            os.makedirs('temp')
+            os.makedirs(self.tempPath)
 
         if not os.path.exists('hash'):
             log.info('Hash directory created')
@@ -85,27 +86,27 @@ class Scanner:
         ###raid1
         raid1 = img[Y1-70:Y1+200,X1-80:X1+80]
 
-        cv2.imwrite("temp/" + str(hash) + "_raid1.jpg", raid1)
+        cv2.imwrite(self.tempPath + "/" + str(hash) + "_raid1.jpg", raid1)
 
         ###raid2
         raid2 = img[Y1-70:Y1+200, X2-80:X2+80]
-        cv2.imwrite("temp/" + str(hash) + "_raid2.jpg", raid2)
+        cv2.imwrite(self.tempPath + "/" + str(hash) + "_raid2.jpg", raid2)
 
         ###raid3
         raid3 = img[Y1-70:Y1+200, X3-80:X3+80]
-        cv2.imwrite("temp/" + str(hash) + "_raid3.jpg", raid3)
+        cv2.imwrite(self.tempPath + "/" + str(hash) + "_raid3.jpg", raid3)
 
         ###raid4
         raid4 = img[Y2-70:Y2+200, X1-80:X1+80]
-        cv2.imwrite("temp/" + str(hash) + "_raid4.jpg", raid4)
+        cv2.imwrite(self.tempPath + "/" + str(hash) + "_raid4.jpg", raid4)
 
         ###raid5
         raid5 = img[Y2-70:Y2+200, X2-80:X2+80]
-        cv2.imwrite("temp/" + str(hash) + "_raid5.jpg", raid5)
+        cv2.imwrite(self.tempPath + "/" + str(hash) + "_raid5.jpg", raid5)
 
         ###raid3
         raid6 = img[Y2-70:Y2+200, X3-80:X3+80]
-        cv2.imwrite("temp/" + str(hash) + "_raid6.jpg", raid6)
+        cv2.imwrite(self.tempPath + "/" + str(hash) + "_raid6.jpg", raid6)
 
 
         i = 1
@@ -119,18 +120,18 @@ class Scanner:
             monfound = 0
             eggfound = 0
             lvlfound = 0
-            image1 = cv2.imread("temp/" + str(hash) + "_raid" + str(i) +".jpg")
+            image1 = cv2.imread(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg")
             raidpic = image1[0:165, 0:160]
-            cv2.imwrite("temp/" + str(hash) + "_raidpic" + str(i) +".jpg", raidpic)
+            cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidpic" + str(i) +".jpg", raidpic)
 
-            image2 = cv2.imread("temp/" + str(hash) + "_raid" + str(i) +".jpg")
+            image2 = cv2.imread(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg")
             raidtimer = image2[200:230, 0:297]
             raidtimer = cv2.resize(raidtimer, (0,0), fx=3, fy=3)
-            cv2.imwrite("temp/" + str(hash) + "_raidtimer" + str(i) +".jpg", raidtimer)
+            cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg", raidtimer)
 
             raidlevel = image2[235:265, 0:297]
             raidlevel = cv2.resize(raidlevel, (0,0), fx=3, fy=3)
-            cv2.imwrite("temp/" + str(hash) + "_raidlevel" + str(i) +".jpg", raidlevel)
+            cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", raidlevel)
 
             #lower = np.array([86, 31, 4], dtype = "uint8")
         	#upper = np.array([220, 88, 50], dtype = "uint8")
@@ -139,29 +140,29 @@ class Scanner:
             raidMonZoom = cv2.resize(image1, (0,0), fx=2, fy=2)
             mask = cv2.inRange(raidMonZoom, lower, upper)
             output = cv2.bitwise_and(raidMonZoom, raidMonZoom, mask = mask)
-            cv2.imwrite("temp/" + str(hash) + "_raidboss" + str(i) +".jpg", output)
-            monAsset = cv2.imread("temp/" + str(hash) + "_raidboss" + str(i) +".jpg",3)
+            cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", output)
+            monAsset = cv2.imread(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg",3)
             monAsset = cv2.inRange(monAsset,np.array([0,0,0]),np.array([15,15,15]))
-            cv2.imwrite("temp/" + str(hash) + "_raidboss" + str(i) +".jpg", monAsset)
+            cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", monAsset)
 
             emptyraid = image2[195:225, 0:160]
-            cv2.imwrite("temp/" + str(hash) + "_emptyraid.png", raidtimer)
-            rt = Image.open("temp/" + str(hash) + "_emptyraid.png")
+            cv2.imwrite(self.tempPath + "/" + str(hash) + "_emptyraid.png", raidtimer)
+            rt = Image.open(self.tempPath + "/" + str(hash) + "_emptyraid.png")
             gray = rt.convert('L')
             bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-            bw.save("temp/" + str(hash) + "_cropped_emptyraid_bw.png")
-            raidtext = pytesseract.image_to_string(Image.open("temp/" + str(hash) + "_cropped_emptyraid_bw.png"),config='-psm 7')
+            bw.save(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
+            raidtext = pytesseract.image_to_string(Image.open(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png"),config='-psm 7')
 
 
-            raidtime = Image.open("temp/" + str(hash) + "_raidtimer" + str(i) +".jpg")
+            raidtime = Image.open(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg")
             gray = raidtime.convert('L')
             bw = gray.point(lambda x: 0 if x<185 else 255, '1')
-            bw.save("temp/" + str(hash) + "_raidtimer" + str(i) +".jpg")
-            timer = pytesseract.image_to_string(Image.open("temp/" + str(hash) + "_raidtimer" + str(i) +".jpg"),config='--psm=7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
+            bw.save(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg")
+            timer = pytesseract.image_to_string(Image.open(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg"),config='--psm=7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
 
             if len(raidtext) > 0:
                 for file in glob.glob("mon_img/_egg_*.png"):
-                    find_egg = mt.fort_image_matching(file, "temp/" + str(hash) + "_raid" + str(i) +".jpg", True, 0.9)
+                    find_egg = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", True, 0.9)
                     if foundegg is None or find_egg > foundegg[0]:
     	    	    	foundegg = find_egg, file
 
@@ -189,10 +190,10 @@ class Scanner:
                     raidstart = "-"
 
                 print raidstart
-                gymHash = self.imageHashExists("temp/" + str(hash) + "_raid" + str(i) +".jpg", True)
+                gymHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", True)
                 if not gymHash:
                     for file in glob.glob("gym_img/*.jpg"):
-                        find_gym = mt.fort_image_matching("temp/" + str(hash) + "_raid" + str(i) +".jpg", file, True, 0.7)
+                        find_gym = mt.fort_image_matching(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", file, True, 0.7)
                         if foundgym is None or find_gym > foundgym[0]:
     	    	        	foundgym = find_gym, file
 
@@ -210,7 +211,7 @@ class Scanner:
 
 
                 for file in glob.glob("mon_img/_raidlevel_*.jpg"):
-                    find_lvl = mt.fort_image_matching(file, "temp/" + str(hash) + "_raidlevel" + str(i) +".jpg", False, 0.5)
+                    find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", False, 0.5)
                     if foundlvl is None or find_lvl > foundlvl[0]:
     	    	    	foundlvl = find_lvl, file
 
@@ -218,10 +219,10 @@ class Scanner:
                     lvlfound = 1
 
                 if eggfound == 0:
-                    monHash = self.imageHashExists("temp/" + str(hash) + "_raidboss" + str(i) +".jpg", False)
+                    monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False)
                     if not monHash:
                         for file in glob.glob("mon_img/_mon_*.png"):
-                            find_mon = mt.fort_image_matching(file, "temp/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 0.7)
+                            find_mon = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 0.7)
                             if foundmon is None or find_mon > foundmon[0]:
                                 foundmon = find_mon, file
 
@@ -307,7 +308,7 @@ class Scanner:
             if gymfound == 0 and len(raidtext) > 0:
                 unknowngymfound = 0
                 for file in glob.glob("unknown/gym_*.jpg"):
-                            foundunknowngym = mt.fort_image_matching("temp/" + str(hash) + "_raidpic" + str(i) +".jpg", file, True, 0.8)
+                            foundunknowngym = mt.fort_image_matching(self.tempPath + "/" + str(hash) + "_raidpic" + str(i) +".jpg", file, True, 0.8)
                             if foundgym is None or foundunknowngym > foundgym[0]:
                 	    		foundgym = foundunknowngym, file
 
@@ -323,7 +324,7 @@ class Scanner:
                 unknownmonfound = 0
                 for file in glob.glob("unknown/mon_*.jpg"):
 
-                            foundunknownmon = mt.fort_image_matching("temp/" + str(hash) + "_raidboss" + str(i) +".jpg", file, False, 0.8)
+                            foundunknownmon = mt.fort_image_matching(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", file, False, 0.8)
                             if foundmon is None or foundunknownmon > foundmon[0]:
                 	    		foundmon = foundunknownmon, file
 
@@ -345,10 +346,10 @@ class Scanner:
             lvlfound = None
             i = i + 1
 
-        for file in glob.glob("temp/" + str(hash) + "_*raid*.jpg"):
+        for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
             os.remove(file)
-        os.remove("temp/" + str(hash) + "_cropped_emptyraid_bw.png")
-        os.remove("temp/" + str(hash) + "_emptyraid.png")
+        os.remove(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
+        os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
 
 
     def imageHashExists(self, image, zoom, hashSize=8):

@@ -1,0 +1,34 @@
+#VNC Settings
+vnc_ip: 
+#vncscreen:
+vnc_port: 
+vnc_password: 
+
+#MySql Settings
+dbip: 
+dbusername: 
+dbpassword: 
+dbname:
+#dbport:
+
+#Telnet Settings
+tel_ip:
+tel_port:
+tel_password:
+
+#Coords CSV
+file:
+
+#Walk Settings
+#speed:
+#max_distance:
+
+#Runtype
+#only-scan
+#only-ocr
+
+#path settings
+pogoasset:
+#temp_path:
+#raidscreen_path:
+
