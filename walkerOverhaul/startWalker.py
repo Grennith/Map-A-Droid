@@ -186,15 +186,12 @@ def printHi():
 
 def main_thread():
     vncWrapper = VncWrapper(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
-    #telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
-    #telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
+    telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
+    telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
     pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
-    #scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname)
-
 
     route = getJsonRoute(args.file)
     lastPogoRestart = time.time()
-    #sys.exit(0)
     log.info(args.max_distance)
 
     pool = Pool(processes=5)              # Start a worker processes.
@@ -219,7 +216,7 @@ def main_thread():
                 log.info(gym)
                 curLat = gym['lat']
                 curLng = gym['lng']
-            #calculate distance inbetween and check for walk vs teleport
+                #calculate distance inbetween and check for walk vs teleport
                 distance = getDistanceOfTwoPointsInMeters(float(lastLat), float(lastLng), float(curLat), float(curLng))
                 log.info("Moving to next gym")
                 log.info("Distance to cover: %d" % (distance))
@@ -227,11 +224,11 @@ def main_thread():
                     (args.max_distance and distance > args.max_distance)
                         or (lastLat == 0.0 and lastLng == 0.0)):
                     log.info("Teleporting")
-                #telnGeo.setLocation(curLat, curLng, 0)
+                    telnGeo.setLocation(curLat, curLng, 0)
                 else:
                     log.info("Walking")
                     log.info(args.speed)
-                #telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
+                    telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
 
             #ok, we should be at the next gym, check for errors and stuff
             #TODO: improve errorhandling by checking results and trying again and again
