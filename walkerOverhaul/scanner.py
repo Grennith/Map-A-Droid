@@ -89,7 +89,6 @@ class Scanner:
         img = cv2.resize(img, (750, 1334), interpolation = cv2.INTER_CUBIC)
         ###raid1
         raid1 = img[Y1-70:Y1+200,X1-80:X1+80]
-
         cv2.imwrite(self.tempPath + "/" + str(hash) + "_raid1.jpg", raid1)
 
         ###raid2
@@ -178,24 +177,10 @@ class Scanner:
                 if "R" not in timer:
                     now = datetime.datetime.now()
                     date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
-                    #raidstart = date1 + " 21:59"
-                    #raidend = date1 + " 22:59"
                     
                     raidstart = getHatchTime(self, timer) - (self.timezone*60*60)
                     raidend = getHatchTime(self, timer) + int(45*60) - (self.timezone*60*60)
-                    #try:
-                        #aab = datetime.datetime(100,1,1,int(timer[:2]),int(timer[-2:]),00)
-                        #bba = aab - datetime.timedelta(minutes = 120) # days, seconds, then other fields.
-                        #raidstart = date1 + " " + str(bba.time())
 
-                        #a = datetime.datetime(100,1,1,int(timer[:2]),int(timer[-2:]),00)
-                    #b = a - datetime.timedelta(0,4500) # days, seconds, then other fields.
-                        #b = bba + datetime.timedelta(minutes = 45)
-                        #raidend = date1 + " " + str(b.time())
-
-                    #except ValueError:
-
-                         #pass
                 else:
                     raidstart = "-"
 
@@ -248,10 +233,8 @@ class Scanner:
 
 
                 if gymfound == 1 and (monfound == 1 or eggfound == 1):
-
                     lvlSplit = foundlvl[1].split('_')
                     lvl = lvlSplit[3]
-
 
                     if monfound == 1:
                         logtext = 'Mon - ID: ' + str(monID)
@@ -268,14 +251,9 @@ class Scanner:
                     log.info('Raid ' + str(i) + ' | Gym-ID: ' + str(gymID) + ' | ' + logtext + ' | Level: ' + lvl)
 
                 if gymfound == 1 and (monfound == 0 and eggfound == 0):
-
-                    #gymSplit = foundgym[1].split('_')
-                    #gymID = gymSplit[2]
                     lvlSplit = foundlvl[1].split('_')
                     lvl = lvlSplit[3]
-
                     logtext = ' Mon or Egg: unknows '
-
                     log.info('Raid ' + str(i) + ' | Gym-ID: ' + str(gymID) + ' | ' + logtext + ' | Level: ' + lvl)
 
                 if gymfound == 0 and (monfound == 1 or eggfound == 1):
@@ -321,7 +299,7 @@ class Scanner:
                             if foundgym is None or foundunknowngym > foundgym[0]:
                 	    		foundgym = foundunknowngym, file
 
-                            if not foundgym is None and foundgym[0]>0.8:
+                            if not foundgym is None and foundgym[0]>0.7:
                                 unknowngymfound = 1
                                 foundgym = None
 
@@ -337,8 +315,7 @@ class Scanner:
                             if foundmon is None or foundunknownmon > foundmon[0]:
                 	    		foundmon = foundunknownmon, file
 
-
-                            if not foundmon is None and foundmon[0]>0.8:
+                            if not foundmon is None and foundmon[0]>0.7:
                                 unknownmonfound = 1
                                 foundmon = None
 
@@ -395,12 +372,8 @@ class Scanner:
         file.close()
         
 def checkHourMin(hour_min):
-        hour_min[0] = hour_min[0].replace('O','0')
-        hour_min[0] = hour_min[0].replace('o','0')
-        hour_min[0] = hour_min[0].replace('A','4')
-        hour_min[1] = hour_min[1].replace('O','0')
-        hour_min[1] = hour_min[1].replace('o','0')
-        hour_min[1] = hour_min[1].replace('A','4')
+        hour_min[0] = hour_min[0].replace('O','0').replace('o','0').replace('A','4')
+        hour_min[1] = hour_min[1].replace('O','0').replace('o','0').replace('A','4')
         if (hour_min[0]).isnumeric()==True and (hour_min[1]).isnumeric()==True:
             return True, hour_min
         else:
@@ -409,18 +382,12 @@ def checkHourMin(hour_min):
 def getHatchTime(self,data):
         zero = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
         unix_zero = zero.strftime("%s")
-        log.info('hatch_time ={}'.format(data))
         hour_min_divider = data.find(':')
         if hour_min_divider != -1:
-            # US format
             AM = data.find('AM')
             PM = data.find('PM')
             if AM >= 4:
-                data = data.replace('A','')
-                data = data.replace('M','')
-                data = data.replace('~','')
-                data = data.replace('-','')
-                data = data.replace(' ','')
+                data = data.replace('A','').replace('M','').replace('~','').replace('-','').replace(' ','')
                 hour_min = data.split(':')
                 ret, hour_min = checkHourMin(hour_min)
                 if ret == True:
@@ -428,11 +395,7 @@ def getHatchTime(self,data):
                 else:
                     return -1
             elif PM >= 4:
-                data = data.replace('P','')
-                data = data.replace('M','')
-                data = data.replace('~','')
-                data = data.replace('-','')
-                data = data.replace(' ','')
+                data = data.replace('P','').replace('M','').replace('~','').replace('-','').replace(' ','')
                 hour_min = data.split(':')
                 ret, hour_min = checkHourMin(hour_min)
                 if ret == True:
@@ -442,11 +405,8 @@ def getHatchTime(self,data):
                         return int(unix_zero)+(int(hour_min[0])+12)*3600+int(hour_min[1])*60
                 else:
                     return -1
-            # Europe format
             else:
-                data = data.replace('~','')
-                data = data.replace('-','')
-                data = data.replace(' ','')
+                data = data.replace('~','').replace('-','').replace(' ','')
                 hour_min = data.split(':')
                 ret, hour_min = checkHourMin(hour_min)
                 if ret == True:

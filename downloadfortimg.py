@@ -6,7 +6,7 @@ import mysql.connector;
 import os
 import time
 import logging 
-from utils import get_args
+from walkerArgs import parseArgs
 
 log = logging.getLogger(__name__)
 
@@ -17,7 +17,7 @@ if not os.path.exists('gym_img'):
 url_image_path = os.getcwd() + '/gym_img/'
 
 
-args = get_args()
+args = parseArgs()
 
 try:
     connection = mysql.connector.connect(host = args.dbip, user = args.dbusername, passwd = args.dbpassword, db = "rocketmapdb")

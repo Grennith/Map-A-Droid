@@ -10,22 +10,10 @@ import math
 from watchdog.observers import Observer  
 from watchdog.events import PatternMatchingEventHandler  
 from shutil import copyfile
-
-#from vnc import vncWrapper
-#from detect_text import check_login, check_message, check_Xbutton, check_speedmessage, check_quitbutton, check_raidscreen
-#from copyMons import copyMons
-#from  scanner import start_detect
-
 from multiprocessing import Pool
 from copyMons import MonRaidImages
-from  scanner import Scanner
+from scanner import Scanner
 from fileObserver import checkScreenshot
-#internal imports
-
-#import sys
-#sys.path.insert(0, 'vnc')
-#sys.path.insert(0, 'routecalc')
-
 from routecalc.calculate_route import getJsonRoute
 from vnc.vncWrapper import VncWrapper
 from telnet.telnetGeo import TelnetGeo
@@ -130,12 +118,14 @@ def sleeptimer(sleeptime):
     
         if tmNow >= tmFrom and tmNow < tmTil:
             log.info('Going to sleep - byebye')
+            #Doing smth over telnet ....
             sleep = True
     
         while tmNow >= tmFrom and tmNow < tmTil:
             tmNow = datetime.strptime(datetime.now().strftime('%H:%M'),"%H:%M")
             if tmNow >= tmTil:
                 log.info('Wakeup - here we go ...')
+                #Doing smth over telnet ....
                 sleep = False
                 break
 

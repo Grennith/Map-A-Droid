@@ -23,7 +23,7 @@ file:
 #speed:
 #max_distance:
 
-#Runtype
+#Runtype settings
 #only-scan
 #only-ocr
 
@@ -33,9 +33,9 @@ pogoasset:
 #raidscreen_path:
 #unknown_path:
 
-#timezone
+#timezone settings
 timezone:
 
+#sleeptimer settings
 #sleeptimer
-#sleeptimer
-#sleepinterval: ['7:00', '9:15'], ['11:00', '12:00']
+#sleepinterval: [21:00, 05:00]
