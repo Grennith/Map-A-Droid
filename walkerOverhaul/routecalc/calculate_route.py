@@ -4,10 +4,93 @@ import json
 import math
 from util import *
 from args import *
+import collections
+
+
+ShortestDistance = collections.namedtuple('ShortestDistance', ['index', 'distance'])
+
+def __midPoint(lat1, lon1, lat2, lon2):
+
+    dLon = math.radians(lon2 - lon1)
+
+    #convert to radians
+    lat1 = math.radians(lat1)
+    lat2 = math.radians(lat2)
+    lon1 = math.radians(lon1)
+
+    x = math.cos(lat2) * math.cos(dLon)
+    y = math.cos(lat2) * math.sin(dLon);
+    lat3 = math.atan2(math.sin(lat1) + math.sin(lat2), math.sqrt((math.cos(lat1) + x) * (math.cos(lat1) + x) + y * y));
+    lon3 = lon1 + math.atan2(y, math.cos(lat1) + x);
+
+
+    coord = [math.degrees(lat3), math.degrees(lon3)]
+    return coord
+
+def getDistanceOfTwoPointsInMeters(startLat, startLng, destLat, destLng):
+    # approximate radius of earth in km
+    R = 6373.0
+
+    lat1 = math.radians(startLat)
+    lon1 = math.radians(startLng)
+    lat2 = math.radians(destLat)
+    lon2 = math.radians(destLng)
+
+    dlon = lon2 - lon1
+    dlat = lat2 - lat1
+
+    a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+
+    distance = R * c
+
+    distanceInMeters = distance * 1000
+    return distanceInMeters
+
+def __lessCoords(coordinates):
+    less = []
+    #TODO: consider sorting by distances before cutting out points?
+    while coordinates.size > 0:
+        for coord in coordinates:
+            coordIndex = np.nonzero(coordinates == coord)[0][0]
+            shortestDistance = __getShortestDistanceOfPointLessMax(coord, coordinates, 500)
+            if shortestDistance.index == -1:
+                #no other gym in 500m radius
+                less.append(coord)
+                coordinates = np.delete(coordinates, coordIndex, 0)
+                #coordinates.remove(coord)
+                break
+
+            #we got at least one gym nearby, summarize!
+            nearbyPoint = coordinates[shortestDistance.index]
+            middle = __midPoint(coord[0], coord[1], nearbyPoint[0], nearbyPoint[1])
+            less.append(middle)
+
+            #numpy does not delete in-place :(
+            coordinates = np.delete(coordinates, [shortestDistance.index, coordIndex], 0) #the 0 indicates that we keep our 2D structure
+            break
+    return np.array(less)
+
+def __getShortestDistanceOfPointLessMax(point, coordinates, maxDistance):
+    index = -1
+    shortestDistance = maxDistance #we only summarize gyms that are less then n meters apart
+    for coord in coordinates:
+        if (point[0] == coord[0] and point[1] == coord[1]):
+            continue
+        distanceToCoord = getDistanceOfTwoPointsInMeters(point[0], point[1], coord[0], coord[1])
+
+        if distanceToCoord < shortestDistance:
+            #index = np.where(coordinates == coord)
+            index = np.nonzero(coordinates == coord)[0][0]
+
+            shortestDistance = distanceToCoord
+
+    return ShortestDistance(index, shortestDistance)
 
 def getJsonRoute(filePath):
     coordinates = np.loadtxt(filePath, delimiter=',')
-
+    if (coordinates.size > 1):
+        coordinates = __lessCoords(coordinates)
     # Constant Definitions
     NUM_NEW_SOLUTION_METHODS = 3
     SWAP, REVERSE, TRANSPOSE = 0, 1, 2
