@@ -31,37 +31,37 @@ def parseArgs():
             is_config_file=True, help='Set configuration file')
             
     #VNC
-    parser.add_argument('-vncip', '--vnc_ip', required=True,
+    parser.add_argument('-vncip', '--vnc_ip', required=False,
             help=('IP Address of VNC Server on Device.'))
     parser.add_argument('-vncscr', '--vncscreen', type=int, default=None, required=False,
             help=('Screen Number of VNC Server on Device.'))
-    parser.add_argument('-vncport', '--vnc_port', type=int, required=True,
+    parser.add_argument('-vncport', '--vnc_port', type=int, required=False,
             help=('Port of VNC Server on Device.'))
-    parser.add_argument('-vncpassword', '--vnc_password', required=True,
+    parser.add_argument('-vncpassword', '--vnc_password', required=False,
             help=('Password of VNC Server on Device.'))
             
     #MySQL
-    parser.add_argument('-dbip', '--dbip', required=True,
+    parser.add_argument('-dbip', '--dbip', required=False,
             help=('IP of MySql Server.'))
-    parser.add_argument('-dbuser', '--dbusername', required=True,
+    parser.add_argument('-dbuser', '--dbusername', required=False,
             help=('Username of MySql Server.'))
-    parser.add_argument('-dbpassw', '--dbpassword', required=True,
+    parser.add_argument('-dbpassw', '--dbpassword', required=False,
             help=('Password of MySql Server.'))
-    parser.add_argument('-dbname', '--dbname', required=True,
+    parser.add_argument('-dbname', '--dbname', required=False,
             help=('Name of MySql Database.'))
     parser.add_argument('-dbport', '--dbport', type=int, default=3306,
             help=('Port of MySql Server.'))
             
     #TELNET
-    parser.add_argument('-telip', '--tel_ip', required=True,
+    parser.add_argument('-telip', '--tel_ip', required=False,
             help=('IP of the telnet server. String!'))
-    parser.add_argument('-telport', '--tel_port', required=True, type=int,
+    parser.add_argument('-telport', '--tel_port', required=False, type=int,
             help=('Port of the telnet server. Integer!'))
     parser.add_argument('-telpassword', '--tel_password', required=False,
             help=('Password of the telnet server. String!'))            
             
     #CSV for Coords      
-    parser.add_argument('-file', '--file', required=True,
+    parser.add_argument('-file', '--file', required=False,
             help=('Full path to the .csv containing the gym coordinates.'))
     
     #Walk Settings
@@ -102,6 +102,12 @@ def parseArgs():
             help=('Active the Sleeptimer.'))
     parser.add_argument('-si', '--sleepinterval', default=[], action='append',
             help=('Intervalls for the sleeptimer. f.e. [[22:00, 5:00]]')) 
+
+    #download coords
+    parser.add_argument('-latlngleft', '--latlngleft', default=[], action='append',
+            help=('download gym cords from this param f.e. [47.1, 47.2]'))
+    parser.add_argument('-latlngright', '--latlngright', default=[], action='append',
+            help=('download gym cords to this param  f.e. [9.1, 9.5]'))
    
     #log settings      
     parser.add_argument('--no-file-logs',

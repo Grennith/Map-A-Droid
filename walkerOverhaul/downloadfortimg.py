@@ -1,8 +1,8 @@
 import sys
 import requests
 import shutil
-import mysql;
-import mysql.connector;
+import mysql
+import mysql.connector
 import os
 import time
 import logging
