@@ -35,3 +35,7 @@ pogoasset:
 
 #timezone
 timezone:
+
+#sleeptimer
+#sleeptimer
+#sleepinterval: ['7:00', '9:15'], ['11:00', '12:00']

@@ -95,7 +95,13 @@ def parseArgs():
     
     #timezone
     parser.add_argument('-tz', '--timezone', type=int, required=True,
-            help=('Hours Difference to GMT0. f.e.: +2 for Berlin/Germany'))  
+            help=('Hours Difference to GMT0. f.e.: +2 for Berlin/Germany'))
+            
+    #sleeptimer
+    parser.add_argument('-st', '--sleeptimer', action='store_true', default=False,
+            help=('Active the Sleeptimer.'))
+    parser.add_argument('-si', '--sleepinterval', default=[], action='append',
+            help=('Intervalls for the sleeptimer. f.e. [[22:00, 5:00]]')) 
    
     #log settings      
     parser.add_argument('--no-file-logs',

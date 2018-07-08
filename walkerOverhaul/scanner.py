@@ -51,9 +51,9 @@ class Scanner:
         now = datetime.datetime.now()
         date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
         date_plus_45 = now + datetime.timedelta(minutes = 45)
-        today1 = date1 + " " + str(now.hour + (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
-        today2 = date1 + " " + str(now.hour+ (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
-        fakeed = date1 + " " + str(date_plus_45.hour+ (self.timezone)) + ":" + str(date_plus_45.minute) + ":" + str(date_plus_45.second)
+        today1 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
+        today2 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
+        fakeed = date1 + " " + str(date_plus_45.hour - (self.timezone)) + ":" + str(date_plus_45.minute) + ":" + str(date_plus_45.second)
         try:
             connection = mysql.connector.connect(host = self.dbIp, user = self.dbUser, passwd = self.dbPassword, db = self.dbName, port = self.dbPort)
         except:
@@ -63,7 +63,7 @@ class Scanner:
         cursor = connection.cursor()
 
         if type == 'EGG':
-            query = " UPDATE raid SET level = %s, spawn=%s, start=%s, end=%s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
+            query = " UPDATE raid SET level = %s, spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
             data = (lvl, start, start, end, None, "999", "1", "1",  today1, guid)
             cursor.execute(query, data)
         else:
@@ -81,11 +81,9 @@ class Scanner:
             log.error("File does not exist")
             log.error(filename)
             return
+            
         log.error("Starting analisys")
-        now = datetime.datetime.now()
-        date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
-        today1 = date1 + " " + str(now.hour) + ":" + str(now.minute) + ":" + str(now.second)
-        today2 = date1 + " 00:01:00"
+
 
         img = cv2.imread(filename)
         img = cv2.resize(img, (750, 1334), interpolation = cv2.INTER_CUBIC)
@@ -139,16 +137,18 @@ class Scanner:
             raidlevel = cv2.resize(raidlevel, (0,0), fx=3, fy=3)
             cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", raidlevel)
 
-            #lower = np.array([86, 31, 4], dtype = "uint8")
-        	#upper = np.array([220, 88, 50], dtype = "uint8")
             lower = np.array([86, 31, 4], dtype = "uint8")
             upper = np.array([220, 88, 50], dtype = "uint8")
+            kernel = np.ones((3,3),np.uint8)
+            kernel2 = np.ones((6,6),np.uint8)
             raidMonZoom = cv2.resize(image1, (0,0), fx=2, fy=2)
             mask = cv2.inRange(raidMonZoom, lower, upper)
             output = cv2.bitwise_and(raidMonZoom, raidMonZoom, mask = mask)
             cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", output)
             monAsset = cv2.imread(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg",3)
             monAsset = cv2.inRange(monAsset,np.array([0,0,0]),np.array([15,15,15]))
+            monAsset = cv2.morphologyEx(monAsset, cv2.MORPH_CLOSE, kernel)
+            monAsset = cv2.morphologyEx(monAsset, cv2.MORPH_OPEN, kernel2)
             cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", monAsset)
 
             emptyraid = image2[195:225, 0:160]
@@ -176,21 +176,26 @@ class Scanner:
                     eggfound = 1
 
                 if "R" not in timer:
-                    raidstart = date1 + " 21:59"
-                    raidend = date1 + " 22:59"
-                    try:
-                        aab = datetime.datetime(100,1,1,int(timer[:2]),int(timer[-2:]),00)
-                        bba = aab - datetime.timedelta(minutes = 120) # days, seconds, then other fields.
-                        raidstart = date1 + " " + str(bba.time())
+                    now = datetime.datetime.now()
+                    date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
+                    #raidstart = date1 + " 21:59"
+                    #raidend = date1 + " 22:59"
+                    
+                    raidstart = getHatchTime(self, timer) - (self.timezone*60*60)
+                    raidend = getHatchTime(self, timer) + int(45*60) - (self.timezone*60*60)
+                    #try:
+                        #aab = datetime.datetime(100,1,1,int(timer[:2]),int(timer[-2:]),00)
+                        #bba = aab - datetime.timedelta(minutes = 120) # days, seconds, then other fields.
+                        #raidstart = date1 + " " + str(bba.time())
 
-                        a = datetime.datetime(100,1,1,int(timer[:2]),int(timer[-2:]),00)
+                        #a = datetime.datetime(100,1,1,int(timer[:2]),int(timer[-2:]),00)
                     #b = a - datetime.timedelta(0,4500) # days, seconds, then other fields.
-                        b = bba + datetime.timedelta(minutes = 45)
-                        raidend = date1 + " " + str(b.time())
+                        #b = bba + datetime.timedelta(minutes = 45)
+                        #raidend = date1 + " " + str(b.time())
 
-                    except ValueError:
+                    #except ValueError:
 
-                         pass
+                         #pass
                 else:
                     raidstart = "-"
 
@@ -388,3 +393,66 @@ class Scanner:
         file = open('hash/_' + str(imageHash) + '_' + str(id) + '_' + str(type) + '_','w')
         file.write(id)
         file.close()
+        
+def checkHourMin(hour_min):
+        hour_min[0] = hour_min[0].replace('O','0')
+        hour_min[0] = hour_min[0].replace('o','0')
+        hour_min[0] = hour_min[0].replace('A','4')
+        hour_min[1] = hour_min[1].replace('O','0')
+        hour_min[1] = hour_min[1].replace('o','0')
+        hour_min[1] = hour_min[1].replace('A','4')
+        if (hour_min[0]).isnumeric()==True and (hour_min[1]).isnumeric()==True:
+            return True, hour_min
+        else:
+            return False, hour_min    
+
+def getHatchTime(self,data):
+        zero = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
+        unix_zero = zero.strftime("%s")
+        log.info('hatch_time ={}'.format(data))
+        hour_min_divider = data.find(':')
+        if hour_min_divider != -1:
+            # US format
+            AM = data.find('AM')
+            PM = data.find('PM')
+            if AM >= 4:
+                data = data.replace('A','')
+                data = data.replace('M','')
+                data = data.replace('~','')
+                data = data.replace('-','')
+                data = data.replace(' ','')
+                hour_min = data.split(':')
+                ret, hour_min = checkHourMin(hour_min)
+                if ret == True:
+                    return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
+                else:
+                    return -1
+            elif PM >= 4:
+                data = data.replace('P','')
+                data = data.replace('M','')
+                data = data.replace('~','')
+                data = data.replace('-','')
+                data = data.replace(' ','')
+                hour_min = data.split(':')
+                ret, hour_min = checkHourMin(hour_min)
+                if ret == True:
+                    if hour_min[0] == '12':
+                        return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
+                    else:
+                        return int(unix_zero)+(int(hour_min[0])+12)*3600+int(hour_min[1])*60
+                else:
+                    return -1
+            # Europe format
+            else:
+                data = data.replace('~','')
+                data = data.replace('-','')
+                data = data.replace(' ','')
+                hour_min = data.split(':')
+                ret, hour_min = checkHourMin(hour_min)
+                if ret == True:
+                    return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
+                else:
+                    return -1
+        else:
+            return -1
+    
