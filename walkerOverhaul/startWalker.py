@@ -82,10 +82,6 @@ def main():
         os.makedirs(args.raidscreen_path)
 
     MonRaidImages.runAll(args.pogoasset)
-
-    print args.sleepinterval
-    for times in args.sleepinterval:
-        print times
         
     if not args.only_ocr:
         log.info('Starting Scanning Thread....')
