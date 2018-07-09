@@ -1,6 +1,6 @@
-import time  
-from watchdog.observers import Observer  
-from watchdog.events import PatternMatchingEventHandler  
+import time
+from watchdog.observers import Observer
+from watchdog.events import PatternMatchingEventHandler
 from walkerArgs import parseArgs
 from  scanner import Scanner
 from threading import Thread, Event
@@ -10,8 +10,8 @@ log = logging.getLogger(__name__)
 args = parseArgs()
 
 class checkScreenshot(PatternMatchingEventHandler):
-    patterns = ['*.jpg']
-    
+    patterns = ['*.png']
+
     def process(self, event):
         curTime = time.time()
         # the file will be processed there
@@ -21,16 +21,10 @@ class checkScreenshot(PatternMatchingEventHandler):
                            name='scanner')
         t_scanner.daemon = True
         t_scanner.start()
-        
+
 
     def on_modified(self, event):
         self.process(event)
 
     def on_created(self, event):
         self.process(event)
-         
-
-        
-
-        
-         

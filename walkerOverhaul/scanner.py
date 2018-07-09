@@ -33,11 +33,11 @@ class Scanner:
         self.tempPath = tempPath
         self.unknownPath = unknownPath
         self.timezone = timezone
-        
+
         if not os.path.exists(self.tempPath):
             log.info('Temp directory created')
             os.makedirs(self.tempPath)
-            
+
         if not os.path.exists(self.unknownPath):
             log.info('Unknow directory created')
             os.makedirs(self.unknownPath)
@@ -61,7 +61,7 @@ class Scanner:
             exit(0)
 
         cursor = connection.cursor()
-
+        log.e("PokemonID %s" % pkm)
         if type == 'EGG':
             query = " UPDATE raid SET level = %s, spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
             data = (lvl, start, start, end, None, "999", "1", "1",  today1, guid)
@@ -81,7 +81,7 @@ class Scanner:
             log.error("File does not exist")
             log.error(filename)
             return
-            
+
         log.error("Starting analisys")
 
 
@@ -177,7 +177,7 @@ class Scanner:
                 if "R" not in timer:
                     now = datetime.datetime.now()
                     date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
-                    
+
                     raidstart = getHatchTime(self, timer) - (self.timezone*60*60)
                     raidend = getHatchTime(self, timer) + int(45*60) - (self.timezone*60*60)
 
@@ -370,14 +370,14 @@ class Scanner:
         file = open('hash/_' + str(imageHash) + '_' + str(id) + '_' + str(type) + '_','w')
         file.write(id)
         file.close()
-        
+
 def checkHourMin(hour_min):
         hour_min[0] = hour_min[0].replace('O','0').replace('o','0').replace('A','4')
         hour_min[1] = hour_min[1].replace('O','0').replace('o','0').replace('A','4')
         if (hour_min[0]).isnumeric()==True and (hour_min[1]).isnumeric()==True:
             return True, hour_min
         else:
-            return False, hour_min    
+            return False, hour_min
 
 def getHatchTime(self,data):
         zero = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
@@ -415,4 +415,3 @@ def getHatchTime(self,data):
                     return -1
         else:
             return -1
-    

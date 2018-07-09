@@ -39,7 +39,7 @@ class PogoWindows:
         if 'O. K.' in text:
             log.info('Found Loginbutton - closing ...')
             self.vncWrapper.clickVNC(340, 750) #TODO: adaptive to resolution
-            os.remove(filename)
+            #os.remove(filename)
             result = True
         else:
             log.error('No login detected')
@@ -66,7 +66,7 @@ class PogoWindows:
         if len(text) > 1:
             log.error('Found Messagebox - closing ...')
             self.vncWrapper.rightClickVnc()
-            os.remove(filename)
+            #os.remove(filename)
             result = True
         else:
             log.error('No message found')
@@ -140,7 +140,7 @@ class PogoWindows:
         if len(text) > 1:
             log.info('Found Quitbutton - closing ...')
             self.vncWrapper.rightClickVnc()
-            os.remove(filename)
+            #os.remove(filename)
             result = True
         else:
             log.error('No quit-button found found')
@@ -169,7 +169,7 @@ class PogoWindows:
             log.info('Found Speedmessage - closing ...')
             self.vncWrapper.clickVnc(360,900) #TODO: adaptive to resolution
             self.vncWrapper.clickVnc(880, 450) #TODO: adaptive to resolution
-            os.remove(filename)
+            #os.remove(filename)
             result = True
         else:
             log.error('No speedmessage found')
@@ -207,7 +207,7 @@ class PogoWindows:
         if 'X' in text1 and 'RAID' not in text2 :
             log.info('Found Xbutton - closing ...')
             self.vncWrapper.rightClickVnc()
-            os.remove(filename)
+            #os.remove(filename)
             result = True
         else:
             log.error('No closebutton found')

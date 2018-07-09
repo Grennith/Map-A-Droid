@@ -10,7 +10,6 @@ import math
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 from shutil import copyfile
-from multiprocessing import Pool
 from copyMons import MonRaidImages
 from scanner import Scanner
 from fileObserver import checkScreenshot
@@ -188,14 +187,14 @@ def main_thread():
     #sys.exit(0)
     log.info(args.max_distance)
 
-    pool = Pool(processes=5)              # Start a worker processes.
     while True:
-        while not sleep:
-            log.info("Next round")
-            lastLat = 0.0
-            lastLng = 0.0
-            curLat = 0.0
-            curLng = 0.0
+        while sleep:
+            time.sleep(1)
+        log.info("Next round")
+        lastLat = 0.0
+        lastLng = 0.0
+        curLat = 0.0
+        curLng = 0.0
         #TODO:in for loop looping over route:
         #walk to next gym
         #getVNCPic
@@ -205,85 +204,83 @@ def main_thread():
         #check time to restart pogo and reset google play services
         for gym in route:
             #gym is an object of format {"lat": "50.583249", "lng": "8.682608"}
-                lastLat = curLat
-                lastLng = curLng
-                log.info(gym)
-                curLat = gym['lat']
-                curLng = gym['lng']
-                #calculate distance inbetween and check for walk vs teleport
-                distance = getDistanceOfTwoPointsInMeters(float(lastLat), float(lastLng), float(curLat), float(curLng))
-                log.info("Moving to next gym")
-                log.info("Distance to cover: %d" % (distance))
-                if (args.speed == 0 or
-                    (args.max_distance and distance > args.max_distance)
-                        or (lastLat == 0.0 and lastLng == 0.0)):
-                    log.info("Teleporting")
-                    telnGeo.setLocation(curLat, curLng, 0)
-                else:
-                    log.info("Walking")
-                    log.info(args.speed)
-                    telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
-
+            lastLat = curLat
+            lastLng = curLng
+            log.info(gym)
+            curLat = gym['lat']
+            curLng = gym['lng']
+            #calculate distance inbetween and check for walk vs teleport
+            distance = getDistanceOfTwoPointsInMeters(float(lastLat), float(lastLng), float(curLat), float(curLng))
+            log.info("Moving to next gym")
+            log.info("Distance to cover: %d" % (distance))
+            if (args.speed == 0 or
+                (args.max_distance and distance > args.max_distance)
+                    or (lastLat == 0.0 and lastLng == 0.0)):
+                log.info("Teleporting")
+                telnGeo.setLocation(curLat, curLng, 0)
+                time.sleep(4)
+            else:
+                log.info("Walking")
+                log.info(args.speed)
+                telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
+                time.sleep(2)
             #ok, we should be at the next gym, check for errors and stuff
             #TODO: improve errorhandling by checking results and trying again and again
             #not using continue to always take a new screenshot...
+            #time.sleep(5)
             vncWrapper.getScreenshot('screenshot.png')
             while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123)):
                 #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
-                    found =  pogoWindowManager.checkLogin('screenshot.png', 123)
-                    if not found and pogoWindowManager.checkMessage('screenshot.png', 123):
-                        log.error("Message found")
-                        found = True
-                    if not found and pogoWindowManager.checkClosebutton('screenshot.png', 123):
-                        log.error("closebutton found")
-                        found = True
-                    if not found and pogoWindowManager.checkSpeedmessage('screenshot.png', 123):
-                        log.error("speedmessage found")
-                        found = True
+                found =  pogoWindowManager.checkLogin('screenshot.png', 123)
+                if not found and pogoWindowManager.checkMessage('screenshot.png', 123):
+                    log.error("Message found")
+                    found = True
+                if not found and pogoWindowManager.checkClosebutton('screenshot.png', 123):
+                    log.error("closebutton found")
+                    found = True
+                if not found and pogoWindowManager.checkSpeedmessage('screenshot.png', 123):
+                    log.error("speedmessage found")
+                    found = True
                 #if pogoWindowManager.checkQuitbutton('screenshot.png', 123):
                 #    log.error("Quit message found")
                 #    continue
-                    log.error(not found)
-                    if not found:
-                        pogoWindowManager.checkNearby('screenshot.png', 123)
-                ######vncWrapper.getScreenshot('screenshot.png')
+                log.error(not found)
+                if not found:
+                    pogoWindowManager.checkNearby('screenshot.png', 123)
+                #pogoWindowManager.checkNearby('screenshot.png', 123)
+                vncWrapper.getScreenshot('screenshot.png')
                 #vncWrapper.getScreenshot('screenshot.png')
                 #pogoWindowManager.checkQuitbutton('screenshot.png', 123)
                 #pogoWindowManager.checkRaidscreen('screenshot.png', 123)
                 #vncWrapper.getScreenshot('screenshot.png')
 
-            #TODO: take screenshot of raidscreen?
-            #we should now see the raidscreen, let's take a screenshot of it
-                time.sleep(2)
-                log.info("Saving raid screenshot")
-                curTime = time.time()
-                copyfile('screenshot.png', args.raidscreen_path + '/Raidscreen' + str(curTime) + '.jpg')
-            ####vncWrapper.getScreenshot('screenshots/nextRaidscreen' + str(curTime) + '.jpg')
-            #start_detect()
-            #result = pool.apply_async(scanner.start_detect, ['screenshots/nextRaidscreen' + str(time.time()) + '.jpg', 123], printHi) # Evaluate "f(10)" asynchronously calling callback when finished.
-            #######scanner.start_detect('screenshots/nextRaidscreen' + str(curTime) + '.jpg', 123)
-            #we got the latest raids. To avoid the mobile from killing apps,
-            #let's restart pogo every 90minutes or whatever TODO: consider args
-            #curTime = time.time()
-                if (curTime - lastPogoRestart >= (90 * 60)):
-                #time for a restart
-                    successfulRestart = telnMore.restartApp("com.nianticlabs.pokemongo")
-                #TODO: errorhandling if it returned false, maybe try again next round?
-                    if successfulRestart:
-                        lastPogoRestart = curTime
+                #TODO: take screenshot of raidscreen?
+                #we should now see the raidscreen, let's take a screenshot of it
+                time.sleep(1)
+            log.info("Saving raid screenshot")
+            curTime = time.time()
+            copyfile('screenshot.png', args.raidscreen_path + '/Raidscreen' + str(curTime) + '.png')
+                ####vncWrapper.getScreenshot('screenshots/nextRaidscreen' + str(curTime) + '.jpg')
+                #start_detect()
+                #result = pool.apply_async(scanner.start_detect, ['screenshots/nextRaidscreen' + str(time.time()) + '.jpg', 123], printHi) # Evaluate "f(10)" asynchronously calling callback when finished.
+                #######scanner.start_detect('screenshots/nextRaidscreen' + str(curTime) + '.jpg', 123)
+                #we got the latest raids. To avoid the mobile from killing apps,
+                #let's restart pogo every 90minutes or whatever TODO: consider args
+                #curTime = time.time()
+            if (curTime - lastPogoRestart >= (90 * 60)):
+            #time for a restart
+                successfulRestart = telnMore.restartApp("com.nianticlabs.pokemongo")
+            #TODO: errorhandling if it returned false, maybe try again next round?
+                if successfulRestart:
+                    lastPogoRestart = curTime
                     time.sleep(25) #just sleep for a couple seconds to have the game come back up again
                 #TODO: handle login screen...
 
-        #vncWrapper.getScreenshot('checkErrors.jpg')
+def observer(scrPath):
+        observer = Observer()
+        observer.schedule(checkScreenshot(), path=scrPath)
+        observer.start()
 
-        #check_login()
-        #check_quitbutton()
-        #check_message()
-        #check_Xbutton()
-        #check_speedmessage()
-        #check_raidscreen()
-        #start_detect()
-        #time.sleep(10)
 
 
 if __name__ == '__main__':
