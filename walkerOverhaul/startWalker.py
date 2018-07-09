@@ -7,14 +7,14 @@ from walkerArgs import parseArgs
 import sys
 import os
 import math
-from watchdog.observers import Observer  
-from watchdog.events import PatternMatchingEventHandler  
+from watchdog.observers import Observer
+from watchdog.events import PatternMatchingEventHandler
 from shutil import copyfile
 from multiprocessing import Pool
 from copyMons import MonRaidImages
 from scanner import Scanner
 from fileObserver import checkScreenshot
-from routecalc.calculate_route import getJsonRoute
+from routecalc.calculate_route import getJsonRoute, getDistanceOfTwoPointsInMeters
 from vnc.vncWrapper import VncWrapper
 from telnet.telnetGeo import TelnetGeo
 from telnet.telnetMore import TelnetMore
@@ -82,41 +82,41 @@ def main():
         os.makedirs(args.raidscreen_path)
 
     MonRaidImages.runAll(args.pogoasset)
-        
+
     if not args.only_ocr:
         log.info('Starting Scanning Thread....')
         t = Thread(target=main_thread, name='main')
         t.daemon = True
         t.start()
-    
+
     if not args.only_scan:
         log.info('Starting OCR Thread....')
         t_observ = Thread(name='observer', target=observer(args.raidscreen_path))
         t_observ.daemon = True
         t_observ.start()
-    
+
     if args.sleeptimer:
         log.info('Starting Sleeptimer....')
         t_sleeptimer = Thread(name='sleeptimer', target=sleeptimer(args.sleepinterval))
         t_sleeptimer.daemon = True
-        t_sleeptimer.start()    
-    
+        t_sleeptimer.start()
+
     while True:
         time.sleep(10)
 
 def sleeptimer(sleeptime):
-    
+
     while True:
         tmFrom = datetime.strptime(sleeptime[0],"%H:%M")
         tmTil = datetime.strptime(sleeptime[1],"%H:%M")
         tmNow = datetime.strptime(datetime.now().strftime('%H:%M'),"%H:%M")
         global sleep
-    
+
         if tmNow >= tmFrom and tmNow < tmTil:
             log.info('Going to sleep - byebye')
             #Doing smth over telnet ....
             sleep = True
-    
+
         while tmNow >= tmFrom and tmNow < tmTil:
             tmNow = datetime.strptime(datetime.now().strftime('%H:%M'),"%H:%M")
             if tmNow >= tmTil:
@@ -156,26 +156,6 @@ def set_log_and_verbosity(log):
             t.start()
     else:
             log.setLevel(logging.INFO)
-
-def getDistanceOfTwoPointsInMeters(startLat, startLng, destLat, destLng):
-    # approximate radius of earth in km
-    R = 6373.0
-
-    lat1 = math.radians(startLat)
-    lon1 = math.radians(startLng)
-    lat2 = math.radians(destLat)
-    lon2 = math.radians(destLng)
-
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-
-    a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-    distance = R * c
-
-    distanceInMeters = distance * 1000
-    return distanceInMeters
 
 def printHi():
     log.error("Finished analyzing screenshot")
