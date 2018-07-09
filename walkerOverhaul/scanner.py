@@ -1,6 +1,5 @@
 import cv2
 import numpy as np
-import argparse
 cap = cv2.VideoCapture(0)
 from PIL import Image
 import pytesseract
@@ -8,6 +7,7 @@ import datetime
 import time
 import matching as mt
 import logging
+from walkerArgs import parseArgs
 
 Y1 = 585
 Y2 = 908
@@ -22,6 +22,14 @@ import mysql;
 import mysql.connector;
 
 log = logging.getLogger(__name__)
+args = parseArgs()
+
+monegg = []
+monegg.append(args.egg1_mon_id)
+monegg.append(args.egg2_mon_id)
+monegg.append(args.egg3_mon_id)
+monegg.append(args.egg4_mon_id)
+monegg.append(args.egg5_mon_id)
 
 class Scanner:
     def __init__(self, dbIp, dbPort, dbUser, dbPassword, dbName, tempPath, unknownPath, timezone):
@@ -64,7 +72,7 @@ class Scanner:
         log.e("PokemonID %s" % pkm)
         if type == 'EGG':
             query = " UPDATE raid SET level = %s, spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
-            data = (lvl, start, start, end, None, "999", "1", "1",  today1, guid)
+            data = (lvl, start, start, end, monegg[lvl], "999", "1", "1",  today1, guid)
             cursor.execute(query, data)
         else:
             query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
@@ -291,7 +299,6 @@ class Scanner:
                 else:
                     log.error('Raid ' + str(i) + ' | empty')
 
-    ##############################################
             if gymfound == 0 and len(raidtext) > 0:
                 unknowngymfound = 0
                 for file in glob.glob(self.unknownPath + "/gym_*.jpg"):
@@ -349,7 +356,7 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        for file in glob.glob('hash/*' + str(imageHash) + '_' + str(type) + '_*'):
+        for file in glob.glob('hash/_' + str(imageHash) + '_' + str(type) + '_'):
                     Split = file.split('_')
                     return Split[2]
 

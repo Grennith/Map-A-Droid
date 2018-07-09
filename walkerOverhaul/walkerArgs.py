@@ -88,11 +88,22 @@ def parseArgs():
                   
     parser.add_argument('-rscrpath', '--raidscreen_path', default='screenshots',
             help=('Folder for processed Raidscreens. Default: screenshots'))    
-        
+
     parser.add_argument('-unkpath', '--unknown_path', default='unknown',
-            help=('Folder for unknows Gyms or Mons. Default: unknown'))       
-    
-    
+            help=('Folder for unknows Gyms or Mons. Default: unknown'))
+
+
+    # Egg - Mon placeholder
+    parser.add_argument('-egg1mon', '--egg1_mon_id', default='15',
+            help=('Mon Placeholder for Level 1. Default: 15'))
+    parser.add_argument('-egg2mon', '--egg2_mon_id', default='20',
+            help=('Mon Placeholder for Level 2. Default: 20'))
+    parser.add_argument('-egg3mon', '--egg3_mon_id', default='55',
+            help=('Mon Placeholder for Level 3. Default: 55'))
+    parser.add_argument('-egg4mon', '--egg4_mon_id', default='164',
+            help=('Mon Placeholder for Level 4. Default: 164'))
+    parser.add_argument('-egg5mon', '--egg5_mon_id', default='198',
+            help=('Mon Placeholder for Level 5. Default: 198'))
     #timezone
     parser.add_argument('-tz', '--timezone', type=int, required=True,
             help=('Hours Difference to GMT0. f.e.: +2 for Berlin/Germany'))

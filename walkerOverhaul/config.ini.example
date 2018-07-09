@@ -71,4 +71,12 @@ timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Ge
 #latlngleft:                 # download gym cords from this param f.e. [47.1, 47.2]
 #latlngright:                # download gym cords to this param  f.e. [9.1, 9.5]
 
+# Egg - Mon placeholder
+######################
+
+#egg1_mon_id:                # set this mon-id for detected lvl 1 raids (replace later after hatch)
+#egg2_mon_id:                # set this mon-id for detected lvl 2 raids (replace later after hatch)
+#egg3_mon_id:                # set this mon-id for detected lvl 3 raids (replace later after hatch)
+#egg4_mon_id:                # set this mon-id for detected lvl 4 raids (replace later after hatch)
+#egg5_mon_id:                # set this mon-id for detected lvl 5 raids (replace later after hatch)
 
