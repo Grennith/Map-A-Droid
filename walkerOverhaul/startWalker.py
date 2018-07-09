@@ -20,6 +20,9 @@ from telnet.telnetGeo import TelnetGeo
 from telnet.telnetMore import TelnetMore
 from ocr.pogoWindows import PogoWindows
 
+from ocr.pogoWindows import PogoWindows
+
+
 class LogFilter(logging.Filter):
 
     def __init__(self, level):
@@ -103,6 +106,13 @@ def main():
 
     while True:
         time.sleep(10)
+        #pass
+    #loop = asyncio.get_event_loop()
+    #tasks = [
+    #    asyncio.async(getVNCPic()),
+    #    asyncio.async(check_login()),
+    #    asyncio.async(check_message()),
+    #    asyncio.async(check_Xbutton())]
 
 def sleeptimer(sleeptime):
 
@@ -161,13 +171,21 @@ def printHi():
     log.error("Finished analyzing screenshot")
 
 def main_thread():
+    log.info("Starting VNC client")
     vncWrapper = VncWrapper(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
+    log.info("Starting TelnetGeo Client")
     telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
+    log.info("Starting Telnet MORE Client")
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
+    log.info("Starting pogo window manager")
     pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
+
+
 
     route = getJsonRoute(args.file)
     lastPogoRestart = time.time()
+    print(route)
+    #sys.exit(0)
     log.info(args.max_distance)
 
     pool = Pool(processes=5)              # Start a worker processes.
@@ -185,7 +203,7 @@ def main_thread():
         #get to raidscreen (with the above command)
         #take screenshot and store coords in exif with it
         #check time to restart pogo and reset google play services
-            for gym in route:
+        for gym in route:
             #gym is an object of format {"lat": "50.583249", "lng": "8.682608"}
                 lastLat = curLat
                 lastLng = curLng
@@ -209,8 +227,8 @@ def main_thread():
             #ok, we should be at the next gym, check for errors and stuff
             #TODO: improve errorhandling by checking results and trying again and again
             #not using continue to always take a new screenshot...
-            #vncWrapper.getScreenshot('screenshot.png')
-                while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123)):
+            vncWrapper.getScreenshot('screenshot.png')
+            while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123)):
                 #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
                     found =  pogoWindowManager.checkLogin('screenshot.png', 123)
                     if not found and pogoWindowManager.checkMessage('screenshot.png', 123):
@@ -267,10 +285,6 @@ def main_thread():
         #start_detect()
         #time.sleep(10)
 
-def observer(scrPath):
-    observer = Observer()
-    observer.schedule(checkScreenshot(), path=scrPath)
-    observer.start()
 
 if __name__ == '__main__':
     main()
