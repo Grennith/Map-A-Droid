@@ -1,4 +1,5 @@
 import socket
+import time
 
 class TelnetClient:
     def __init__(self, ip, port, password):
@@ -10,7 +11,7 @@ class TelnetClient:
         self.__sock = socket.socket()
         attempts = 0
         while (not self.__connectSocket() and attempts < 10):
-            sleep(1)
+            time.sleep(1)
         if (self.__sock is None):
             raise ValueError('Socket not connected')
         else:

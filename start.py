@@ -126,13 +126,13 @@ def set_log_and_verbosity(log):
 
 def main_thread():
     while True:
-        getVNCPic('screenshot.png')
-        check_login('screenshot.png', 123)
-        check_message('screenshot.png', 123)
-        check_Xbutton('screenshot.png', 123)
-        check_speedmessage('screenshot.png', 123)
-        check_quitbutton('screenshot.png', 123)
-        check_raidscreen('screenshot.png', 123)
+        #getVNCPic('screenshot.png')
+        #check_login('screenshot.png', 123)
+        #c#heck_message('screenshot.png', 123)
+        #check_Xbutton('screenshot.png', 123)
+        #check_speedmessage('screenshot.png', 123)
+        #check_quitbutton('screenshot.png', 123)
+        #check_raidscreen('screenshot.png', 123)
         start_detect('screenshot.png', 123)
         time.sleep(2)
 

@@ -5,7 +5,9 @@ import imutils
 import os
 import os.path
 import logging
+from shutil import copyfile
 from utils import get_args
+from PIL import Image
 
 log = logging.getLogger(__name__)
 
@@ -44,15 +46,23 @@ def copyMons():
                 log.error('File ' + str(monFileAsset) + ' not found')
                 exit(0)
                 
+            copyfile(monFileAsset, monFile)
             
-            read_transparent_png(monFileAsset, monFile)
+            image = Image.open(monFile)
+            image.convert("RGBA")
+            canvas = Image.new('RGBA', image.size, (255,255,255,255)) # Empty canvas colour (r,g,b,a)
+            canvas.paste(image, mask=image) # Paste the image onto the canvas, using it's alpha channel as mask
+            canvas.save(monFile, format="PNG")
+
             
             monAsset = cv2.imread(monFile,3)
             height, width, channels = monAsset.shape
-            monAsset = cv2.inRange(monAsset,np.array([255,255,255]),np.array([255,255,255]))
+            monAsset = cv2.inRange(monAsset,np.array([240,240,240]),np.array([255,255,255]))
             cv2.imwrite(monFile, monAsset)
             crop = cv2.imread(monFile,3)        
-            crop = crop[0:int(height), 0:int((width/6)*4)]
+            crop = crop[0:int(height), 0:int((width/5)*4)]
+            kernel = np.ones((3,3),np.uint8)
+            crop = cv2.erode(crop,kernel,iterations = 1)
             cv2.imwrite(monFile, crop)
             log.info('Processing Pokemon Nr: ' + str(mon) + ' finished')
 
@@ -91,6 +101,7 @@ def copyEggs():
             log.info('Processing Eggfile: ' + str(egg) + ' finished')
             i = i +1
 
+
 def read_transparent_png(assetFile, saveFile):
     image_4channel = cv2.imread(assetFile, cv2.IMREAD_UNCHANGED)
     alpha_channel = image_4channel[:,:,3]
@@ -108,6 +119,7 @@ def read_transparent_png(assetFile, saveFile):
     cv2.imwrite(saveFile,final_image.astype(np.uint8))
     
     return assetFile 
+
 
 def runAll():
     copyMons()
