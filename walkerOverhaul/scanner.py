@@ -69,12 +69,22 @@ class Scanner:
             exit(0)
 
         cursor = connection.cursor()
-        log.e("PokemonID %s" % pkm)
+        log.error("Submitting something of type %s" % type)
         if type == 'EGG':
-            query = " UPDATE raid SET level = %s, spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
-            data = (lvl, start, start, end, monegg[lvl], "999", "1", "1",  today1, guid)
+            #query = " UPDATE raid SET level = %s, spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
+            #data = (lvl, start, start, end, monegg[int(lvl) - 1], "999", "1", "1",  today1, guid)
+            log.error("Submitting Egg. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, last_scanned: %s" % (guid, lvl, start, end, today1))
+            query = (' INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, ' +
+                'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
+                'FROM_UNIXTIME(%s), %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE level = %s, ' +
+                'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
+                'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s')
+            data = (guid, lvl, start, start, end, monegg[int(lvl)-1], "999", "1", "1", today1,
+                lvl, start, start, end, monegg[int(lvl) - 1], "999", "1", "1", today1)
+            #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
             cursor.execute(query, data)
         else:
+            log.error("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, guid))
             query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
             data = (lvl, pkm, "999", "1", "1",  today1, guid)
             cursor.execute(query, data)
@@ -246,14 +256,14 @@ class Scanner:
 
                     if monfound == 1:
                         logtext = 'Mon - ID: ' + str(monID)
-
+                        log.info("Found mon %s Lv %s. GymID: %s" % (monID, lvl, gymID))
                         self.submitRaid(str(gymID), monID, lvl, '-', '-', 'MON')
 
                     if eggfound == 1:
                         eggSplit = foundegg[1].split('_')
                         eggID = eggSplit[3]
                         logtext = 'Egg - ID: ' + str(eggID)
-
+                        log.info("Found egg Lv %s starting at %s and ending at %s. GymID: %s" % (lvl, raidstart, raidend, gymID))
                         self.submitRaid(str(gymID), '0', lvl, raidstart, raidend, 'EGG')
 
                     log.info('Raid ' + str(i) + ' | Gym-ID: ' + str(gymID) + ' | ' + logtext + ' | Level: ' + lvl)

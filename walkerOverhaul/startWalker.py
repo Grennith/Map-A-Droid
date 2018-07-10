@@ -13,6 +13,9 @@ from shutil import copyfile
 from copyMons import MonRaidImages
 from scanner import Scanner
 from fileObserver import checkScreenshot
+
+from multiprocessing import Process
+
 from routecalc.calculate_route import getJsonRoute, getDistanceOfTwoPointsInMeters
 from vnc.vncWrapper import VncWrapper
 from telnet.telnetGeo import TelnetGeo
@@ -96,6 +99,11 @@ def main():
         t_observ = Thread(name='observer', target=observer(args.raidscreen_path))
         t_observ.daemon = True
         t_observ.start()
+        #param = str(args.raidscreen_path)
+        #process = Process(target=observer, args=(param,))
+        #process.daemon = True
+        #process.start();
+
 
     if args.sleeptimer:
         log.info('Starting Sleeptimer....')
