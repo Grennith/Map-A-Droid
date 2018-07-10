@@ -13,7 +13,7 @@ from shutil import copyfile
 from copyMons import MonRaidImages
 from scanner import Scanner
 from fileObserver import checkScreenshot
-
+import heapq
 from multiprocessing import Process
 
 from routecalc.calculate_route import getJsonRoute, getDistanceOfTwoPointsInMeters
@@ -23,6 +23,10 @@ from telnet.telnetMore import TelnetMore
 from ocr.pogoWindows import PogoWindows
 
 from ocr.pogoWindows import PogoWindows
+import collections
+
+
+RaidLocation = collections.namedtuple('RaidLocation', ['latitude', 'longitude'])
 
 
 class LogFilter(logging.Filter):
@@ -36,6 +40,7 @@ class LogFilter(logging.Filter):
 console = logging.StreamHandler()
 args = parseArgs()
 sleep = False
+nextRaidQueue = []
 
 if not (args.verbose):
     console.setLevel(logging.INFO)
@@ -177,6 +182,12 @@ def set_log_and_verbosity(log):
 def printHi():
     log.error("Finished analyzing screenshot")
 
+#to be called regularly... like every 5mins? no idea... would be nicer to simply insert updates
+def updateRaidQueue():
+    newQueue = dbHelper.getNextTimes()
+    heapq.heapify(newQueue)
+    nextRaidQueue = newQueue
+
 def main_thread():
     log.info("Starting VNC client")
     vncWrapper = VncWrapper(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
@@ -210,28 +221,40 @@ def main_thread():
         #get to raidscreen (with the above command)
         #take screenshot and store coords in exif with it
         #check time to restart pogo and reset google play services
-        for gym in route:
-            #gym is an object of format {"lat": "50.583249", "lng": "8.682608"}
+        i = 0 #index, iterating with it to either get to the next gym or the priority of our queue
+        while i < len(route):
             lastLat = curLat
             lastLng = curLng
-            log.info(gym)
-            curLat = gym['lat']
-            curLng = gym['lng']
-            #calculate distance inbetween and check for walk vs teleport
+
+            #determine whether we move to the next gym or to the top of our priority queue
+            if (len(nextRaidQueue) > 0 and nextRaidQueue[0][0] < time.time()):
+                #the topmost item in the queue lays in the past...
+                log.info('A egg has hatched, get there asap. Location: %s' % nextRaidQueue[0])
+                nextStop = heapq.heappop(nextRaidQueue)[1] #gets the location tuple
+                curLat = nextStop.latitude
+                curLng = nextStop.longitude
+            else:
+                #continue as usual
+                log.info('Moving on with gym at %s' % route[i])
+                curLat = route[i]['lat']
+                curLng = route[i]['lng']
+                i += 1
+
+            log.debug('LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' % (lastLat, lastLng, curLat, curLng))
+            #get the distance from our current position (last) to the next gym (cur)
             distance = getDistanceOfTwoPointsInMeters(float(lastLat), float(lastLng), float(curLat), float(curLng))
-            log.info("Moving to next gym")
-            log.info("Distance to cover: %d" % (distance))
+            log.info('Moving %s meters to the next position' % distance)
             if (args.speed == 0 or
                 (args.max_distance and distance > args.max_distance)
                     or (lastLat == 0.0 and lastLng == 0.0)):
-                log.info("Teleporting")
+                log.info("Teleporting...")
                 telnGeo.setLocation(curLat, curLng, 0)
                 time.sleep(4)
             else:
-                log.info("Walking")
-                log.info(args.speed)
+                log.info('Walking...')
                 telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
                 time.sleep(2)
+
             #ok, we should be at the next gym, check for errors and stuff
             #TODO: improve errorhandling by checking results and trying again and again
             #not using continue to always take a new screenshot...
