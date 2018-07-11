@@ -196,7 +196,7 @@ def main_thread():
     log.info("Starting Telnet MORE Client")
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
     log.info("Starting pogo window manager")
-    pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
+    pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password, args.screen_width, args.screen_height)
 
 
 
@@ -205,7 +205,7 @@ def main_thread():
     print(route)
     #sys.exit(0)
     log.info(args.max_distance)
-
+    #sys.exit(0)
     while True:
         while sleep:
             time.sleep(1)

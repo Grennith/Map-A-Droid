@@ -23,13 +23,13 @@ def parseArgs():
     defaultconfigfiles = []
     if '-cf' not in sys.argv and '--config' not in sys.argv:
         defaultconfigfiles = [os.getenv('THERAIDMAPPER_CONFIG', os.path.join(
-            os.path.dirname(__file__), 'config.ini'))]   
+            os.path.dirname(__file__), 'config.ini'))]
     parser = configargparse.ArgParser(
         default_config_files=defaultconfigfiles,
         auto_env_var_prefix='THERAIDMAPPER_')
     parser.add_argument('-cf', '--config',
             is_config_file=True, help='Set configuration file')
-            
+
     #VNC
     parser.add_argument('-vncip', '--vnc_ip', required=False,
             help=('IP Address of VNC Server on Device.'))
@@ -39,7 +39,7 @@ def parseArgs():
             help=('Port of VNC Server on Device.'))
     parser.add_argument('-vncpassword', '--vnc_password', required=False,
             help=('Password of VNC Server on Device.'))
-            
+
     #MySQL
     parser.add_argument('-dbip', '--dbip', required=False,
             help=('IP of MySql Server.'))
@@ -51,43 +51,50 @@ def parseArgs():
             help=('Name of MySql Database.'))
     parser.add_argument('-dbport', '--dbport', type=int, default=3306,
             help=('Port of MySql Server.'))
-            
+
     #TELNET
     parser.add_argument('-telip', '--tel_ip', required=False,
             help=('IP of the telnet server. String!'))
     parser.add_argument('-telport', '--tel_port', required=False, type=int,
             help=('Port of the telnet server. Integer!'))
     parser.add_argument('-telpassword', '--tel_password', required=False,
-            help=('Password of the telnet server. String!'))            
-            
-    #CSV for Coords      
+            help=('Password of the telnet server. String!'))
+
+    #CSV for Coords
     parser.add_argument('-file', '--file', required=False,
             help=('Full path to the .csv containing the gym coordinates.'))
-    
+
+    #Device specific stuff
+    parser.add_argument('-sw', '--screen_width', required=True, type=int,
+            help=('Width of the mobile\'s screen (or pogo). This value usually is smaller than the height'))
+
+    parser.add_argument('-sh', '--screen_height', required=True, type=int,
+            help=('Height of the mobile\'s screen (or pogo). This value usually is bigger than the width'))
+
     #Walk Settings
     parser.add_argument('-s', '--speed', required=False, type=int, default=50,
             help=('The speed to walk from gym to gym in kmph. speed=0 means teleportation. Default: 50'))
     parser.add_argument('-m', '--max_distance', required=False, type=int,
-            help=('The maximum distance to be walked. Anything with a longer distance will be teleported to.'))                  
-            
-            
+            help=('The maximum distance to be walked. Anything with a longer distance will be teleported to.'))
+
+
     #Runtypes
     parser.add_argument('-os', '--only-scan', action='store_true', default=False,
             help=('Use this instance only for scanning.'))
     parser.add_argument('-oo', '--only-ocr', action='store_true', default=False,
-            help=('Use this instance only for OCR.'))     
-            
-            
+            help=('Use this instance only for OCR.'))
+
+
     #folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
-            help=('Temp Folder for OCR Scanning. Defaul: temp'))    
-       
+            help=('Temp Folder for OCR Scanning. Defaul: temp'))
+
     parser.add_argument('-pgasset', '--pogoasset', required=True,
             help=('Path to Pogo Asset.'
-                  'See https://github.com/ZeChrales/PogoAssets/')) 
-                  
+                  'See https://github.com/ZeChrales/PogoAssets/'))
+
     parser.add_argument('-rscrpath', '--raidscreen_path', default='screenshots',
-            help=('Folder for processed Raidscreens. Default: screenshots'))    
+            help=('Folder for processed Raidscreens. Default: screenshots'))
 
     parser.add_argument('-unkpath', '--unknown_path', default='unknown',
             help=('Folder for unknows Gyms or Mons. Default: unknown'))
@@ -107,20 +114,20 @@ def parseArgs():
     #timezone
     parser.add_argument('-tz', '--timezone', type=int, required=True,
             help=('Hours Difference to GMT0. f.e.: +2 for Berlin/Germany'))
-            
+
     #sleeptimer
     parser.add_argument('-st', '--sleeptimer', action='store_true', default=False,
             help=('Active the Sleeptimer.'))
     parser.add_argument('-si', '--sleepinterval', default=[], action='append',
-            help=('Intervalls for the sleeptimer. f.e. [[22:00, 5:00]]')) 
+            help=('Intervalls for the sleeptimer. f.e. [[22:00, 5:00]]'))
 
     #download coords
     parser.add_argument('-latlngleft', '--latlngleft', default=[], action='append',
             help=('download gym cords from this param f.e. [47.1, 47.2]'))
     parser.add_argument('-latlngright', '--latlngright', default=[], action='append',
             help=('download gym cords to this param  f.e. [9.1, 9.5]'))
-   
-    #log settings      
+
+    #log settings
     parser.add_argument('--no-file-logs',
                         help=('Disable logging to files. ' +
                               'Does not disable --access-logs.'),
@@ -152,6 +159,6 @@ def parseArgs():
     args.log_filename = strftime(args.log_filename)
     args.log_filename = args.log_filename.replace('<sn>', '<SN>')
     args.log_filename = args.log_filename.replace('<SN>', args.status_name)
-    
-    
+
+
     return args

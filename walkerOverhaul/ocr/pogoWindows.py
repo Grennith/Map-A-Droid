@@ -5,6 +5,7 @@ cap = cv2.VideoCapture(0)
 from PIL import Image
 #import pytesseract
 from pytesseract import image_to_string
+from resolutionCalculator import *
 
 import os.path
 import sys
@@ -19,8 +20,9 @@ if not os.path.exists('temp'):
     os.makedirs('temp')
 
 class PogoWindows:
-    def __init__(self, vncIp, vncScreen, vncPort, vncPassword):
+    def __init__(self, vncIp, vncScreen, vncPort, vncPassword, width, height):
         self.vncWrapper = VncWrapper(str(vncIp), vncScreen, vncPort, vncPassword)
+        self.resolutionCalculator = ResolutionCalc(width, height)
 
     def checkLogin(self, filename, hash):
         result = False
