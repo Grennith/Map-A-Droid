@@ -20,7 +20,7 @@ referencePositions = {}
 class ResolutionCalc:
     #TODO: consider loading config file
     def __init__(self, width, height):
-        self.widht = width
+        self.width = width
         self.height = height
         with open('resolutions.json') as f:
             self.resolutions = json.load(f)
@@ -56,26 +56,26 @@ class ResolutionCalc:
         return Coordinate(x, y)
 
     def getNearby(self):
-        x = self.width * self.resolutionConfiguration['nearby'][x]
-        y = self.height * self.resolutionConfiguration['nearby'][y]
+        x = self.width * self.resolutionConfiguration['nearby']['x']
+        y = self.height * self.resolutionConfiguration['nearby']['y']
         return Coordinate(x, y)
 
     def getMenuClose(self):
-        x = self.width * self.resolutionConfiguration['menu_close'][x]
-        y = self.height * self.resolutionConfiguration['menu_close'][y]
+        x = self.width * self.resolutionConfiguration['menu_close']['x']
+        y = self.height * self.resolutionConfiguration['menu_close']['y']
         return Coordinate(x, y)
 
     def getQuestClose(self):
-        x = self.width * self.resolutionConfiguration['quest_close'][x]
-        y = self.height * self.resolutionConfiguration['quest_close'][y]
+        x = self.width * self.resolutionConfiguration['quest_close']['x']
+        y = self.height * self.resolutionConfiguration['quest_close']['y']
         return Coordinate(x, y)
 
     def getNearbyRaid(self):
-        x = self.width * self.resolutionConfiguration['nearby_raid'][x]
-        y = self.height * self.resolutionConfiguration['nearby_raid'][y]
+        x = self.width * self.resolutionConfiguration['nearby_raid']['x']
+        y = self.height * self.resolutionConfiguration['nearby_raid']['y']
         return Coordinate(x, y)
 
     def getNewsClose(self):
-        x = self.width * self.resolutionConfiguration['news_close'][x]
-        y = self.height * self.resolutionConfiguration['news_close'][y]
+        x = self.width * self.resolutionConfiguration['news_close']['x']
+        y = self.height * self.resolutionConfiguration['news_close']['y']
         return Coordinate(x, y)
