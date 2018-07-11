@@ -76,11 +76,12 @@ def parseArgs():
             help=('Use this instance only for scanning.'))
     parser.add_argument('-oo', '--only-ocr', action='store_true', default=False,
             help=('Use this instance only for OCR.'))     
-            
+    parser.add_argument('-om', '--ocr-multitask', action='store_true', default=False,
+            help=('Running OCR as multiprocessing task.'))            
             
     #folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
-            help=('Temp Folder for OCR Scanning. Defaul: temp'))    
+            help=('Temp Folder for OCR Scanning. Default: temp'))    
        
     parser.add_argument('-pgasset', '--pogoasset', required=True,
             help=('Path to Pogo Asset.'
@@ -104,6 +105,7 @@ def parseArgs():
             help=('Mon Placeholder for Level 4. Default: 164'))
     parser.add_argument('-egg5mon', '--egg5_mon_id', default='198',
             help=('Mon Placeholder for Level 5. Default: 198'))
+            
     #timezone
     parser.add_argument('-tz', '--timezone', type=int, required=True,
             help=('Hours Difference to GMT0. f.e.: +2 for Berlin/Germany'))

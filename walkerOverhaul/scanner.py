@@ -102,7 +102,6 @@ class Scanner:
 
         log.error("Starting analisys")
 
-
         img = cv2.imread(filename)
         img = cv2.resize(img, (750, 1334), interpolation = cv2.INTER_CUBIC)
         ###raid1
@@ -154,8 +153,8 @@ class Scanner:
             raidlevel = cv2.resize(raidlevel, (0,0), fx=3, fy=3)
             cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", raidlevel)
 
-            lower = np.array([86, 31, 4], dtype = "uint8")
-            upper = np.array([220, 88, 50], dtype = "uint8")
+            lower = np.array([88, 64, 36], dtype = "uint8")
+            upper = np.array([110, 86, 60], dtype = "uint8")
             kernel = np.ones((3,3),np.uint8)
             kernel2 = np.ones((6,6),np.uint8)
             raidMonZoom = cv2.resize(image1, (0,0), fx=2, fy=2)
@@ -184,6 +183,18 @@ class Scanner:
             timer = pytesseract.image_to_string(Image.open(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg"),config='--psm=7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
 
             if len(raidtext) > 0:
+                
+                for file in glob.glob("mon_img/_raidlevel_*.jpg"):
+                    find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", False, 0.5)
+                    if foundlvl is None or find_lvl > foundlvl[0]:
+    	    	    	foundlvl = find_lvl, file
+
+                if not foundlvl is None and foundlvl[0]>0.5 and len(raidtext) > 0:
+                    lvlfound = 1
+                
+                lvlSplit = foundlvl[1].split('_')
+                lvl = lvlSplit[3]
+                
                 for file in glob.glob("mon_img/_egg_*.png"):
                     find_egg = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", True, 0.9)
                     if foundegg is None or find_egg > foundegg[0]:
@@ -222,18 +233,10 @@ class Scanner:
                     gymID = gymHash
 
 
-                for file in glob.glob("mon_img/_raidlevel_*.jpg"):
-                    find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", False, 0.5)
-                    if foundlvl is None or find_lvl > foundlvl[0]:
-    	    	    	foundlvl = find_lvl, file
-
-                if not foundlvl is None and foundlvl[0]>0.5 and len(raidtext) > 0:
-                    lvlfound = 1
-
                 if eggfound == 0:
                     monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 'mon')
                     if not monHash:
-                        for file in glob.glob("mon_img/_mon_*.png"):
+                        for file in glob.glob("mon_img/_mon_*_" + str(lvl) + ".png"):
                             find_mon = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 0.7)
                             if foundmon is None or find_mon > foundmon[0]:
                                 foundmon = find_mon, file
@@ -251,8 +254,7 @@ class Scanner:
 
 
                 if gymfound == 1 and (monfound == 1 or eggfound == 1):
-                    lvlSplit = foundlvl[1].split('_')
-                    lvl = lvlSplit[3]
+                    
 
                     if monfound == 1:
                         logtext = 'Mon - ID: ' + str(monID)
@@ -269,8 +271,6 @@ class Scanner:
                     log.info('Raid ' + str(i) + ' | Gym-ID: ' + str(gymID) + ' | ' + logtext + ' | Level: ' + lvl)
 
                 if gymfound == 1 and (monfound == 0 and eggfound == 0):
-                    lvlSplit = foundlvl[1].split('_')
-                    lvl = lvlSplit[3]
                     logtext = ' Mon or Egg: unknows '
                     log.info('Raid ' + str(i) + ' | Gym-ID: ' + str(gymID) + ' | ' + logtext + ' | Level: ' + lvl)
 
@@ -291,8 +291,6 @@ class Scanner:
 
                 if gymfound == 0 and (monfound == 0 and eggfound == 0):
 
-                    lvlSplit = foundlvl[1].split('_')
-                    lvl = lvlSplit[3]
                     gymID = 'uknown'
                     logtext = ' unknown Mon or Egg '
 
@@ -304,10 +302,11 @@ class Scanner:
                 foundlvl = None
             else:
                 if i == 1:
-                    log.error('No active Raids ' + str(i) + ' | empty')
+                    log.error('No active Raids')
                     break
                 else:
-                    log.error('Raid ' + str(i) + ' | empty')
+                    log.error('No more active Raids')
+                    break
 
             if gymfound == 0 and len(raidtext) > 0:
                 unknowngymfound = 0
@@ -349,10 +348,10 @@ class Scanner:
             lvlfound = None
             i = i + 1
 
-        for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
-            os.remove(file)
-        os.remove(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
-        os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
+        #for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
+            #os.remove(file)
+        #os.remove(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
+        #os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
 
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
