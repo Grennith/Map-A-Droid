@@ -348,10 +348,10 @@ class Scanner:
             lvlfound = None
             i = i + 1
 
-        #for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
+        for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
             #os.remove(file)
-        #os.remove(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
-        #os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
+        os.remove(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
+        os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
 
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
