@@ -32,7 +32,7 @@ class checkScreenshot(PatternMatchingEventHandler):
     def on_created(self, event):
         if args.ocr_multitask:
             import multiprocessing
-            log.error("Got new file, appending to queue")
+            log.error("Got new file, creating sub-process to process it")
             p = multiprocessing.Process(target=RaidScan.process, args=(event.src_path,))
             p.daemon = True
             p.start()

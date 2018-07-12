@@ -183,7 +183,7 @@ class Scanner:
             timer = pytesseract.image_to_string(Image.open(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg"),config='--psm=7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
 
             if len(raidtext) > 0:
-                
+
                 for file in glob.glob("mon_img/_raidlevel_*.jpg"):
                     find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", False, 0.5)
                     if foundlvl is None or find_lvl > foundlvl[0]:
@@ -191,10 +191,10 @@ class Scanner:
 
                 if not foundlvl is None and foundlvl[0]>0.5 and len(raidtext) > 0:
                     lvlfound = 1
-                
+
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
-                
+
                 for file in glob.glob("mon_img/_egg_*.png"):
                     find_egg = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", True, 0.9)
                     if foundegg is None or find_egg > foundegg[0]:
@@ -254,7 +254,7 @@ class Scanner:
 
 
                 if gymfound == 1 and (monfound == 1 or eggfound == 1):
-                    
+
 
                     if monfound == 1:
                         logtext = 'Mon - ID: ' + str(monID)
@@ -348,7 +348,7 @@ class Scanner:
             lvlfound = None
             i = i + 1
 
-        for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
+        #for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
             #os.remove(file)
         os.remove(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
         os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")

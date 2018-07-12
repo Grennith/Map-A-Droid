@@ -80,16 +80,16 @@ log = logging.getLogger()
 log.addHandler(stdout_hdlr)
 log.addHandler(stderr_hdlr)
 
-log.info("Starting Telnet MORE Client")
+print("Starting Telnet MORE Client")
 telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
 
 def main():
-
+    log.info("Starting TheRaidMap")
     sys.excepthook = handle_exception
+    log.info("Parsing arguments")
     args = parseArgs()
     print(args.vnc_ip)
     set_log_and_verbosity(log)
-    log.info("Starting TheRaidMap")
 
     if not os.path.exists(args.raidscreen_path):
         log.info('Raidscreen directory created')
@@ -125,6 +125,7 @@ def main():
 
 def sleeptimer(sleeptime):
     global sleep
+    global telnMore
     while True:
         tmFrom = datetime.strptime(sleeptime[0],"%H:%M")
         tmTil = datetime.strptime(sleeptime[1],"%H:%M")
@@ -195,9 +196,21 @@ def mergeRaidQueue(newQueue):
     nextRaidQueue = merged
     log.info("Raidqueue: %s" % nextRaidQueue)
 
+def restartPogo():
+    curTime = time.time()
+    global telnMore
+    global lastPogoRestart
+    successfulRestart = telnMore.restartApp("com.nianticlabs.pokemongo")
+    #TODO: errorhandling if it returned false, maybe try again next round?
+    if successfulRestart:
+        lastPogoRestart = curTime
+        time.sleep(25) #just sleep for a couple seconds to have the game come back up again
+        #TODO: handle login screen... ?
+
 def main_thread():
     global nextRaidQueue
     global lastPogoRestart
+    global telnMore
     log.info("Starting VNC client")
     vncWrapper = VncWrapper(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
     log.info("Starting TelnetGeo Client")
@@ -232,6 +245,7 @@ def main_thread():
         #take screenshot and store coords in exif with it
         #check time to restart pogo and reset google play services
         i = 0 #index, iterating with it to either get to the next gym or the priority of our queue
+        failcount = 0
         while i < len(route):
             lastLat = curLat
             lastLng = curLng
@@ -239,7 +253,7 @@ def main_thread():
             #determine whether we move to the next gym or to the top of our priority queue
             if (len(nextRaidQueue) > 0 and nextRaidQueue[0][0] < time.time()):
                 #the topmost item in the queue lays in the past...
-                log.info('A egg has hatched, get there asap. Location: %s' % nextRaidQueue[0])
+                log.info('A egg has hatched, get there asap. Location: %s' % str(nextRaidQueue[0]))
                 nextStop = heapq.heappop(nextRaidQueue)[1] #gets the location tuple
                 curLat = nextStop.latitude
                 curLng = nextStop.longitude
@@ -269,8 +283,23 @@ def main_thread():
             #TODO: improve errorhandling by checking results and trying again and again
             #not using continue to always take a new screenshot...
             #time.sleep(5)
-            vncWrapper.getScreenshot('screenshot.png')
+
+            log.info("Attempting to retrieve screenshot before checking windows")
+            if (not vncWrapper.getScreenshot('screenshot.png')):
+                log.error("Failed retrieving screenshot before checking windows")
+                break
+
+            #log.error("Failed getting screenshot before checking windows")
+                #failcount += 1
+                #TODO: consider proper errorhandling?
+                #even restart entire thing? VNC dead means we won't be using the device
+                #maybe send email? :D
+                #break;
+            attempts = 0
             while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123)):
+                if (attempts >= 15):
+                    #weird count of failures... restart pogo and try again
+                    restartPogo()
                 #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
                 found =  pogoWindowManager.checkLogin('screenshot.png', 123)
                 if not found and pogoWindowManager.checkMessage('screenshot.png', 123):
@@ -289,7 +318,16 @@ def main_thread():
                 if not found:
                     pogoWindowManager.checkNearby('screenshot.png', 123)
                 #pogoWindowManager.checkNearby('screenshot.png', 123)
+                #try:
+                log.info("Attempting to retrieve screenshot checking windows")
                 vncWrapper.getScreenshot('screenshot.png')
+                #except:
+                    #log.error("Failed getting screenshot while checking windows")
+                    #failcount += 1
+                    #TODO: consider proper errorhandling?
+                    #even restart entire thing? VNC dead means we won't be using the device
+                    #maybe send email? :D
+                    #break;
                 #vncWrapper.getScreenshot('screenshot.png')
                 #pogoWindowManager.checkQuitbutton('screenshot.png', 123)
                 #pogoWindowManager.checkRaidscreen('screenshot.png', 123)
@@ -298,6 +336,7 @@ def main_thread():
                 #TODO: take screenshot of raidscreen?
                 #we should now see the raidscreen, let's take a screenshot of it
                 time.sleep(1)
+                attempts += 1
             log.info("Saving raid screenshot")
             curTime = time.time()
             copyfile('screenshot.png', args.raidscreen_path + '/Raidscreen' + str(curTime) + '.png')
@@ -310,13 +349,7 @@ def main_thread():
             #we got the latest raids. To avoid the mobile from killing apps,
             #let's restart pogo every 2hours or whatever TODO: consider args
             if (curTime - lastPogoRestart >= (180 * 60)):
-            #time for a restart
-                successfulRestart = telnMore.restartApp("com.nianticlabs.pokemongo")
-            #TODO: errorhandling if it returned false, maybe try again next round?
-                if successfulRestart:
-                    lastPogoRestart = curTime
-                    time.sleep(25) #just sleep for a couple seconds to have the game come back up again
-                #TODO: handle login screen...
+                restartPogo()
 
 def observer(scrPath):
         observer = Observer()
