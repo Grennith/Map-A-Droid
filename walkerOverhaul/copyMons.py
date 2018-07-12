@@ -2,7 +2,7 @@ import cv2
 import os
 import numpy as np
 import imutils
-import os
+import glob, os
 import os.path
 import logging
 from shutil import copyfile
@@ -24,45 +24,51 @@ class MonRaidImages(object):
             os.makedirs(filePath)
 
         assetPath = pogoasset
-        raidMons = ["68", "142", "90", "378", "382", "125", "303", "129", "359", "248", "95", "185", "306", "76", "112", "310", "138", "140", "320", '135', '185']
+        raidMons = {1: [129, 140, 320, 138], 
+                    2: [125, 303, 185, 310],
+                    3: [68, 142, 135, 95],
+                    4: [359, 248, 76, 112],
+                    5: [378]
+                }
 
         if not os.path.exists(assetPath):
             log.error('PogoAssets not found')
             exit(0)
 
-        for mon in raidMons:
+        for file in glob.glob(monImgPath + "*mon*.png"):
+                    os.remove(file)
 
-            mon = '{:03d}'.format(int(mon))
-            monFile = monImgPath + '_mon_' + str(mon) + '_.png'
+        for lvl, mons in raidMons.iteritems():
+            for mon in mons:
 
-            if not os.path.isfile(monFile):
+                mon = '{:03d}'.format(int(mon))
+                monFile = monImgPath + '_mon_' + str(mon) + '_' + str(lvl) + '.png'
 
-                log.info('Processing Pokedex Nr: ' + str(mon))
+                if not os.path.isfile(monFile):
 
-                monFileAsset = assetPath + 'decrypted_assets/pokemon_icon_' + str(mon) + '_00.png'
+                    monFileAsset = assetPath + 'decrypted_assets/pokemon_icon_' + str(mon) + '_00.png'
 
-                if not os.path.isfile(monFileAsset):
-                    log.error('File ' + str(monFileAsset) + ' not found')
-                    exit(0)
+                    if not os.path.isfile(monFileAsset):
+                        log.error('File ' + str(monFileAsset) + ' not found')
+                        exit(0)
                 
-                copyfile(monFileAsset, monFile)
+                    copyfile(monFileAsset, monFile)
             
-                image = Image.open(monFile)
-                image.convert("RGBA")
-                canvas = Image.new('RGBA', image.size, (255,255,255,255)) # Empty canvas colour (r,g,b,a)
-                canvas.paste(image, mask=image) # Paste the image onto the canvas, using it's alpha channel as mask
-                canvas.save(monFile, format="PNG")
+                    image = Image.open(monFile)
+                    image.convert("RGBA")
+                    canvas = Image.new('RGBA', image.size, (255,255,255,255)) # Empty canvas colour (r,g,b,a)
+                    canvas.paste(image, mask=image) # Paste the image onto the canvas, using it's alpha channel as mask
+                    canvas.save(monFile, format="PNG")
 
-                monAsset = cv2.imread(monFile,3)
-                height, width, channels = monAsset.shape
-                monAsset = cv2.inRange(monAsset,np.array([240,240,240]),np.array([255,255,255]))
-                cv2.imwrite(monFile, monAsset)
-                crop = cv2.imread(monFile,3)
-                crop = crop[0:int(height), 0:int((width/6)*5)]
-                kernel = np.ones((3,3),np.uint8)
-                crop = cv2.erode(crop,kernel,iterations = 1)
-                cv2.imwrite(monFile, crop)
-                log.info('Processing Pokemon Nr: ' + str(mon) + ' finished')
+                    monAsset = cv2.imread(monFile,3)
+                    height, width, channels = monAsset.shape
+                    monAsset = cv2.inRange(monAsset,np.array([240,240,240]),np.array([255,255,255]))
+                    cv2.imwrite(monFile, monAsset)
+                    crop = cv2.imread(monFile,3)
+                    crop = crop[0:int(height), 0:int((width/6)*5)]
+                    kernel = np.ones((3,3),np.uint8)
+                    crop = cv2.erode(crop,kernel,iterations = 1)
+                    cv2.imwrite(monFile, crop)
 
     @staticmethod
     def copyEggs(pogoasset):
@@ -122,3 +128,6 @@ class MonRaidImages(object):
     def runAll(pogoasset):
         MonRaidImages.copyMons(pogoasset)
         MonRaidImages.copyEggs(pogoasset)
+        
+if __name__ == '__main__':
+    MonRaidImages.runAll('../../PogoAssets/')
