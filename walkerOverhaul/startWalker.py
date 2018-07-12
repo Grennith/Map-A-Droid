@@ -21,6 +21,7 @@ from vnc.vncWrapper import VncWrapper
 from telnet.telnetGeo import TelnetGeo
 from telnet.telnetMore import TelnetMore
 from ocr.pogoWindows import PogoWindows
+from dbWrapper import *
 
 from ocr.pogoWindows import PogoWindows
 import collections
@@ -79,6 +80,9 @@ log = logging.getLogger()
 log.addHandler(stdout_hdlr)
 log.addHandler(stderr_hdlr)
 
+log.info("Starting Telnet MORE Client")
+telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
+
 def main():
 
     sys.excepthook = handle_exception
@@ -118,32 +122,27 @@ def main():
 
     while True:
         time.sleep(10)
-        #pass
-    #loop = asyncio.get_event_loop()
-    #tasks = [
-    #    asyncio.async(getVNCPic()),
-    #    asyncio.async(check_login()),
-    #    asyncio.async(check_message()),
-    #    asyncio.async(check_Xbutton())]
 
 def sleeptimer(sleeptime):
-
+    global sleep
     while True:
         tmFrom = datetime.strptime(sleeptime[0],"%H:%M")
         tmTil = datetime.strptime(sleeptime[1],"%H:%M")
         tmNow = datetime.strptime(datetime.now().strftime('%H:%M'),"%H:%M")
-        global sleep
 
         if tmNow >= tmFrom and tmNow < tmTil:
             log.info('Going to sleep - byebye')
-            #Doing smth over telnet ....
+            #Stopping pogo...
+            telnMore.stopApp("com.nianticlabs.pokemongo")
             sleep = True
 
         while tmNow >= tmFrom and tmNow < tmTil:
             tmNow = datetime.strptime(datetime.now().strftime('%H:%M'),"%H:%M")
             if tmNow >= tmTil:
                 log.info('Wakeup - here we go ...')
-                #Doing smth over telnet ....
+                #Turning screen on and starting app
+                telnMore.turnScreenOn()
+                telnMore.startApp("com.nianticlabs.pokemongo")
                 sleep = False
                 break
 
@@ -183,28 +182,40 @@ def printHi():
     log.error("Finished analyzing screenshot")
 
 #to be called regularly... like every 5mins? no idea... would be nicer to simply insert updates
-def updateRaidQueue():
-    newQueue = dbHelper.getNextTimes()
+def updateRaidQueue(dbWrapper):
+    log.info("Updating raid queue")
+    newQueue = dbWrapper.getNextRaidHatches()
     heapq.heapify(newQueue)
-    nextRaidQueue = newQueue
+    mergeRaidQueue(newQueue)
+
+def mergeRaidQueue(newQueue):
+    global nextRaidQueue
+    merged = list(set(newQueue + nextRaidQueue))
+    heapq.heapify(merged)
+    nextRaidQueue = merged
+    log.info("Raidqueue: %s" % nextRaidQueue)
 
 def main_thread():
+    global nextRaidQueue
+    global lastPogoRestart
     log.info("Starting VNC client")
     vncWrapper = VncWrapper(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
     log.info("Starting TelnetGeo Client")
     telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
-    log.info("Starting Telnet MORE Client")
-    telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
+    #log.info("Starting Telnet MORE Client")
+    #telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
     log.info("Starting pogo window manager")
     pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password, args.screen_width, args.screen_height)
-
-
+    log.info("Starting dbWrapper")
+    dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
+    updateRaidQueue(dbWrapper)
 
     route = getJsonRoute(args.file)
     lastPogoRestart = time.time()
+    lastRaidQueueUpdate = time.time()
     print(route)
     #sys.exit(0)
-    log.info(args.max_distance)
+    log.info("Max_distance before teleporting: %s" % args.max_distance)
     #sys.exit(0)
     while True:
         while sleep:
@@ -214,9 +225,8 @@ def main_thread():
         lastLng = 0.0
         curLat = 0.0
         curLng = 0.0
-        #TODO:in for loop looping over route:
+        #loop over gyms:
         #walk to next gym
-        #getVNCPic
         #check errors (anything not raidscreen)
         #get to raidscreen (with the above command)
         #take screenshot and store coords in exif with it
@@ -291,14 +301,15 @@ def main_thread():
             log.info("Saving raid screenshot")
             curTime = time.time()
             copyfile('screenshot.png', args.raidscreen_path + '/Raidscreen' + str(curTime) + '.png')
-                ####vncWrapper.getScreenshot('screenshots/nextRaidscreen' + str(curTime) + '.jpg')
-                #start_detect()
-                #result = pool.apply_async(scanner.start_detect, ['screenshots/nextRaidscreen' + str(time.time()) + '.jpg', 123], printHi) # Evaluate "f(10)" asynchronously calling callback when finished.
-                #######scanner.start_detect('screenshots/nextRaidscreen' + str(curTime) + '.jpg', 123)
-                #we got the latest raids. To avoid the mobile from killing apps,
-                #let's restart pogo every 90minutes or whatever TODO: consider args
-                #curTime = time.time()
-            if (curTime - lastPogoRestart >= (90 * 60)):
+
+            #update the raid queue every 5mins...
+            if (curTime - lastRaidQueueUpdate) >= (5 * 60):
+                updateRaidQueue(dbWrapper)
+                lastRaidQueueUpdate = curTime
+
+            #we got the latest raids. To avoid the mobile from killing apps,
+            #let's restart pogo every 2hours or whatever TODO: consider args
+            if (curTime - lastPogoRestart >= (180 * 60)):
             #time for a restart
                 successfulRestart = telnMore.restartApp("com.nianticlabs.pokemongo")
             #TODO: errorhandling if it returned false, maybe try again next round?

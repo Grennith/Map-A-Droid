@@ -17,3 +17,6 @@ class TelnetMore:
 
     def resetAppdata(self, packageName):
         return self.telnetClient.sendCommand("more reset %s\r\n" % (packageName))
+
+    def turnScreenOn(self):
+        return self.telnetClient.sendCommand("more screen on\r\n")
