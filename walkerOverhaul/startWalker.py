@@ -80,8 +80,8 @@ log = logging.getLogger()
 log.addHandler(stdout_hdlr)
 log.addHandler(stderr_hdlr)
 
-log.info("Starting Telnet MORE Client")
-telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
+#log.info("Starting Telnet MORE Client")
+#telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
 
 def main():
 
@@ -170,11 +170,6 @@ def set_log_and_verbosity(log):
 
     if args.verbose:
             log.setLevel(logging.DEBUG)
-
-            # Let's log some periodic resource usage stats.
-            t = Thread(target=log_resource_usage_loop, name='res-usage')
-            t.daemon = True
-            t.start()
     else:
             log.setLevel(logging.INFO)
 

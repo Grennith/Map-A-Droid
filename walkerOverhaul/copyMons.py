@@ -65,7 +65,7 @@ class MonRaidImages(object):
                     monAsset = cv2.inRange(monAsset,np.array([240,240,240]),np.array([255,255,255]))
                     cv2.imwrite(monFile, monAsset)
                     crop = cv2.imread(monFile,3)
-                    crop = crop[0:int(height), 0:int((width/6)*5)]
+                    crop = crop[0:int(height), 0:int((width/10)*8)]
                     kernel = np.ones((3,3),np.uint8)
                     crop = cv2.erode(crop,kernel,iterations = 1)
                     cv2.imwrite(monFile, crop)

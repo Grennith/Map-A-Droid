@@ -76,6 +76,8 @@ def parseArgs():
             help=('Use this instance only for scanning.'))
     parser.add_argument('-oo', '--only-ocr', action='store_true', default=False,
             help=('Use this instance only for OCR.'))
+    parser.add_argument('-om', '--ocr-multitask', action='store_true', default=False,
+            help=('Running OCR as multiprocessing task.'))
 
 
     #folder

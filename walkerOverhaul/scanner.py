@@ -55,7 +55,7 @@ class Scanner:
             os.makedirs('hash')
 
     def submitRaid(self, guid, pkm, lvl, start, end, type):
-        log.error("Submitting raid")
+        log.debug("Submitting raid")
         now = datetime.datetime.now()
         date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
         date_plus_45 = now + datetime.timedelta(minutes = 45)
@@ -69,11 +69,11 @@ class Scanner:
             exit(0)
 
         cursor = connection.cursor()
-        log.error("Submitting something of type %s" % type)
+        log.debug("Submitting something of type %s" % type)
         if type == 'EGG':
             #query = " UPDATE raid SET level = %s, spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
             #data = (lvl, start, start, end, monegg[int(lvl) - 1], "999", "1", "1",  today1, guid)
-            log.error("Submitting Egg. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, last_scanned: %s" % (guid, lvl, start, end, today1))
+            log.debug("Submitting Egg. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, last_scanned: %s" % (guid, lvl, start, end, today1))
             query = (' INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, ' +
                 'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
                 'FROM_UNIXTIME(%s), %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE level = %s, ' +
@@ -84,7 +84,7 @@ class Scanner:
             #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
             cursor.execute(query, data)
         else:
-            log.error("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, guid))
+            log.debug("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, guid))
             query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
             data = (lvl, pkm, "999", "1", "1",  today1, guid)
             cursor.execute(query, data)
@@ -140,33 +140,18 @@ class Scanner:
             monfound = 0
             eggfound = 0
             lvlfound = 0
+            log.debug('Generating Pic of Raidboss')
             image1 = cv2.imread(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg")
             raidpic = image1[0:165, 0:160]
             cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidpic" + str(i) +".jpg", raidpic)
 
+            log.debug('Generating Pic of Timer')
             image2 = cv2.imread(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg")
             raidtimer = image2[200:230, 0:297]
             raidtimer = cv2.resize(raidtimer, (0,0), fx=3, fy=3)
             cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg", raidtimer)
 
-            raidlevel = image2[235:265, 0:297]
-            raidlevel = cv2.resize(raidlevel, (0,0), fx=3, fy=3)
-            cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", raidlevel)
-
-            lower = np.array([88, 64, 36], dtype = "uint8")
-            upper = np.array([110, 86, 60], dtype = "uint8")
-            kernel = np.ones((3,3),np.uint8)
-            kernel2 = np.ones((6,6),np.uint8)
-            raidMonZoom = cv2.resize(image1, (0,0), fx=2, fy=2)
-            mask = cv2.inRange(raidMonZoom, lower, upper)
-            output = cv2.bitwise_and(raidMonZoom, raidMonZoom, mask = mask)
-            cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", output)
-            monAsset = cv2.imread(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg",3)
-            monAsset = cv2.inRange(monAsset,np.array([0,0,0]),np.array([15,15,15]))
-            monAsset = cv2.morphologyEx(monAsset, cv2.MORPH_CLOSE, kernel)
-            monAsset = cv2.morphologyEx(monAsset, cv2.MORPH_OPEN, kernel2)
-            cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", monAsset)
-
+            log.debug('Reading Raidtext')
             emptyraid = image2[195:225, 0:160]
             cv2.imwrite(self.tempPath + "/" + str(hash) + "_emptyraid.png", raidtimer)
             rt = Image.open(self.tempPath + "/" + str(hash) + "_emptyraid.png")
@@ -174,16 +159,39 @@ class Scanner:
             bw = gray.point(lambda x: 0 if x<210 else 255, '1')
             bw.save(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
             raidtext = pytesseract.image_to_string(Image.open(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png"),config='-psm 7')
-
-
-            raidtime = Image.open(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg")
-            gray = raidtime.convert('L')
-            bw = gray.point(lambda x: 0 if x<185 else 255, '1')
-            bw.save(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg")
-            timer = pytesseract.image_to_string(Image.open(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg"),config='--psm=7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
+            log.debug(raidtext)
 
             if len(raidtext) > 0:
+
+                log.debug('Generating Pic of Timer')
+                raidlevel = image2[235:265, 0:297]
+                raidlevel = cv2.resize(raidlevel, (0,0), fx=3, fy=3)
+                cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", raidlevel)
+ 
+                log.debug('Extracting Raidboss')
+                lower = np.array([80, 60, 30], dtype = "uint8")
+                upper = np.array([110, 90, 70], dtype = "uint8")
+                kernel = np.ones((3,3),np.uint8)
+                kernel2 = np.ones((6,6),np.uint8)
+                raidMonZoom = cv2.resize(image1, (0,0), fx=2, fy=2)
+                mask = cv2.inRange(raidMonZoom, lower, upper)
+                output = cv2.bitwise_and(raidMonZoom, raidMonZoom, mask = mask)
+                cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", output)
+                monAsset = cv2.imread(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg",3)
+                monAsset = cv2.inRange(monAsset,np.array([0,0,0]),np.array([15,15,15]))
+                monAsset = cv2.morphologyEx(monAsset, cv2.MORPH_CLOSE, kernel)
+                monAsset = cv2.morphologyEx(monAsset, cv2.MORPH_OPEN, kernel2)
+                cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", monAsset)
+ 
+                log.debug('Reading Timer')
+                raidtime = Image.open(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg")
+                gray = raidtime.convert('L')
+                bw = gray.point(lambda x: 0 if x<185 else 255, '1')
+                bw.save(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg")
+                timer = pytesseract.image_to_string(Image.open(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg"),config='--psm=7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
+                log.debug(timer)
                 
+                log.debug('Scanning Level')
                 for file in glob.glob("mon_img/_raidlevel_*.jpg"):
                     find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", False, 0.5)
                     if foundlvl is None or find_lvl > foundlvl[0]:
@@ -194,6 +202,8 @@ class Scanner:
                 
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
+                log.debug('Level: ' + str(lvl))
+                log.debug('Scanning Egg')
                 
                 for file in glob.glob("mon_img/_egg_*.png"):
                     find_egg = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", True, 0.9)
@@ -202,18 +212,23 @@ class Scanner:
 
                 if not foundegg is None and foundegg[0]>0.9 and len(raidtext) > 0:
                     eggfound = 1
-
+                log.debug('Eggfound: ' + str(eggfound))
+                log.debug('Scanning Time')
                 if "R" not in timer:
                     now = datetime.datetime.now()
                     date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
 
                     raidstart = getHatchTime(self, timer) - (self.timezone*60*60)
                     raidend = getHatchTime(self, timer) + int(45*60) - (self.timezone*60*60)
-
+                    
+                    log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
                 else:
                     raidstart = "-"
+                    
+                log.debug('Scanning Gym')
 
                 gymHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", True, 'gym')
+                log.debug('Gymhash: ' + str(gymHash))
                 if not gymHash:
                     for file in glob.glob("gym_img/*.jpg"):
                         find_gym = mt.fort_image_matching(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", file, True, 0.7)
@@ -232,9 +247,10 @@ class Scanner:
                     gymfound = 1
                     gymID = gymHash
 
-
                 if eggfound == 0:
-                    monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 'mon')
+                    log.debug('Scanning Mon')
+                    monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 'mon-' + str(lvl))
+                    log.debug('Monhash: ' + str(monHash))
                     if not monHash:
                         for file in glob.glob("mon_img/_mon_*_" + str(lvl) + ".png"):
                             find_mon = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 0.7)
@@ -247,7 +263,7 @@ class Scanner:
                                 monID = monSplit[3]
 
                         if monfound == 1:
-                            self.imageHash('temp/' + str(hash) + '_raidboss' + str(i) +'.jpg', monID, False, 'mon')
+                            self.imageHash('temp/' + str(hash) + '_raidboss' + str(i) +'.jpg', monID, False, 'mon-' + str(lvl))
                     else:
                         monfound = 1
                         monID = monHash
@@ -258,20 +274,20 @@ class Scanner:
 
                     if monfound == 1:
                         logtext = 'Mon - ID: ' + str(monID)
-                        log.info("Found mon %s Lv %s. GymID: %s" % (monID, lvl, gymID))
+                        log.debug("Found mon %s Lv %s. GymID: %s" % (monID, lvl, gymID))
                         self.submitRaid(str(gymID), monID, lvl, '-', '-', 'MON')
 
                     if eggfound == 1:
                         eggSplit = foundegg[1].split('_')
                         eggID = eggSplit[3]
                         logtext = 'Egg - ID: ' + str(eggID)
-                        log.info("Found egg Lv %s starting at %s and ending at %s. GymID: %s" % (lvl, raidstart, raidend, gymID))
+                        log.debug("Found egg Lv %s starting at %s and ending at %s. GymID: %s" % (lvl, raidstart, raidend, gymID))
                         self.submitRaid(str(gymID), '0', lvl, raidstart, raidend, 'EGG')
 
                     log.info('Raid ' + str(i) + ' | Gym-ID: ' + str(gymID) + ' | ' + logtext + ' | Level: ' + lvl)
 
                 if gymfound == 1 and (monfound == 0 and eggfound == 0):
-                    logtext = ' Mon or Egg: unknows '
+                    logtext = ' Mon or Egg: unknown '
                     log.info('Raid ' + str(i) + ' | Gym-ID: ' + str(gymID) + ' | ' + logtext + ' | Level: ' + lvl)
 
                 if gymfound == 0 and (monfound == 1 or eggfound == 1):
@@ -348,10 +364,10 @@ class Scanner:
             lvlfound = None
             i = i + 1
 
-        for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
-            #os.remove(file)
-        os.remove(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
-        os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
+        #for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
+        #   os.remove(file)
+        #os.remove(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
+        #os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
 
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
@@ -365,9 +381,12 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        for file in glob.glob('hash/_' + str(imageHash) + '_' + str(type) + '_'):
-                    Split = file.split('_')
-                    return Split[2]
+        log.debug('hash/_' + str(imageHash) + '_*_' + str(type) + '_')
+        for file in glob.glob('hash/_' + str(imageHash) + '_*_' + str(type) + '_'):
+            log.debug(file)
+            Split = file.split('_')
+            log.debug(Split)
+            return Split[2]
 
         return False
 
