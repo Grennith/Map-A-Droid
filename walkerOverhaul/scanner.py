@@ -199,9 +199,10 @@ class Scanner:
 
                 if not foundlvl is None and foundlvl[0]>0.5 and len(raidtext) > 0:
                     lvlfound = 1
-                
+
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
+
                 log.debug('Level: ' + str(lvl))
                 log.debug('Scanning Egg')
                 
@@ -270,7 +271,7 @@ class Scanner:
 
 
                 if gymfound == 1 and (monfound == 1 or eggfound == 1):
-                    
+
 
                     if monfound == 1:
                         logtext = 'Mon - ID: ' + str(monID)
@@ -364,11 +365,10 @@ class Scanner:
             lvlfound = None
             i = i + 1
 
-        #for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
-        #   os.remove(file)
-        #os.remove(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
-        #os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
-
+        for file in glob.glob(self.tempPath + "/" + str(hash) + "_*raid*.jpg"):
+            os.remove(file)
+        os.remove(self.tempPath + "/" + str(hash) + "_cropped_emptyraid_bw.png")
+        os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
         image2 = cv2.imread(image,3)

@@ -1,4 +1,4 @@
-from vnc import connect
+from vnc import connect, TimeoutError
 
 class VncWrapper:
     def __init__(self, ip, screen, port, password):
@@ -13,16 +13,34 @@ class VncWrapper:
 
     def getScreenshot(self, path):
         client = connect(self.__getServerString(), self.password, timeout = 10)
-        client.captureScreen(path) #TODO: consider passing path
-        client.disconnect()
+        success = True
+        try:
+            client.captureScreen(path)
+        except (TimeoutError):
+            success = False
+        finally:
+            client.disconnect()
+        return success
 
     def clickVnc(self, x, y):
         client = connect(self.__getServerString(), self.password, timeout = 10)
-        client.mouseMove(x, y)
-        client.mousePress(1)
-        client.disconnect()
+        success = True
+        try:
+            client.mouseMove(x, y)
+            client.mousePress(1)
+        except (TimeoutError):
+            success = False
+        finally:
+            client.disconnect()
+        return success
 
     def rightClickVnc(self):
         client = connect(self.__getServerString(), self.password, timeout = 10)
-        client.mousePress(3)
-        client.disconnect()
+        success = True
+        try:
+            client.mousePress(3)
+        except (TimeoutError):
+            success = False
+        finally:
+            client.disconnect()
+        return success

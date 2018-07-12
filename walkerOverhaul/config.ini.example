@@ -29,6 +29,13 @@
 #tel_port:                   # Port of the telnet server  (needed for scanning mode)
 #tel_password:               # Telnet password  (needed for scanning mode)
 
+# Device specifics
+######################
+
+screen_width:                     
+screen_height:                  
+
+
 # Coords CSV
 ######################
 
