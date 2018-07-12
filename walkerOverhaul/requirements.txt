@@ -1,0 +1,5 @@
+vncdotool
+opencv-python
+pytesseract
+watchdog
+

@@ -5,7 +5,9 @@ import math
 from util import *
 from args import *
 import collections
+import logging
 
+log = logging.getLogger(__name__)
 
 ShortestDistance = collections.namedtuple('ShortestDistance', ['index', 'distance'])
 
@@ -47,7 +49,7 @@ def getDistanceOfTwoPointsInMeters(startLat, startLng, destLat, destLng):
     distanceInMeters = distance * 1000
     return distanceInMeters
 
-def __lessCoords(coordinates):
+def __lessCoordsMiddle(coordinates):
     less = []
     #TODO: consider sorting by distances before cutting out points?
     while coordinates.size > 0:
@@ -71,6 +73,32 @@ def __lessCoords(coordinates):
             break
     return np.array(less)
 
+def __lessCoords(coordinates):
+    less = []
+    while coordinates.size > 0:
+        coord = coordinates[0]
+        #indicesToDelete = []
+        #append the coord
+        less.append(coord)
+        #print("np.nonzero: %s\n" % str(np.nonzero(coordinates == coord)))
+        #coordIndex = np.nonzero(coordinates == coord)[0]#[0] #TODO: BREAKS
+        #coordIndex, = np.where(coordinates == coord)
+        #print coordIndex
+        #coordIndex, = np.where(coordinates == coord)[0]
+        #print("CoordIndex: %s\n" % coordIndex)
+        coordinates = np.delete(coordinates, 0, 0)
+        for x in range(4):
+            if (coordinates.size == 0):
+                #we already cut down all the gyms...
+                return np.array(less)
+            shortestDistance = __getShortestDistanceOfPointLessMax(coord, coordinates, 700)
+
+            if (shortestDistance.index == -1):
+                #no (more) gym found in range
+                break;
+            coordinates = np.delete(coordinates, shortestDistance.index, 0)
+    return np.array(less)
+
 def __getShortestDistanceOfPointLessMax(point, coordinates, maxDistance):
     index = -1
     shortestDistance = maxDistance #we only summarize gyms that are less then n meters apart
@@ -90,7 +118,17 @@ def __getShortestDistanceOfPointLessMax(point, coordinates, maxDistance):
 def getJsonRoute(filePath):
     coordinates = np.loadtxt(filePath, delimiter=',')
     if (coordinates.size > 1):
+        #TODO: consider randomizing coords and trying a couple times to get "best" result
+        log.info("Found %s coordinates" % (coordinates.size / 2))
+        log.info("Calculating")
         coordinates = __lessCoords(coordinates)
+        #log.info("Still calculating")
+        #coordinates = __lessCoords(coordinates)
+        #log.info("Just a little longer")
+        #coordinates = __lessCoords(coordinates)
+        #TODO: use smallest enclosing ball instead of this shit or just make __lessCoords better
+
+    log.info("Got %s coordinates" % (coordinates.size / 2.0))
     # Constant Definitions
     NUM_NEW_SOLUTION_METHODS = 3
     SWAP, REVERSE, TRANSPOSE = 0, 1, 2

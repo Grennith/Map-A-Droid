@@ -5,12 +5,14 @@ cap = cv2.VideoCapture(0)
 from PIL import Image
 #import pytesseract
 from pytesseract import image_to_string
+from resolutionCalculator import *
 
 import os.path
 import sys
 sys.path.insert(0, '../')
 from vnc.vncWrapper import VncWrapper
 
+Coordinate = collections.namedtuple("Coordinate", ['x', 'y'])
 
 log = logging.getLogger(__name__)
 
@@ -19,8 +21,9 @@ if not os.path.exists('temp'):
     os.makedirs('temp')
 
 class PogoWindows:
-    def __init__(self, vncIp, vncScreen, vncPort, vncPassword):
+    def __init__(self, vncIp, vncScreen, vncPort, vncPassword, width, height):
         self.vncWrapper = VncWrapper(str(vncIp), vncScreen, vncPort, vncPassword)
+        self.resolutionCalculator = ResolutionCalc(width, height)
 
     def checkLogin(self, filename, hash):
         result = False
@@ -38,7 +41,9 @@ class PogoWindows:
         log.error(text)
         if 'O. K.' in text:
             log.info('Found Loginbutton - closing ...')
-            self.vncWrapper.clickVNC(340, 750) #TODO: adaptive to resolution
+            pos = self.resolutionCalculator.getLoginOkButton()
+            self.vncWrapper.clickVnc(pos.x, pox.y)
+            #self.vncWrapper.clickVnc(340, 750) #TODO: adaptive to resolution
             #os.remove(filename)
             result = True
         else:
@@ -100,7 +105,9 @@ class PogoWindows:
         result = False
         if self.__checkRaidTabOnScreen(filename, hash):
             #RAID Tab visible
-            self.vncWrapper.clickVnc(500, 370) #TODO: adaptive to resolution
+            pos = self.resolutionCalculator.getNearbyRaid()
+            self.vncWrapper.clickVnc(pos.x, pos.y)
+            #self.vncWrapper.clickVnc(500, 370) #TODO: adaptive to resolution
             log.error('Raidscreen found')
             result = True
         else:
@@ -113,8 +120,12 @@ class PogoWindows:
         if not self.__checkRaidTabOnScreen(filename, hash):
             #RAID Tab not visible => not on Nearby screen
             log.info('Raidscreen not running...')
-            self.vncWrapper.clickVnc(600, 1170) #TODO: adaptive to resolution
-            self.vncWrapper.clickVnc(500, 370) #TODO: adaptive to resolution
+            posNearby = self.resolutionCalculator.getNearby()
+            self.vncWrapper.clickVnc(posNearby.x, posNearby.y)
+            #self.vncWrapper.clickVnc(600, 1170) #TODO: adaptive to resolution
+            posRaids = self.resolutionCalculator.getNearby()
+            self.vncWrapper.clickVnc(posRaids.x, posRaids.y)
+            #self.vncWrapper.clickVnc(500, 370) #TODO: adaptive to resolution
             result = False
         else:
             log.error('Nearby already open')
