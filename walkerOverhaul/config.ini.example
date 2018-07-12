@@ -45,6 +45,7 @@
 
 #only-scan                   # running this instance in scanning mode without OCR tracing
 #only-ocr                    # running this instance in ocr mode without Scanning 
+#ocr-multitask               # running OCR as multiprocessing task 
 
 # path settings
 ######################
