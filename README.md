@@ -25,6 +25,8 @@ The OCR part requires screenshots to come in. If you already have RDRM (Real Dev
 
 We provide a VNC app which is based on [droidVNC](https://github.com/oNaiPs/droidVncServer).
 > The app is not stable. We had it running for weeks and it would just give up for a whole day. We are planning on releasing our very own app.
+As Stupid as it may sound, an apparent workaround might be:
+Start droidVNC, start Server, switch out of app and go to System Settings -> Apps -> droidVNC -> Force stop. The server itself should continue running.
 
 ### Current limitations
 1) For the moment: 720x1280 px resolution only. Very soon support for any 9:16 resolution (Android). More to come.
