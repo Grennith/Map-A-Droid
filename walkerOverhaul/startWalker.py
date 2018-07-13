@@ -197,7 +197,7 @@ def mergeRaidQueue(newQueue):
     log.info("Raidqueue: %s" % nextRaidQueue)
 
 def restartPogo():
-    curTime = time.time()
+
     global telnMore
     global lastPogoRestart
     successfulRestart = telnMore.restartApp("com.nianticlabs.pokemongo")
@@ -288,8 +288,6 @@ def main_thread():
             if (not vncWrapper.getScreenshot('screenshot.png')):
                 log.error("Failed retrieving screenshot before checking windows")
                 break
-
-            #log.error("Failed getting screenshot before checking windows")
                 #failcount += 1
                 #TODO: consider proper errorhandling?
                 #even restart entire thing? VNC dead means we won't be using the device
@@ -317,21 +315,18 @@ def main_thread():
                 log.error(not found)
                 if not found:
                     pogoWindowManager.checkNearby('screenshot.png', 123)
-                #pogoWindowManager.checkNearby('screenshot.png', 123)
-                #try:
-                log.info("Attempting to retrieve screenshot checking windows")
-                vncWrapper.getScreenshot('screenshot.png')
-                #except:
-                    #log.error("Failed getting screenshot while checking windows")
+                try:
+                    log.info("Attempting to retrieve screenshot checking windows")
+                    vncWrapper.getScreenshot('screenshot.png')
+                except:
+                    log.error("Failed getting screenshot while checking windows")
                     #failcount += 1
                     #TODO: consider proper errorhandling?
                     #even restart entire thing? VNC dead means we won't be using the device
                     #maybe send email? :D
-                    #break;
-                #vncWrapper.getScreenshot('screenshot.png')
-                #pogoWindowManager.checkQuitbutton('screenshot.png', 123)
-                #pogoWindowManager.checkRaidscreen('screenshot.png', 123)
-                #vncWrapper.getScreenshot('screenshot.png')
+                    break;
+
+                vncWrapper.getScreenshot('screenshot.png')
 
                 #TODO: take screenshot of raidscreen?
                 #we should now see the raidscreen, let's take a screenshot of it

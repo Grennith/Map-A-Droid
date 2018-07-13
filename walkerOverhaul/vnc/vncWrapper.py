@@ -12,7 +12,7 @@ class VncWrapper:
         return str(self.ip) + ':' + str(self.screen) + ':' + str(self.port)
 
     def getScreenshot(self, path):
-        client = connect(self.__getServerString(), self.password, timeout = 10)
+        client = connect(self.__getServerString(), self.password, timeout = 30)
         success = True
         try:
             client.captureScreen(path)
@@ -23,7 +23,7 @@ class VncWrapper:
         return success
 
     def clickVnc(self, x, y):
-        client = connect(self.__getServerString(), self.password, timeout = 10)
+        client = connect(self.__getServerString(), self.password, timeout = 30)
         success = True
         try:
             client.mouseMove(x, y)
@@ -35,7 +35,7 @@ class VncWrapper:
         return success
 
     def rightClickVnc(self):
-        client = connect(self.__getServerString(), self.password, timeout = 10)
+        client = connect(self.__getServerString(), self.password, timeout = 30)
         success = True
         try:
             client.mousePress(3)
