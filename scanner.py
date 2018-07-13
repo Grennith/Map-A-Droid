@@ -256,9 +256,11 @@ class Scanner:
                         for file in glob.glob("mon_img/_mon_*_" + str(lvl) + ".png"):
                             find_mon = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 0.7)
                             if foundmon is None or find_mon > foundmon[0]:
+                                log.error("Found mon")
                                 foundmon = find_mon, file
 
                             if not foundmon is None and foundmon[0]>0.7 and len(raidtext) > 0:
+                                log.error("Found mon")
                                 monfound = 1
                                 monSplit = foundmon[1].split('_')
                                 monID = monSplit[3]
