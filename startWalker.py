@@ -80,8 +80,8 @@ log = logging.getLogger()
 log.addHandler(stdout_hdlr)
 log.addHandler(stderr_hdlr)
 
-if args.only_scan:
-    log.info("Starting Telnet MORE Client")
+if not args.only_ocr:
+    print("Starting Telnet MORE Client")
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
 
 
@@ -194,7 +194,6 @@ def mergeRaidQueue(newQueue):
     log.info("Raidqueue: %s" % nextRaidQueue)
 
 def restartPogo():
-
     global telnMore
     global lastPogoRestart
     successfulRestart = telnMore.restartApp("com.nianticlabs.pokemongo")
@@ -250,10 +249,11 @@ def main_thread():
             #determine whether we move to the next gym or to the top of our priority queue
             if (len(nextRaidQueue) > 0 and nextRaidQueue[0][0] < time.time()):
                 #the topmost item in the queue lays in the past...
-                log.info('A egg has hatched, get there asap. Location: %s' % str(nextRaidQueue[0]))
+                log.info('An egg has hatched, get there asap. Location: %s' % str(nextRaidQueue[0]))
                 nextStop = heapq.heappop(nextRaidQueue)[1] #gets the location tuple
                 curLat = nextStop.latitude
                 curLng = nextStop.longitude
+                time.sleep(1)
             else:
                 #continue as usual
                 log.info('Moving on with gym at %s' % route[i])

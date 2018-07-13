@@ -41,7 +41,7 @@ class DbWrapper:
 
         data = []
         for (start, latitude, longitude) in cursor:
-            timestamp = self.dbTimeStringToUnixTimestamp(str(start))
+            timestamp = self.dbTimeStringToUnixTimestamp(str(start)) + self.timezone * 60 * 60
             data.append((timestamp, RaidLocation(latitude, longitude)))
 
         connection.commit()

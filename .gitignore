@@ -1,14 +1,11 @@
-#General
-config.ini
-*.jpg
-*.png
-*.log
-.DS_Store
-
-#Python stuff
 *.pyc
-
-#hash
+config.ini
 hash/*
-walkerOverhaul/hash/*
-walkerOverhaul/screenshots/*.jpg
+gym_img/*
+temp/*
+screenshots/*
+unknown/*
+screenshot.png
+*.log
+
+mon_img/_mon*

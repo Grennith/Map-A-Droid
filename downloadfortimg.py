@@ -1,26 +1,30 @@
 import sys
 import requests
 import shutil
-import mysql;
-import mysql.connector;
+import mysql
+import mysql.connector
 import os
 import time
-import logging 
+import logging
 from walkerArgs import parseArgs
 
 log = logging.getLogger(__name__)
 
 if not os.path.exists('gym_img'):
     log.info('gym_im directory created')
-    os.makedirs('gym_im')
-    
+    os.makedirs('gym_img')
+
 url_image_path = os.getcwd() + '/gym_img/'
 
 
 args = parseArgs()
 
 try:
-    connection = mysql.connector.connect(host = args.dbip, user = args.dbusername, passwd = args.dbpassword, db = "rocketmapdb")
+    log.error(args.dbip)
+    log.error(args.dbusername)
+    log.error(args.dbpassword)
+    log.error(args.dbname)
+    connection = mysql.connector.connect(host = args.dbip, user = args.dbusername, passwd = args.dbpassword, db = args.dbname)
 except:
     print ("Keine Verbindung zum Server")
     exit(0)
@@ -48,15 +52,15 @@ def download_img(url, file_name):
                 print('Failed to download after 5 retry')
 
 def main():
-        
+
     file_path = os.path.dirname(url_image_path)
     if not os.path.exists(file_path):
-        os.makedirs(file_path)    
-    
+        os.makedirs(file_path)
+
     query = ("SELECT gym_id, url FROM gymdetails")
     cursor = connection.cursor()
     cursor.execute(query)
-    
+
     for (gym_id, url) in cursor:
         if url is not None:
             filename = url_image_path + '_' + str(gym_id) + '_.jpg'
@@ -64,7 +68,6 @@ def main():
             download_img(str(url), str(filename))
     cursor.close()
     connection.close()
-    
+
 if __name__ == '__main__':
     main()
-

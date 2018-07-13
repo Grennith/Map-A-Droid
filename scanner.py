@@ -69,11 +69,11 @@ class Scanner:
             exit(0)
 
         cursor = connection.cursor()
-        log.debug("Submitting something of type %s" % type)
+        log.error("Submitting something of type %s" % type)
         if type == 'EGG':
             #query = " UPDATE raid SET level = %s, spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
             #data = (lvl, start, start, end, monegg[int(lvl) - 1], "999", "1", "1",  today1, guid)
-            log.debug("Submitting Egg. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, last_scanned: %s" % (guid, lvl, start, end, today1))
+            log.info("Submitting Egg. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, last_scanned: %s" % (guid, lvl, start, end, today1))
             query = (' INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, ' +
                 'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
                 'FROM_UNIXTIME(%s), %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE level = %s, ' +
@@ -84,7 +84,7 @@ class Scanner:
             #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
             cursor.execute(query, data)
         else:
-            log.debug("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, guid))
+            log.error("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, guid))
             query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
             data = (lvl, pkm, "999", "1", "1",  today1, guid)
             cursor.execute(query, data)
@@ -167,7 +167,7 @@ class Scanner:
                 raidlevel = image2[235:265, 0:297]
                 raidlevel = cv2.resize(raidlevel, (0,0), fx=3, fy=3)
                 cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", raidlevel)
- 
+
                 log.debug('Extracting Raidboss')
                 lower = np.array([80, 60, 30], dtype = "uint8")
                 upper = np.array([110, 90, 70], dtype = "uint8")
@@ -182,7 +182,7 @@ class Scanner:
                 monAsset = cv2.morphologyEx(monAsset, cv2.MORPH_CLOSE, kernel)
                 monAsset = cv2.morphologyEx(monAsset, cv2.MORPH_OPEN, kernel2)
                 cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", monAsset)
- 
+
                 log.debug('Reading Timer')
                 raidtime = Image.open(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg")
                 gray = raidtime.convert('L')
@@ -190,7 +190,7 @@ class Scanner:
                 bw.save(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg")
                 timer = pytesseract.image_to_string(Image.open(self.tempPath + "/" + str(hash) + "_raidtimer" + str(i) +".jpg"),config='--psm=7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
                 log.debug(timer)
-                
+
                 log.debug('Scanning Level')
                 for file in glob.glob("mon_img/_raidlevel_*.jpg"):
                     find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(i) +".jpg", False, 0.5)
@@ -205,7 +205,7 @@ class Scanner:
 
                 log.debug('Level: ' + str(lvl))
                 log.debug('Scanning Egg')
-                
+
                 for file in glob.glob("mon_img/_egg_*.png"):
                     find_egg = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", True, 0.9)
                     if foundegg is None or find_egg > foundegg[0]:
@@ -221,11 +221,11 @@ class Scanner:
 
                     raidstart = getHatchTime(self, timer) - (self.timezone*60*60)
                     raidend = getHatchTime(self, timer) + int(45*60) - (self.timezone*60*60)
-                    
+
                     log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
                 else:
                     raidstart = "-"
-                    
+
                 log.debug('Scanning Gym')
 
                 gymHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", True, 'gym')
@@ -249,7 +249,7 @@ class Scanner:
                     gymID = gymHash
 
                 if eggfound == 0:
-                    log.debug('Scanning Mon')
+                    log.error('Scanning Mon')
                     monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(i) +".jpg", False, 'mon-' + str(lvl))
                     log.debug('Monhash: ' + str(monHash))
                     if not monHash:
@@ -275,7 +275,7 @@ class Scanner:
 
                     if monfound == 1:
                         logtext = 'Mon - ID: ' + str(monID)
-                        log.debug("Found mon %s Lv %s. GymID: %s" % (monID, lvl, gymID))
+                        log.error("Found mon %s Lv %s. GymID: %s" % (monID, lvl, gymID))
                         self.submitRaid(str(gymID), monID, lvl, '-', '-', 'MON')
 
                     if eggfound == 1:

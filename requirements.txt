@@ -1,3 +1,12 @@
 vncdotool
 opencv-python
 pytesseract
+watchdog
+colorlog
+imutils
+configargparse
+image
+scikit-image
+mysql-connector-python-rf
+twisted
+gpxdata
