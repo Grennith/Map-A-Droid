@@ -245,7 +245,7 @@ def main_thread():
         while i < len(route):
             lastLat = curLat
             lastLng = curLng
-
+            log.debug("Checking for raidqueue priority. Current time: %s, Current queue: %s" % (str(time.time()), str(nextRaidQueue)))
             #determine whether we move to the next gym or to the top of our priority queue
             if (len(nextRaidQueue) > 0 and nextRaidQueue[0][0] < time.time()):
                 #the topmost item in the queue lays in the past...

@@ -10,7 +10,8 @@ Example screen #TODO
 
 # Requirements
 #### General
-A computer (RaspberryPI likely is sufficient as well)
+1) A computer (RaspberryPI likely is sufficient as well)
+2) A RM DB with gymdetails for the gyms you intend to scan (you can download the gym images with those details...). Alternative: Get the ingress images of the gyms you want to scan...
 
 #### OCR
 The OCR part requires screenshots to come in. If you already have RDRM (Real Device Raid Mapper) running, you could use the OCR part to send information to RM.
