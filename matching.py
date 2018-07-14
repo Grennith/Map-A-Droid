@@ -16,7 +16,7 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, ttest):
             fort_img = fort_img[int((height_f/2)-(height_f/3)):int((height_f/2)+(height_f/3)), int((width_f/2)-(width_f/3)):int((width_f/2)+(width_f/3))]
 
         url_img = cv2.resize(url_img,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
-        crop = url_img[int(80):int(200),int(80):int(110)]
+        crop = url_img[int(130):int(250),int(80):int(110)]
     else:
         fort_img = cv2.resize(fort_img,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
         crop = url_img
