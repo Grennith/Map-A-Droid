@@ -232,11 +232,11 @@ class Scanner:
                 log.debug('Gymhash: ' + str(gymHash))
                 if not gymHash:
                     for file in glob.glob("gym_img/*.jpg"):
-                        find_gym = mt.fort_image_matching(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", file, True, 0.7)
+                        find_gym = mt.fort_image_matching(self.tempPath + "/" + str(hash) + "_raid" + str(i) +".jpg", file, True, 0.6)
                         if foundgym is None or find_gym > foundgym[0]:
     	    	        	foundgym = find_gym, file
 
-                        if not foundgym is None and foundgym[0]>0.7 and len(raidtext) > 0:
+                        if not foundgym is None and foundgym[0]>0.6 and len(raidtext) > 0:
                             gymfound = 1
                             gymSplit = foundgym[1].split('_')
                             gymID = gymSplit[2]
