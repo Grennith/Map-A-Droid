@@ -409,8 +409,8 @@ class Scanner:
         file.close()
 
 def checkHourMin(hour_min):
-        hour_min[0] = hour_min[0].replace('O','0').replace('o','0').replace('A','4')
-        hour_min[1] = hour_min[1].replace('O','0').replace('o','0').replace('A','4')
+        hour_min[0] = unicode(hour_min[0].replace('O','0').replace('o','0').replace('A','4'))
+        hour_min[1] = unicode(hour_min[1].replace('O','0').replace('o','0').replace('A','4'))
         if (hour_min[0]).isnumeric()==True and (hour_min[1]).isnumeric()==True:
             return True, hour_min
         else:
@@ -418,7 +418,7 @@ def checkHourMin(hour_min):
 
 def getHatchTime(self,data):
         zero = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
-        unix_zero = zero.strftime("%s")
+        unix_zero = (zero-datetime.datetime(1970,1,1)).total_seconds()
         hour_min_divider = data.find(':')
         if hour_min_divider != -1:
             AM = data.find('AM')
