@@ -230,7 +230,6 @@ class PogoWindows:
 
         log.debug('__checkClosePresent: checking bounds %s' % str(bounds))
         closeButton = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        print closeButton
         tempPath = self.tempDirPath + "/" + str(hash) + "_xbutton.png"
         log.debug("TempPath: %s" % tempPath)
         cv2.imwrite(tempPath, closeButton)
