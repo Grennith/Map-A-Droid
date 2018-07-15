@@ -218,8 +218,8 @@ class Scanner:
                     now = datetime.datetime.now()
                     date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
 
-                    raidstart = getHatchTime(self, timer)
-                    raidend = getHatchTime(self, timer) + int(45*60)
+                    raidstart = getHatchTime(self, timer) - (self.timezone*60*60)
+                    raidend = getHatchTime(self, timer) + int(45*60) - (self.timezone*60*60)
 
                     log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
                 else:
