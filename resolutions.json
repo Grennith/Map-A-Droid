@@ -1,46 +1,108 @@
 {
   "9:16" : {
-    "ok" : {
-      "x" : 0.5,
-      "y" : 0.577
+    "post_login_ok" : {
+      "click" : {
+        "x" : 0.5,
+        "y" : 0.577
+      },
+      "bounds" : {
+        "left" : 0.37,
+        "right" : 0.63,
+        "top" : 0.56,
+        "bottom" : 0.59
+      }
+    },
+    "postLoginNewsMessage" : {
+      "bounds" : {
+        "left" : 0.305,
+        "right" : 0.717,
+        "top" : 0.523,
+        "bottom" : 0.559
+      }
+    },
+    "speedwarning" : {
+      "click" : {
+        "x" : 0.5,
+        "y" : 0.696
+      },
+      "bounds" : {
+        "left" : 0.264,
+        "right" : 0.736,
+        "top" : 0.676,
+        "bottom" : 0.715
+      }
     },
     "nearby" : {
-      "x" : 0.858,
-      "y" : 0.915
+      "click" : {
+        "x" : 0.858,
+        "y" : 0.915
+      }
     },
-    "menu_close" : {
-      "x" : 0.5,
-      "y" : 0.911
+    "menu_or_raids_close" : {
+      "click" : {
+        "x" : 0.5,
+        "y" : 0.911
+      },
+      "bounds" : {
+        "left" : 0.48,
+        "right" : 0.52,
+        "top" : 0.9,
+        "bottom" : 0.922
+      }
     },
-    "quest_close" : {
-      "x" : 0.5,
-      "y" : 0.926
+    "nearby_raid_tab" : {
+      "click" : {
+        "x" : 0.733,
+        "y" : 0.294
+      },
+      "bounds" : {
+        "left" : 0.625,
+        "right" : 0.833,
+        "top" : 0.273,
+        "bottom" : 0.312
+      }
     },
-    "nearby_raid" : {
-      "x" : 0.733,
-      "y" : 0.294
+    "news_or_quest_close" : {
+      "click" : {
+        "x" : 0.5,
+        "y" : 0.926
+      },
+      "bounds" : {
+        "left" : 0.48,
+        "right" : 0.525,
+        "top" : 0.912,
+        "bottom" : 0.939
+      }
     },
-    "news_close" : {
-      "x" : 0.5,
-      "y" : 0.926
+    "quit_game_popup" : {
+      "click" : {
+        "x" : 0.5,
+        "y" : 0.63
+      },
+      "bounds" : {
+        "left" : 0.32,
+        "right" : 0.67,
+        "top" : 0.61,
+        "bottom" : 0.65
+      }
     },
     "crop" : {
       "new_res" : {
         "x" : 750,
         "y" : 1334
       },
-      "Y1" : 585,
-      "Y2" : 908,
-      "X1" : 161,
-      "X2" : 380,
-      "X3" : 598,
-      "y_bounds" : {
-        "upper_bound" : -70,
-        "lower_bound" : 200
-      },
-      "x_bounds" : {
-        "left_bound" : -80,
-        "right_bound" : 80
+      "lines" : {
+        "horizontal" : {
+          "first" : 0.365,
+          "second" : 0.614,
+          "third" : 0.863
+        },
+        "vertical" : {
+          "first" : 0.93,
+          "second" : 0.38,
+          "third" : 0.667,
+          "fourth" : 0.954
+        }
       }
     }
   }

@@ -196,6 +196,7 @@ def mergeRaidQueue(newQueue):
 def restartPogo():
     global telnMore
     global lastPogoRestart
+    curTime = time.time()
     successfulRestart = telnMore.restartApp("com.nianticlabs.pokemongo")
     #TODO: errorhandling if it returned false, maybe try again next round?
     if successfulRestart:
@@ -214,7 +215,7 @@ def main_thread():
     #log.info("Starting Telnet MORE Client")
     #telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
     log.info("Starting pogo window manager")
-    pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password, args.screen_width, args.screen_height)
+    pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password, args.screen_width, args.screen_height, args.temp_path)
     log.info("Starting dbWrapper")
     dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
     updateRaidQueue(dbWrapper)
@@ -296,21 +297,23 @@ def main_thread():
                     #weird count of failures... restart pogo and try again
                     restartPogo()
                 #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
-                found =  pogoWindowManager.checkLogin('screenshot.png', 123)
-                if not found and pogoWindowManager.checkMessage('screenshot.png', 123):
-                    log.error("Message found")
+                found =  pogoWindowManager.checkPostLoginOkButton('screenshot.png', 123)
+                if not found and pogoWindowManager.checkCloseExceptNearbyButton('screenshot.png', 123):
+                    log.info("Found close button (X) on a window other than nearby")
                     found = True
-                if not found and pogoWindowManager.checkClosebutton('screenshot.png', 123):
-                    log.error("closebutton found")
+                if not found and pogoWindowManager.checkSpeedwarning('screenshot.png', 123):
+                    log.info("Found speed warning")
                     found = True
-                if not found and pogoWindowManager.checkSpeedmessage('screenshot.png', 123):
-                    log.error("speedmessage found")
+                if not found and pogoWindowManager.checkPostLoginNewsMessage('screenshot.png', 123):
+                    log.info("Found post login news message")
                     found = True
-                #if pogoWindowManager.checkQuitbutton('screenshot.png', 123):
-                #    log.error("Quit message found")
-                #    continue
-                log.error(not found)
+                if not found and pogoWindowManager.checkGameQuitPopup('screenshot.png', 123):
+                    log.info("Found game quit popup")
+                    found = True
+
+                log.info("Previous checks found popups: %s" % str(not found))
                 if not found:
+                    log.info("Previous checks found nothing. Checking nearby open")
                     pogoWindowManager.checkNearby('screenshot.png', 123)
                 try:
                     log.info("Attempting to retrieve screenshot checking windows")

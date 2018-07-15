@@ -6,6 +6,7 @@ log = logging.getLogger(__name__)
 
 AspectRatio = collections.namedtuple('AspectRatio', ['width', 'height'])
 Coordinate = collections.namedtuple("Coordinate", ['x', 'y'])
+Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
 #reference: 720x1280 (redmi 5a, 16:9)
 referenceRatio = AspectRatio(16, 9)
@@ -33,6 +34,24 @@ class ResolutionCalc:
         self.resolutionConfiguration = self.resolutions[self.aspectRatioString]
 #check if windows/buttons stick to the bottom -> correct towards bottom (see 9:16 to 10:16 conversion)
 
+    def __getBounds(self, id):
+        left = self.width * self.resolutionConfiguration[id]['bounds']['left']
+        right = self.width * self.resolutionConfiguration[id]['bounds']['right']
+        top = self.height * self.resolutionConfiguration[id]['bounds']['top']
+        bottom = self.height * self.resolutionConfiguration[id]['bounds']['bottom']
+        left = int(round(left))
+        right = int(round(right))
+        top = int(round(top))
+        bottom = int(round(bottom))
+        return Bounds(top, bottom, left, right)
+
+    def __getClick(self, id):
+        x = self.width * self.resolutionConfiguration[id]['click']['x']
+        y = self.height * self.resolutionConfiguration[id]['click']['y']
+        x = int(round(x))
+        y = int(round(y))
+        return Coordinate(x, y)
+
     #get the correction factor of the x axis for a given reference X
     def __getXFactor(self, xRefPos):
         return referenceWidth / xRefPos #TODO: use referencePositions-dict
@@ -47,35 +66,73 @@ class ResolutionCalc:
     def __getHeightMiddle(self):
         return self.height / 2.0
 
+    def getPostLoginOkBounds(self):
+        return self.__getBounds('post_login_ok')
+
     #OK button's middle is at y = 98px below the middle of the screen on 296ppi
-    def getLoginOkButton(self):
-        x = self.__getWidthMiddle()
+    def getPostLoginOkButtonClick(self):
         #old concept for generic height
         #y = self.__getHeightMiddle() + 98.9 * (self.ppi / referencePpi)
-        y = self.height * self.resolutionConfiguration['ok']['y']
-        return Coordinate(x, y)
+        return self.__getClick('post_login_ok')
 
-    def getNearby(self):
-        x = self.width * self.resolutionConfiguration['nearby']['x']
-        y = self.height * self.resolutionConfiguration['nearby']['y']
-        return Coordinate(x, y)
+    def getPostLoginNewsMessageBounds(self):
+        return self.__getBounds('postLoginNewsMessage')
 
-    def getMenuClose(self):
-        x = self.width * self.resolutionConfiguration['menu_close']['x']
-        y = self.height * self.resolutionConfiguration['menu_close']['y']
-        return Coordinate(x, y)
+    def getSpeedwarningBounds(self):
+        return self.__getBounds('speedwarning')
 
-    def getQuestClose(self):
-        x = self.width * self.resolutionConfiguration['quest_close']['x']
-        y = self.height * self.resolutionConfiguration['quest_close']['y']
-        return Coordinate(x, y)
+    def getSpeedwarningClick(self):
+        return self.__getClick('speedwarning')
 
-    def getNearbyRaid(self):
-        x = self.width * self.resolutionConfiguration['nearby_raid']['x']
-        y = self.height * self.resolutionConfiguration['nearby_raid']['y']
-        return Coordinate(x, y)
+    def getNearbyClick(self):
+        return self.__getClick('nearby')
 
-    def getNewsClose(self):
-        x = self.width * self.resolutionConfiguration['news_close']['x']
-        y = self.height * self.resolutionConfiguration['news_close']['y']
-        return Coordinate(x, y)
+    def getNearbyRaidTabBounds(self):
+        return self.__getBounds('nearby_raid_tab')
+
+    def getNearbyRaidTabClick(self):
+        return self.__getClick('nearby_raid_tab')
+
+    def getQuitGamePopupBounds(self):
+        return self.__getBounds('quit_game_popup')
+
+    def getNewsQuestCloseButtonBounds(self):
+        return self.__getBounds('news_or_quest_close')
+
+    def getMenuRaidsCloseButtonBounds(self):
+        return self.__getBounds('menu_or_raids_close')
+
+    def getRaidBounds(self, numberOfRaid):
+        #numberOfRaid is 1 to 6
+        if numberOfRaid < 1 or numberOfRaid > 6:
+            return None
+        #shift numberOfRaid to have index
+        numberOfRaid -= 1
+        lines = self.resolutionConfiguration['crop']['lines']
+        column = numberOfRaid % 3 #columns 0 to 2
+        row = 0
+        if numberOfRaid > 2: #we are in the 2nd row...
+            row = 1
+
+        top = None
+        bottom = None
+        left = None
+        right = None
+        #arrays in resolutions would be better, but for readability's sake we
+        #will use dicts/strings
+        if row == 0:
+            top = lines['horizontal']['first']
+            bottom = lines['horizontal']['second']
+        else:
+            top = lines['horizontal']['second']
+            bottom = lines['horizontal']['third']
+
+        if column == 0:
+            left = lines['vertical']['first']
+            right = lines['vertical']['second']
+        elif column == 1:
+            left = lines['vertical']['second']
+            right = lines['vertical']['third']
+        else:
+            left = lines['vertical']['third']
+            right = lines['vertical']['fourth']
