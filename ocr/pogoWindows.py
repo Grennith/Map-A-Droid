@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 import logging
-cap = cv2.VideoCapture(0)
 from PIL import Image
 #import pytesseract
 from pytesseract import image_to_string
