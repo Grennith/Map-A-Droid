@@ -11,6 +11,7 @@ from skimage.measure import compare_ssim as ssim
 import glob, os
 import mysql
 import mysql.connector
+import imutils
 
 log = logging.getLogger(__name__)
 args = parseArgs()
@@ -99,14 +100,14 @@ class Scanner:
             raidend = getHatchTime(self, raidtimer) + int(45*60)
 
             log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
-            return raidstart, raidend
+            return raidstart, raidend, raidtimer
         else:
-            return 0, 0
-            
+            return 0, 0, raidtimer
         return False
         
     def detectRaidBoss(self, raidpic, lvl, hash, raidcount):
         foundmon = None
+        monID = None
         log.debug('Extracting Raidboss')
         lower = np.array([80, 60, 30], dtype = "uint8")
         upper = np.array([110, 90, 70], dtype = "uint8")
@@ -132,28 +133,34 @@ class Scanner:
                 if foundmon is None or find_mon > foundmon[0]:
                     foundmon = find_mon, file
 
-            if not foundmon is None and foundmon[0]>=0.7:
-                monSplit = foundmon[1].split('_')
-                monID = monSplit[3]
-                self.imageHash(picName, monID, False, 'mon-' + str(lvl))
-                return monID, monAsset
+                if not foundmon is None and foundmon[0]>0.7:
+                    monSplit = foundmon[1].split('_')
+                    monID = monSplit[3]
+                    
             
         else:
             return monHash, monAsset
+         
+        if monID:
+            self.imageHash(picName, monID, False, 'mon-' + str(lvl))
+            return monID, monAsset    
             
         return False, monAsset
     
     def detectEgg(self, raidpic, hash, raidcount):
         foundegg = None
+        eggID = None
         for file in glob.glob("mon_img/_egg_*.png"):
             find_egg = mt.fort_image_matching(file, raidpic, True, 0.9)
             if foundegg is None or find_egg > foundegg[0]:
     	    	foundegg = find_egg, file
 
-        if not foundegg is None and foundegg[0]>=0.9:
-            eggSplit = foundegg[1].split('_')
-            eggID = eggSplit[3]
-            log.debug('Eggfound: ' + str(eggID))
+            if not foundegg is None and foundegg[0]>0.9:
+                eggSplit = foundegg[1].split('_')
+                eggID = eggSplit[3]
+                log.debug('Eggfound: ' + str(eggID))
+                
+        if eggID:
             return eggID
          
         return False   
@@ -161,6 +168,7 @@ class Scanner:
         
     def detectLevel(self, raidpic, hash, raidcount):
         foundlvl = None
+        lvl = None
         raidlevel = raidpic[210:240, 0:297]
         raidlevel = cv2.resize(raidlevel, (0,0), fx=3, fy=3)
         
@@ -172,33 +180,38 @@ class Scanner:
             if foundlvl is None or find_lvl > foundlvl[0]:
     	    	foundlvl = find_lvl, file
 
-        if not foundlvl is None and foundlvl[0]>0.5:
-            lvlSplit = foundlvl[1].split('_')
-            lvl = lvlSplit[3]
-            log.debug('Level: ' + str(lvl))
-           
+            if not foundlvl is None and foundlvl[0]>0.5:
+                lvlSplit = foundlvl[1].split('_')
+                lvl = lvlSplit[3]
+                log.debug('Level: ' + str(lvl))
+        
+        if lvl:
             return lvl
             
         return False
 
     def detectGym(self, raidpic, hash, raidcount):
         foundgym = None
+        gymID = None
 
         gymHash = self.imageHashExists(raidpic, True, 'gym')
         if not gymHash:
             for file in glob.glob("gym_img/*.jpg"):
-                find_gym = mt.fort_image_matching(raidpic, file, True, 0.8)
+                find_gym = mt.fort_image_matching(raidpic, file, True, 0.55)
+                print find_gym
                 if foundgym is None or find_gym > foundgym[0]:
     	        	foundgym = find_gym, file
 
-            if not foundgym is None and foundgym[0]>0.8:
-                gymSplit = foundgym[1].split('_')
-                gymID = gymSplit[2]
-                self.imageHash(raidpic, gymID, True, 'gym')
-                return gymID
-
+                if not foundgym is None and foundgym[0]>0.55:
+                    gymSplit = foundgym[1].split('_')
+                    gymID = gymSplit[2]
+                    
         else:
             return gymHash
+         
+        if gymID:
+            self.imageHash(raidpic, gymID, True, 'gym')
+            return gymID
             
         return False
 
@@ -206,22 +219,34 @@ class Scanner:
     def unknownfound(self, raidpic, type, zoom, raidcount):
         found = None
         unknownfound = 0
-        tempPic = self.tempPath + "/" + str(type) + "_" + str(time.time()) +".jpg"
-        cv2.imwrite(tempPic, raidpic)
         for file in glob.glob(self.unknownPath + "/" + str(type) + "_*.jpg"):
-                    foundunknown = mt.fort_image_matching(tempPic, file, zoom, 0.8)
+                    foundunknown = mt.fort_image_matching(raidpic, file, zoom, 0.8)
                     if found is None or foundunknown > found[0]:
         	    		found = foundunknown, file
 
-                    if not found is None and found[0]>0.8:
+                    if not found is None and found[0]>=0.8:
                         unknownfound = 1
                         found = None
 
         if unknownfound == 0:
+            raidpic = cv2.imread(raidpic)
             cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(time.time()) +".jpg", raidpic)
          
-        os.remove(tempPic)   
         return True
+
+    def resize(image, width = None, height = None, inter = cv2.INTER_AREA):
+        dim = None
+        (h, w) = image.shape[:2]
+        if width is None and height is None:
+            return image
+        if width is None:
+            r = height / float(h)
+            dim = (int(w * r), height)
+        else:
+            r = width / float(w)
+            dim = (width, int(h * r))
+        resized = cv2.resize(image, dim, interpolation = inter)
+        return resized
 
     def start_detect(self, filename, hash, RaidNo):
         log.error("Starting detection")
@@ -237,13 +262,14 @@ class Scanner:
         log.error("Starting analisys")
 
         img = cv2.imread(filename)
-        img = cv2.resize(img, (176, 270), interpolation = cv2.INTER_CUBIC)
+        img = imutils.resize(img, height=270)
+        #img = cv2.resize(img, (176, 270), interpolation = cv2.INTER_CUBIC)
         cv2.imwrite(filename, img)
         img = cv2.imread(filename) 
             
         raidtimer = self.detectRaidTime(img, hash)
         
-        if raidtimer:
+        if len(raidtimer[2]) > 0:
             
             raidstart = raidtimer[0]
             raidend = raidtimer[1]
@@ -276,19 +302,23 @@ class Scanner:
              
             if detectGym and (not monfound and not eggfound):
                 logtext = 'Mon or Egg unknown'
-                self.unknownfound(detectRaidBossBW, 'mon', False, RaidNo)
+                self.unknownfound(filename, 'mon', False, RaidNo)
                 print("Raid %s | Gym-ID: %s | %s | Level: %s" % (RaidNo, detectGym, logtext, detectLevel))
                 
                 
             if not detectGym and (monfound or eggfound):
                 logtext = 'Gym unknown'
-                self.unknownfound(img, 'gym', True, RaidNo)
-                print("Raid %s | %s | Level: %s" % (RaidNo, logtext, detectLevel))
+                if monfound:
+                    logtext_add = 'Mon - ID: ' + str(detectRaidBoss)
+                else:
+                    logtext_add = 'Egg - ID: ' + str(detectEgg)
+                self.unknownfound(filename, 'gym', True, RaidNo)
+                print("Raid %s | %s | %s | Level: %s" % (RaidNo, logtext, logtext_add, detectLevel))
                 
-            if not detectGym and (not monfound or not eggfound):
+            if not detectGym and not monfound and not eggfound:
                 logtext = 'Gym unknown & Mon/Egg unknown'
                 self.unknownfound(filename, 'gym', True, RaidNo)
-                self.unknownfound(detectRaidBossBW, 'mon', False, RaidNo)
+                self.unknownfound(filename, 'mon', False, RaidNo)
                 print("Raid %s | %s | Level: %s" % (RaidNo, logtext, detectLevel))
                 
         else:
@@ -300,9 +330,9 @@ class Scanner:
                 log.error('No more active Raids')
                 return False  
                 
-        os.remove(filename)
-        os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
-        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(RaidNo) + ".jpg")
+        #os.remove(filename)
+        #os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
+        #os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(RaidNo) + ".jpg")
         return True
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
@@ -310,7 +340,7 @@ class Scanner:
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
             image2 = cv2.resize(image2,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
-            crop = image2[int(160):int(200),int(80):int(120)]
+            crop = image2[int(135):int(200),int(65):int(95)]
         else:
             crop = image2
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
@@ -330,7 +360,7 @@ class Scanner:
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
             image2 = cv2.resize(image2,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
-            crop = image2[int(160):int(200),int(80):int(120)]
+            crop = image2[int(135):int(200),int(65):int(95)]
         else:
             crop = image2
 

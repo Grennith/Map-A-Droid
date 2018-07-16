@@ -21,8 +21,8 @@ class RaidScan:
     def process(filename, hash, raidno):
         args = parseArgs()
         scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path, args.unknown_path, args.timezone)
-        scanner.start_detect(filename, hash, raidno)
-
+        checkcrop = scanner.start_detect(filename, hash, raidno)
+        return checkcrop
 
 class checkScreenshot(PatternMatchingEventHandler):
     def __init__(self, width, height):
@@ -33,24 +33,40 @@ class checkScreenshot(PatternMatchingEventHandler):
     ignore_patterns = ""
     case_sensitive = False
     def on_created(self, event):
+        
+        
         if args.ocr_multitask:
             import multiprocessing
-            log.error("Got new file, creating sub-process to process it")
-            p = multiprocessing.Process(target=RaidScan.process, args=(event.src_path,))
-            p.daemon = True
-            p.start()
-        else:
-            curTime = time.time()
-            raidNo = 1
-            log.error("Got new file, running ocr scanner")
+            RaidNo = 1
             raidPic = cv2.imread(event.src_path)
-            hash = str(curTime)
+            log.error("Got new file, running ocr scanner")
             while raidNo < 7:
-                raidPicCrop = args.temp_path + "/" + str(hash) + "_raid" + str(raidNo) +".jpg"
+                curTime = time.time()
+                hash = str(curTime)
+                raidPicCrop = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) +".jpg"
                 bounds = None
                 bounds = self.resolutionCalculator.getRaidBounds(raidNo)
                 log.error(bounds)
-                raid = raidPic[bounds.top:bounds.bottom, bounds.right:bounds.left]
+                raid = raidPic[bounds.top:bounds.bottom, bounds.left:bounds.right]
                 cv2.imwrite(raidPicCrop, raid)
-                RaidScan.process(raidPicCrop, hash, raidNo)
-                raidPic += 1
+                p = multiprocessing.Process(target=RaidScan.process, args=(raidPicCrop, hash, raidNo,))
+                p.daemon = True
+                p.start()
+                raidNo += 1
+        else:
+            raidNo = 1
+            raidPic = cv2.imread(event.src_path)
+            log.error("Got new file, running ocr scanner")
+            while raidNo < 7:
+                curTime = time.time()
+                hash = str(curTime)
+                raidPicCrop = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) +".jpg"
+                bounds = None
+                bounds = self.resolutionCalculator.getRaidBounds(raidNo)
+                log.error(bounds)
+                raid = raidPic[bounds.top:bounds.bottom, bounds.left:bounds.right]
+                cv2.imwrite(raidPicCrop, raid)
+                checkcrop = RaidScan.process(raidPicCrop, hash, raidNo)
+                if not checkcrop:
+                    break
+                raidNo += 1
