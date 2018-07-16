@@ -66,14 +66,22 @@ class ResolutionCalc:
     def __getHeightMiddle(self):
         return self.height / 2.0
 
-    def getPostLoginOkBounds(self):
-        return self.__getBounds('post_login_ok')
+    def getPostLoginOkDrivingBounds(self):
+        return self.__getBounds('post_login_ok_driving')
+
+    def getPostLoginOkPrivatePropertyBounds(self):
+        return self.__getBounds('post_login_ok_private_property')
 
     #OK button's middle is at y = 98px below the middle of the screen on 296ppi
-    def getPostLoginOkButtonClick(self):
+    def getPostLoginOkDrivingClick(self):
         #old concept for generic height
         #y = self.__getHeightMiddle() + 98.9 * (self.ppi / referencePpi)
-        return self.__getClick('post_login_ok')
+        return self.__getClick('post_login_ok_driving')
+
+    def getPostLoginOkPrivatePropertyClick(self):
+        #old concept for generic height
+        #y = self.__getHeightMiddle() + 98.9 * (self.ppi / referencePpi)
+        return self.__getClick('post_login_ok_private_property')
 
     def getPostLoginNewsMessageBounds(self):
         return self.__getBounds('postLoginNewsMessage')

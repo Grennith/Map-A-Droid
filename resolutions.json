@@ -1,6 +1,6 @@
 {
   "9:16" : {
-    "post_login_ok" : {
+    "post_login_ok_driving" : {
       "click" : {
         "x" : 0.5,
         "y" : 0.577
@@ -10,6 +10,18 @@
         "right" : 0.63,
         "top" : 0.56,
         "bottom" : 0.59
+      }
+    },
+    "post_login_ok_private_property" : {
+      "click" : {
+        "x" : 0.5,
+        "y" : 0.577
+      },
+      "bounds" : {
+        "left" : 0.37,
+        "right" : 0.63,
+        "top" : 0.582,
+        "bottom" : 0.609
       }
     },
     "postLoginNewsMessage" : {

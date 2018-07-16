@@ -42,20 +42,34 @@ class PogoWindows:
         except TypeError:
             return None
 
-    def checkPostLoginOkButton(self, filename, hash):
+    def __checkPostLoginOkButton(self, filename, hash, type):
         if not os.path.isfile(filename):
             return False
-        log.debug('checkPostLoginOkButton: Checking for post-login ok button...')
+        log.debug('checkPostLoginOkButton: Checking for post-login ok button of type %s...' % type)
         col = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getPostLoginOkBounds()
-        okFont = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
+        bounds = None
+        if type == 'post_login_ok_driving':
+            bounds = self.resolutionCalculator.getPostLoginOkDrivingBounds()
+        else:
+            bounds = self.resolutionCalculator.getPostLoginOkPrivatePropertyBounds()
 
-        cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_login.png", okFont)
-        col = Image.open(self.tempDirPath + "/" + str(hash) + "_login.png")
+        okFont = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
+        log.debug('checkPostLoginOkButton: bounds of okFont: %s' % str(bounds))
+
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_login.png"
+        cv2.imwrite(tempPathColoured, okFont)
+
+        col = Image.open(tempPathColoured)
+        width, height = col.size
+
+        #check for the colour of the button that says "show all"
+        if (self.__mostPresentColour(tempPathColoured, width * height) != (144, 217, 152)):
+            return False
+
         gray = col.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
         bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.png")
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.png"),config='-c tessedit_char_whitelist=O.K -psm 7')
+        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.png"),config='--oem 3 --psm 7')
 
         #cleanup
         os.remove(self.tempDirPath + "/" + str(hash) + "_login.png")
@@ -64,12 +78,20 @@ class PogoWindows:
         log.debug("checkPostLoginOkButton: Checking for post-login OK button found: %s" % text)
         if 'O. K.' in text:
             log.debug('checkPostLoginOkButton: Found post login OK button - closing ...')
-            pos = self.resolutionCalculator.getPostLoginOkButtonClick()
-            self.vncWrapper.clickVnc(pos.x, pox.y)
+            pos = None
+            if type == 'post_login_ok_driving':
+                pos = self.resolutionCalculator.getPostLoginOkDrivingClick()
+            else:
+                pos = self.resolutionCalculator.getPostLoginOkPrivatePropertyClick()
+            self.vncWrapper.clickVnc(pos.x, pos.y)
             return True
         else:
             log.debug('checkPostLoginOkButton: Could not find OK button')
             return False
+
+    def checkPostLoginOkButton(self, filename, hash):
+        return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving')
+            or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property'))
 
     def checkPostLoginNewsMessage(self, filename, hash):
         if not os.path.isfile(filename):
@@ -78,14 +100,25 @@ class PogoWindows:
         log.debug('checkPostLoginNewsMessage: Checking for small news popup ...')
         col = cv2.imread(filename)
         bounds = self.resolutionCalculator.getPostLoginNewsMessageBounds()
+        log.debug('checkPostLoginNewsMessage: bounds are %s' % str(bounds))
         raidtimer = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_message.png", raidtimer)
-        col = Image.open(self.tempDirPath + "/" + str(hash) + "_message.png")
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_message.png"
+        cv2.imwrite(tempPathColoured, raidtimer)
+
+
+        col = Image.open(tempPathColoured)
+        width, height = col.size
+
+        #check for the colour of the button that says "show all"
+        if (self.__mostPresentColour(tempPathColoured, width * height) != (241, 255, 237)):
+            return False
+
+
         gray = col.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
         bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png")
 
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png"),config='-psm 10')
+        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png"),config='--psm 7')
 
         #cleanup
         os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png")
@@ -163,8 +196,18 @@ class PogoWindows:
         col = cv2.imread(filename)
         bounds = self.resolutionCalculator.getQuitGamePopupBounds()
         quitGameCrop = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        cv2.imwrite('temp/' + str(hash) + '_quitbutton.png', quitGameCrop)
-        col = Image.open(self.tempDirPath + "/" + str(hash) + "_quitbutton.png")
+        tempPath = 'temp/' + str(hash) + '_quitbutton.png'
+        cv2.imwrite(tempPath, quitGameCrop)
+
+        col = Image.open(tempPath)
+        width, height = col.size
+
+        mostPresentColour = self.__mostPresentColour(tempPath, width * height)
+        log.debug('checkGameQuitPopup: most present colour is %s' % str(mostPresentColour))
+        #just gonna check the most occuring colours on that button...
+        if (mostPresentColour != (255, 255, 255)):
+            return False
+
         gray = col.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
         bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.png")
@@ -191,21 +234,36 @@ class PogoWindows:
         log.debug('checkSpeedwarning: Checking for speed-warning ...')
         col = cv2.imread(filename)
         bounds = self.resolutionCalculator.getSpeedwarningBounds()
-        raidtimer = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_speedmessage.png", raidtimer)
-        col = Image.open(self.tempDirPath + "/" + str(hash) + "_speedmessage.png")
+        log.debug('checkSpeedwarning: got bounds %s' % str(bounds))
+        cropOfSpeedwarning = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
+        tempPath = self.tempDirPath + "/" + str(hash) + "_speedmessage.png"
+        cv2.imwrite(tempPath, cropOfSpeedwarning)
+
+        col = Image.open(tempPath)
+        width, height = col.size
+
+        mostPresentColour = self.__mostPresentColour(tempPath, width * height)
+        log.debug('checkSpeedwarning: most present colour is %s' % str(mostPresentColour))
+        #just gonna check the most occuring colours on that button...
+        if (mostPresentColour != (144, 217, 152)
+            and mostPresentColour != (146, 217, 152)
+            and mostPresentColour != (152, 218, 151)
+            and mostPresentColour != (153, 218, 151)
+            and mostPresentColour != (151, 218, 151)):
+            return False
+
         gray = col.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
         bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.png")
 
-        timer2 = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.png"),config='-psm 7')
+        passengerString = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.png"),config='-psm 7')
 
         #cleanup
         os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.png")
         os.remove(self.tempDirPath + "/" + str(hash) + "_speedmessage.png")
 
-        log.debug("checkSpeedwarning: Found text: %s " % timer2)
-        if len(timer2) > 10:
+        log.debug("checkSpeedwarning: Found text: %s " % passengerString)
+        if len(passengerString) > 10:
             log.debug('checkSpeedwarning: Found Speedmessage - closing ...')
             posPassenger = self.resolutionCalculator.getSpeedwarningClick()
             log.debug("checkSpeedwarning: Clicking %s" % str(posPassenger))
