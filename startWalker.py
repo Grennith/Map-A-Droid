@@ -107,7 +107,7 @@ def main():
 
     if not args.only_scan:
         log.info('Starting OCR Thread....')
-        t_observ = Thread(name='observer', target=observer(args.raidscreen_path))
+        t_observ = Thread(name='observer', target=observer(args.raidscreen_path, args.screen_width, args.screen_height))
         t_observ.daemon = True
         t_observ.start()
         #param = str(args.raidscreen_path)
@@ -346,9 +346,9 @@ def main_thread():
             if (curTime - lastPogoRestart >= (180 * 60)):
                 restartPogo()
 
-def observer(scrPath):
+def observer(scrPath, width, height):
         observer = Observer()
-        observer.schedule(checkScreenshot(), path=scrPath)
+        observer.schedule(checkScreenshot(width, height), path=scrPath)
         observer.start()
 
 

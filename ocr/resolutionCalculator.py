@@ -144,3 +144,9 @@ class ResolutionCalc:
         else:
             left = lines['vertical']['third']
             right = lines['vertical']['fourth']
+            
+        left = int(round(left * self.width))
+        right = int(round(right * self.width))
+        top = int(round(top * self.height))
+        bottom = int(round(bottom * self.height))
+        return Bounds(top, bottom, left, right)
