@@ -37,7 +37,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         
         if args.ocr_multitask:
             import multiprocessing
-            RaidNo = 1
+            raidNo = 1
             raidPic = cv2.imread(event.src_path)
             log.error("Got new file, running ocr scanner")
             while raidNo < 7:
