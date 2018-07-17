@@ -260,10 +260,11 @@ def main_thread():
                 log.info('Moving on with gym at %s' % route[i])
                 curLat = route[i]['lat']
                 curLng = route[i]['lng']
+                #remove whitespaces that might be on either side...
+                curLat = curLat.strip()
+                curLng = curLng.strip()
                 i += 1
-            #remove whitespaces that might be on either side...
-            curLat = curLat.strip()
-            curLng = curLng.strip()
+
             log.debug('LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' % (lastLat, lastLng, curLat, curLng))
             #get the distance from our current position (last) to the next gym (cur)
             distance = getDistanceOfTwoPointsInMeters(float(lastLat), float(lastLng), float(curLat), float(curLng))
