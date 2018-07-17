@@ -341,9 +341,9 @@ class Scanner:
                 log.debug('No more active Raids')
                 return False
 
-        #os.remove(filename)
-        #os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
-        #os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(RaidNo) + ".jpg")
+        os.remove(filename)
+        os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
+        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(RaidNo) + ".jpg")
         log.debug("start_detect: permutation found: monfound '%s', eggfound '%s'" % (str(monfound), str(eggfound)))
         log.debug("start_detect: finished")
         return True
