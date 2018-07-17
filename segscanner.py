@@ -270,7 +270,7 @@ class Scanner:
         img = cv2.imread(filename)
 
         raidtimer = self.detectRaidTime(img, hash)
-
+        log.debug("start_detect: got raidtime %s" % str(raidtimer))
         if len(raidtimer[2]) > 0:
 
             raidstart = raidtimer[0]
@@ -279,9 +279,12 @@ class Scanner:
             detectLevel = self.detectLevel(img, hash, RaidNo)
             detectEgg = self.detectEgg(filename, hash, RaidNo)
             if detectEgg:
+                log.debug("start_detect: Found egg")
                 eggfound = True
             else:
+                log.debug("start_detect: Trying to detect raidboss")
                 detectRaidBoss = self.detectRaidBoss(img, detectLevel, hash, RaidNo)
+                log.debug("start_detect: Got raidboss '%s'" % str(detectRaidBoss))
                 if detectRaidBoss[0]:
                     detectRaidBoss = detectRaidBoss[0]
                     detectRaidBossBW = detectRaidBoss[1]
@@ -309,7 +312,8 @@ class Scanner:
 
 
             if not detectGym and (monfound or eggfound):
-                logtext = 'Gym unknown'
+                logtext = 'start_detect: Gym unknown'
+                log.info(logtext)
                 if monfound:
                     logtext_add = 'Mon - ID: ' + str(detectRaidBoss)
                 else:
@@ -319,6 +323,7 @@ class Scanner:
 
             if not detectGym and not monfound and not eggfound:
                 logtext = 'Gym unknown & Mon/Egg unknown'
+                log.info(logtext)
                 self.unknownfound(filename, 'gym', True, RaidNo)
                 self.unknownfound(filename, 'mon', False, RaidNo)
                 log.debug("Raid %s | %s | Level: %s" % (RaidNo, logtext, detectLevel))
