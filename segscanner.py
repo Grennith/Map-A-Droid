@@ -259,7 +259,7 @@ class Scanner:
             log.error("File does not exist: %s" % str(filename))
             return
 
-        gymfound = False
+        #gymfound = False
         monfound = False
         eggfound = False
 
@@ -280,6 +280,7 @@ class Scanner:
 
             detectLevel = self.detectLevel(img, hash, RaidNo)
             detectEgg = self.detectEgg(filename, hash, RaidNo)
+            log.debug("start_detect: got level %s and egg %s" % (str(detectLevel), str(detectEgg)))
             if detectEgg:
                 log.debug("start_detect: Found egg")
                 eggfound = True
@@ -295,7 +296,7 @@ class Scanner:
                     detectRaidBossBW = detectRaidBoss[1]
 
             detectGym = self.detectGym(filename, hash, RaidNo)
-
+            log.debug("start_detect: got gym %s" % str(detectGym))
             if detectGym and eggfound:
                 logtext = 'Egg - ID: ' + str(detectEgg)
                 log.debug("Found egg Lv %s starting at %s and ending at %s. GymID: %s" % (detectEgg, raidstart, raidend, detectGym))
@@ -330,6 +331,7 @@ class Scanner:
                 self.unknownfound(filename, 'mon', False, RaidNo)
                 log.debug("Raid %s | %s | Level: %s" % (RaidNo, logtext, detectLevel))
 
+        log.debug("start_detect: permutation found: monfound '%s', eggfound '%s'" % (str(monfound), str(eggfound)))
         else:
             os.remove(filename)
             if RaidNo == 1:
@@ -342,6 +344,7 @@ class Scanner:
         #os.remove(filename)
         #os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
         #os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(RaidNo) + ".jpg")
+        log.debug("start_detect: finished")
         return True
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
