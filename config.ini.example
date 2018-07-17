@@ -9,7 +9,7 @@
 ######################
 
 #vnc_ip:                     # IP address or hostname of the VNC server (needed for scanning mode)
-#vncscreen:                  # Number of screen (default: None) 
+#vncscreen:                  # Number of screen (default: None)
 #vnc_port:                   # Port of the VNC server  (needed for scanning mode)
 #vnc_password:               # VNC password  (needed for scanning mode)
 
@@ -32,8 +32,8 @@
 # Device specifics
 ######################
 
-screen_width:                     
-screen_height:                  
+screen_width:
+screen_height:
 
 
 # Coords CSV
@@ -50,9 +50,9 @@ screen_height:
 # Runtype settings
 ######################
 
-#only-scan                   # running this instance in scanning mode without OCR tracing
-#only-ocr                    # running this instance in ocr mode without Scanning 
-#ocr-multitask               # running OCR as multiprocessing task 
+#only_scan                   # running this instance in scanning mode without OCR tracing
+#only_ocr                    # running this instance in ocr mode without Scanning
+#ocr_multitask               # running OCR as multiprocessing task 
 
 # path settings
 ######################
@@ -65,7 +65,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 # timezone settings
 ######################
 
-timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Germany) - Needed for Rocketmap Database 
+timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Germany) - Needed for Rocketmap Database
 
 #sleeptimer settings
 ######################
@@ -87,4 +87,3 @@ timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Ge
 #egg3_mon_id:                # set this mon-id for detected lvl 3 raids (replace later after hatch)
 #egg4_mon_id:                # set this mon-id for detected lvl 4 raids (replace later after hatch)
 #egg5_mon_id:                # set this mon-id for detected lvl 5 raids (replace later after hatch)
-

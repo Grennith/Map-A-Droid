@@ -78,11 +78,11 @@ def parseArgs():
 
 
     #Runtypes
-    parser.add_argument('-os', '--only-scan', action='store_true', default=False,
+    parser.add_argument('-os', '--only_scan', action='store_true', default=False,
             help=('Use this instance only for scanning.'))
-    parser.add_argument('-oo', '--only-ocr', action='store_true', default=False,
+    parser.add_argument('-oo', '--only_ocr', action='store_true', default=False,
             help=('Use this instance only for OCR.'))
-    parser.add_argument('-om', '--ocr-multitask', action='store_true', default=False,
+    parser.add_argument('-om', '--ocr_multitask', action='store_true', default=False,
             help=('Running OCR in sub-processes (module multiprocessing) to speed up analysis of raids.'))
 
 

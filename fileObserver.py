@@ -27,26 +27,26 @@ class RaidScan:
 class checkScreenshot(PatternMatchingEventHandler):
     def __init__(self, width, height):
         self.resolutionCalculator = ResolutionCalc(width, height)
-        
+
     patterns = ['*.png']
     ignore_directories = True
     ignore_patterns = ""
     case_sensitive = False
     def on_created(self, event):
-        
-        
+
+        #TODO: code this better....
         if args.ocr_multitask:
             import multiprocessing
-            RaidNo = 1
+            raidNo = 1
             raidPic = cv2.imread(event.src_path)
-            log.error("Got new file, running ocr scanner")
+            log.info("Got new file, running ocr scanner")
             while raidNo < 7:
                 curTime = time.time()
                 hash = str(curTime)
                 raidPicCrop = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) +".jpg"
                 bounds = None
                 bounds = self.resolutionCalculator.getRaidBounds(raidNo)
-                log.error(bounds)
+                log.debug("on_created: scanning bounds: %s of %s" % (str(bounds), str(event.src_path)))
                 raid = raidPic[bounds.top:bounds.bottom, bounds.left:bounds.right]
                 cv2.imwrite(raidPicCrop, raid)
                 p = multiprocessing.Process(target=RaidScan.process, args=(raidPicCrop, hash, raidNo,))
@@ -63,7 +63,7 @@ class checkScreenshot(PatternMatchingEventHandler):
                 raidPicCrop = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) +".jpg"
                 bounds = None
                 bounds = self.resolutionCalculator.getRaidBounds(raidNo)
-                log.error(bounds)
+                log.debug("on_created: scanning bounds: %s of %s" % (str(bounds), str(event.src_path)))
                 raid = raidPic[bounds.top:bounds.bottom, bounds.left:bounds.right]
                 cv2.imwrite(raidPicCrop, raid)
                 checkcrop = RaidScan.process(raidPicCrop, hash, raidNo)
