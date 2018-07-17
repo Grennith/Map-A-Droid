@@ -11,7 +11,6 @@ from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 from shutil import copyfile
 from copyMons import MonRaidImages
-from scanner import Scanner
 from fileObserver import checkScreenshot
 import heapq
 from multiprocessing import Process

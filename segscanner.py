@@ -157,7 +157,7 @@ class Scanner:
         for file in glob.glob("mon_img/_egg_*.png"):
             find_egg = mt.fort_image_matching(file, raidpic, True, 0.9)
             if foundegg is None or find_egg > foundegg[0]:
-    	    	foundegg = find_egg, file
+                foundegg = find_egg, file
 
             if not foundegg is None and foundegg[0]>0.9:
                 eggSplit = foundegg[1].split('_')
@@ -342,7 +342,7 @@ class Scanner:
                 return False
 
         os.remove(filename)
-        os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
+        #os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
         os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(RaidNo) + ".jpg")
         log.debug("start_detect: permutation found: monfound '%s', eggfound '%s'" % (str(monfound), str(eggfound)))
         log.debug("start_detect: finished")
