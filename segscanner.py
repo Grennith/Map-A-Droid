@@ -98,10 +98,10 @@ class Scanner:
             log.error(raidtimer)
             hatchTime = getHatchTime(self, raidtimer)
             log.error("getHatchTime: %s" % str(hatchTime))
-            raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
-            #raidstart = hatchTime
-            #raidend = hatchTime + 45 * 60
-            raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
+            #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
+            raidstart = hatchTime
+            raidend = hatchTime + 45 * 60
+            #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
 
             log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
             return raidstart, raidend, raidtimer
@@ -190,8 +190,10 @@ class Scanner:
                 log.debug('Level: ' + str(lvl))
 
         if lvl:
+            log.debug("detectLevel: found level '%s'" % str(lvl))
             return lvl
 
+        log.info("detectLevel: could not find level")
         return False
 
     def detectGym(self, raidpic, hash, raidcount):
@@ -388,7 +390,7 @@ def checkHourMin(hour_min):
 
 def getHatchTime(self,data):
         zero = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
-        unix_zero = (zero-datetime.datetime(1970,1,1)).total_seconds()
+        unix_zero =  time.mktime(zero.timetuple())
         hour_min_divider = data.find(':')
         if hour_min_divider != -1:
             AM = data.find('AM')
