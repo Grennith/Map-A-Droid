@@ -2,10 +2,15 @@ import cv2
 import os
 import numpy as np
 import imutils
-#import time
+import logging
+
+
+log = logging.getLogger(__name__)
 
 def fort_image_matching(url_img_name, fort_img_name, zoom, ttest):
+    log.debug("fort_image_matching: Reading url_img_name '%s'" % str(url_img_name))
     url_img = cv2.imread(url_img_name,3)
+    log.debug("fort_image_matching: Reading fort_img_name '%s'" % str(fort_img_name))
     fort_img = cv2.imread(fort_img_name,3)
     height, width, channels = url_img.shape
     height_f, width_f, channels_f = fort_img.shape

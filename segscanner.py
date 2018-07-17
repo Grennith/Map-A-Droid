@@ -70,13 +70,13 @@ class Scanner:
                 'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
                 'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
             data = (guid, lvl, start, start, end, pkm, "999", "1", "1", time.time(),
-                lvl, start, start, end, pkm, "999", "1", "1", today1)
+                lvl, start, start, end, pkm, "999", "1", "1", time.time())
             #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
             cursor.execute(query, data)
         else:
             log.info("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, guid))
             query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
-            data = (lvl, pkm, "999", "1", "1",  today1, guid)
+            data = (lvl, pkm, "999", "1", "1",  time.time(), guid)
             cursor.execute(query, data)
 
         connection.commit()
@@ -98,10 +98,10 @@ class Scanner:
             log.error(raidtimer)
             hatchTime = getHatchTime(self, raidtimer)
             log.error("getHatchTime: %s" % str(hatchTime))
-            #raidstart = getHatchTime(self, raidtimer) - (self.timezone*60*60)
-            raidstart = hatchTime
-            raidend = hatchTime + 45 * 60
-            #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
+            raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
+            #raidstart = hatchTime
+            #raidend = hatchTime + 45 * 60
+            raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
 
             log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
             return raidstart, raidend, raidtimer
