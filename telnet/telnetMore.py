@@ -4,6 +4,7 @@ class TelnetMore:
     def __init__(self, ip, port, password):
         #Throws ValueError if unable to connect!
         #catch in code using this class
+        
         self.telnetClient = TelnetClient(ip, port, password)
 
     def startApp(self, packageName):

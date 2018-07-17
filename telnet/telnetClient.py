@@ -1,8 +1,17 @@
 import socket
 import time
+import logging
+log = logging.getLogger()
 
 class TelnetClient:
     def __init__(self, ip, port, password):
+        if (password != None):
+            log.debug('Trying to build up a telnet connection to %s:%s with a password'
+                % (str(ip), str(port)))
+        else:
+            log.debug('Trying to build up a telnet connection to %s:%s without a password'
+                % (str(ip), str(port)))
+
         self.ip = ip
         self.port = port
         self.password = password
@@ -16,8 +25,10 @@ class TelnetClient:
             raise ValueError('Socket not connected')
         else:
             self.connected = True
-
+        #Retrieve the help instructions to have auth only receive "OK"
+        self.__sock.recv(1024)
         self.authenticated = self.__auth()
+
         #print(authenticated)
 
 
@@ -38,14 +49,17 @@ class TelnetClient:
 
     def __sendCommandRecursive(self, command, again):
         x = self.__sendCommandWithoutChecks(command)
+        log.debug("__sendCommandRecursive: Sending '%s' resulted in '%s'" % (str(command), x))
         if "OK" in x:
             return True
         elif ("KO: password required. Use 'password' or 'auth'" in x
             and not again):
             #handle missing auth
-            self.authenticate(self.password);
+            log.debug('__sendCommandRecursive: Auth required')
+            self.__auth();
             self.__sendCommandRecursive(command, True);
         else:
+            log.debug('__sendCommandRecursive: Input failed. Aborting')
             self.authenticated = False
             return False
 
@@ -54,7 +68,14 @@ class TelnetClient:
         return self.__sendCommandRecursive(command, False)
 
     def __auth(self):
-        result = self.__sendCommandWithoutChecks("auth %s\r\n" % (self.password))
+        if (self.password == None):
+            log.debug("__auth: No password configured, not authenticating")
+            return False
+        log.debug("__auth: Trying to authenticate")
+        toSend = "auth %s\r\n" % str(self.password)
+        result = self.__sendCommandWithoutChecks(toSend)
+        log.debug("__auth: got: %s" % str(result))
         authenticated = ("OK" in result)
         self.authenticated = authenticated
+        log.debug("__auth: Authenticated: %s" % str(authenticated))
         return authenticated
