@@ -331,7 +331,7 @@ class Scanner:
                 self.unknownfound(filename, 'mon', False, RaidNo)
                 log.debug("Raid %s | %s | Level: %s" % (RaidNo, logtext, detectLevel))
 
-        log.debug("start_detect: permutation found: monfound '%s', eggfound '%s'" % (str(monfound), str(eggfound)))
+
         else:
             os.remove(filename)
             if RaidNo == 1:
@@ -344,6 +344,7 @@ class Scanner:
         #os.remove(filename)
         #os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
         #os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(RaidNo) + ".jpg")
+        log.debug("start_detect: permutation found: monfound '%s', eggfound '%s'" % (str(monfound), str(eggfound)))
         log.debug("start_detect: finished")
         return True
 
