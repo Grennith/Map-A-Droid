@@ -99,8 +99,8 @@ class Scanner:
             hatchTime = getHatchTime(self, raidtimer)
             log.error("getHatchTime: %s" % str(hatchTime))
             #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
-            raidstart = hatchTime
-            raidend = hatchTime + 45 * 60
+            raidstart = hatchTime - (self.timezone * 60 * 60)
+            raidend = hatchTime + 45 * 60 - (self.timezone * 60 * 60)
             #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
 
             log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
