@@ -104,7 +104,7 @@ class Scanner:
         if raidFound:
             if ':' in raidtimer:
                 now = datetime.datetime.now()
-                log.info("getHatchTime: found raidtimer '%s'" % str(raidtimer))
+                log.info("getHatchTime: found raidtimer '%s'" % raidtimer)
                 hatchTime = getHatchTime(self, raidtimer)
                 log.info("getHatchTime: Hatchtime %s" % str(hatchTime))
                 #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
