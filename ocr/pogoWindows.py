@@ -251,7 +251,8 @@ class PogoWindows:
             and mostPresentColour != (152, 218, 151)
             and mostPresentColour != (153, 218, 151)
             and mostPresentColour != (151, 218, 151)
-            and mostPresentColour != (77, 209, 163)):
+            and mostPresentColour != (77, 209, 163)
+            and mostPresentColour != (255, 255, 255)):
             return False
 
         gray = col.convert('L')
