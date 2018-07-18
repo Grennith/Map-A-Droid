@@ -12,7 +12,10 @@ import glob, os
 import mysql
 import mysql.connector
 import imutils
+from tinydb import TinyDB, Query
 
+hashdb = TinyDB('hashing.json')
+Hash = Query()
 log = logging.getLogger(__name__)
 args = parseArgs()
 
@@ -154,7 +157,7 @@ class Scanner:
                     monSplit = foundmon[1].split('_')
                     monID = monSplit[3]
                     log.debug('detectRaidBoss: Found mon in mon_img: ' + str(monID))
-                    break; #we found the mon that's most likely to be the one that's in the crop
+                    #we found the mon that's most likely to be the one that's in the crop
 
         else:
             os.remove(picName)
@@ -204,7 +207,7 @@ class Scanner:
             if not foundlvl is None and foundlvl[0]>0.9:
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
-                break;
+                
 
         if lvl:
             log.debug("detectLevel: found level '%s'" % str(lvl))
@@ -221,16 +224,16 @@ class Scanner:
         #if gymHash is none, we haven't seen the gym yet, otherwise, gymHash == gymId we are looking for
         if gymHash is None:
             for file in glob.glob("gym_img/*.jpg"):
-                find_gym = mt.fort_image_matching(raidpic, file, True, 0.55)
+                find_gym = mt.fort_image_matching(raidpic, file, True, 0.8)
                 if foundgym is None or find_gym > foundgym[0]:
     	        	foundgym = find_gym, file
 
-                if foundgym and foundgym[0]>0.55:
+                if foundgym and foundgym[0]>=0.8:
                     #okay, we very likely found our gym
                     gymSplit = foundgym[1].split('_')
                     gymId = gymSplit[2]
                     #if we are looking by coords (TODO), we will likely get additional checks somewhere around here and before the for-loop
-                    break;
+                    
 
         else:
             return gymHash
@@ -276,7 +279,7 @@ class Scanner:
         return resized
 
     def start_detect(self, filenameOfCrop, hash, raidNo):
-        log.debug("start_detect: Starting detection of crop")
+        log.debug("start_detect: Starting detection of crop" + str(raidNo))
         if not os.path.isfile(filenameOfCrop):
             log.error("start_detect: File does not exist: %s" % str(filenameOfCrop))
             return
@@ -317,6 +320,7 @@ class Scanner:
             log.warning("start_detect: could not determine gym, aborting analysis")
             self.unknownfound(filenameOfCrop, 'gym', True, raidNo)
             os.remove(filenameOfCrop)
+            log.debug("start_detect: finished")
             return True #return true since a raid is present, we just couldn't find the correct gym
 
         raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
@@ -331,6 +335,8 @@ class Scanner:
             eggId = eggIdsByLevel[int(raidlevel) - 1]
             log.debug("Found egg level %s starting at %s and ending at %s. GymID: %s" % (raidlevel, raidstart, raidend, gymId))
             self.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG')
+            self.cleanup(filenameOfCrop, hash, raidNo)
+            log.debug("start_detect: finished")
             return True
             #guid, pkm, lvl, start, end, type
         else:
@@ -342,18 +348,21 @@ class Scanner:
                 #we could not determine the mon... let's move the crop to unknown and stop analysing
                 log.error("start_detect: Could not determine mon in crop, aborting and moving crop to unknown")
                 self.unknownfound(filenameOfCrop, 'mon', False, raidNo)
-                os.remove(filenameOfCrop)
-                os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
+                self.cleanup(filenameOfCrop, hash, raidNo)
+                log.debug("start_detect: finished")
                 return True #since a raid is present, we just failed analysing the mon... SOOO CLOSE Q_Q
 
             log.debug("start_detect: submitting mon. ID: %s, gymId: %s" % (str(monFound[0]), str(gymId)))
             self.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
-            return True
+            self.cleanup(filenameOfCrop, hash, raidNo)
+            log.debug("start_detect: finished")
+            return True     
 
+    def cleanup(self, filenameOfCrop, hash, raidNo):
         #cleanup
+        log.debug('Cleanup')
         os.remove(filenameOfCrop)
         os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
-        log.debug("start_detect: finished")
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
         image2 = cv2.imread(image,3)
@@ -366,13 +375,15 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        log.debug('hash/_' + str(imageHash) + '_*_' + str(type) + '_')
-        for file in glob.glob('hash/_' + str(imageHash) + '_*_' + str(type) + '_'):
-            log.debug(file)
-            Split = file.split('_')
-            log.debug(Split)
-            return Split[2]
-
+        existHash = hashdb.search((Hash.type == str(type)) & (Hash.hash == str(imageHash)))
+        if not existHash:
+            log.debug('Hash not exists')
+            return None
+        for hashvalue in existHash:
+            log.debug('Found Hash in Database')
+            log.debug(hashvalue)
+            log.debug(hashvalue['id'])
+            return hashvalue['id']
         return None
 
     def imageHash(self, image, id, zoom, type, hashSize=8):
@@ -387,9 +398,11 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        file = open('hash/_' + str(imageHash) + '_' + str(id) + '_' + str(type) + '_','w')
-        file.write(id)
-        file.close()
+        log.debug('Adding Hash to Database')
+        log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
+        hashdb.insert({'type': str(type),'hash': str(imageHash), 'id': str(id)})
+        
+
 
 def checkHourMin(hour_min):
         hour_min[0] = unicode(hour_min[0].replace('O','0').replace('o','0').replace('A','4'))
