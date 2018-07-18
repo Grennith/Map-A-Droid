@@ -57,6 +57,7 @@ class checkScreenshot(PatternMatchingEventHandler):
                 #process.join()
             log.info("Done with new screenshot")
         else:
+            time.sleep(.5)
             raidNo = 1
             raidPic = cv2.imread(event.src_path)
             log.error("Got new file, running ocr scanner as normal thread")
