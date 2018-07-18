@@ -351,8 +351,8 @@ class Scanner:
             return True
 
         #cleanup
-        #os.remove(filenameOfCrop)
-        #os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
+        os.remove(filenameOfCrop)
+        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
         log.debug("start_detect: finished")
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
