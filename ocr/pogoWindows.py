@@ -250,7 +250,8 @@ class PogoWindows:
             and mostPresentColour != (146, 217, 152)
             and mostPresentColour != (152, 218, 151)
             and mostPresentColour != (153, 218, 151)
-            and mostPresentColour != (151, 218, 151)):
+            and mostPresentColour != (151, 218, 151)
+            and mostPresentColour != (77, 209, 163)):
             return False
 
         gray = col.convert('L')
@@ -264,7 +265,7 @@ class PogoWindows:
         os.remove(self.tempDirPath + "/" + str(hash) + "_speedmessage.png")
 
         log.debug("checkSpeedwarning: Found text: %s " % passengerString)
-        if len(passengerString) > 10:
+        if len(passengerString) > 4:
             log.debug('checkSpeedwarning: Found Speedmessage - closing ...')
             posPassenger = self.resolutionCalculator.getSpeedwarningClick()
             log.debug("checkSpeedwarning: Clicking %s" % str(posPassenger))

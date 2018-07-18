@@ -201,6 +201,7 @@ class Scanner:
             if not foundlvl is None and foundlvl[0]>0.5:
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
+                break;
 
         if lvl:
             log.debug("detectLevel: found level '%s'" % str(lvl))
@@ -249,6 +250,7 @@ class Scanner:
                     if not found is None and found[0]>=0.8:
                         unknownfound = 1
                         found = None
+                        break;
 
         if unknownfound == 0:
             raidpic = cv2.imread(raidpic)
@@ -309,7 +311,7 @@ class Scanner:
 
         if gymId is None:
             #gym unknown...
-            log.debug("start_detect: could not determine gym, aborting analysis")
+            log.warning("start_detect: could not determine gym, aborting analysis")
             self.unknownfound(filenameOfCrop, 'gym', True, raidNo)
             os.remove(filenameOfCrop)
             return True #return true since a raid is present, we just couldn't find the correct gym
@@ -334,14 +336,14 @@ class Scanner:
 
             if monFound is None:
                 #we could not determine the mon... let's move the crop to unknown and stop analysing
-                log.info("start_detect: Could not determine mon in crop, aborting and moving crop to unknown")
+                log.error("start_detect: Could not determine mon in crop, aborting and moving crop to unknown")
                 self.unknownfound(filenameOfCrop, 'mon', False, raidNo)
                 os.remove(filenameOfCrop)
                 os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
                 return True #since a raid is present, we just failed analysing the mon... SOOO CLOSE Q_Q
 
             log.debug("start_detect: submitting mon. ID: %s, gymId: %s" % (str(monFound[0]), str(gymId)))
-            self.submitRaid(str(gymId), monFound[0], None, None, None, 'MON')
+            self.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
 
         #cleanup
         os.remove(filenameOfCrop)
