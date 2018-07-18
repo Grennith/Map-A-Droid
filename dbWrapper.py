@@ -41,6 +41,8 @@ class DbWrapper:
 
         data = []
         for (start, latitude, longitude) in cursor:
+            if latitude is None or longitude is None:
+                continue
             timestamp = self.dbTimeStringToUnixTimestamp(str(start))
             data.append((timestamp, RaidLocation(latitude, longitude)))
 
