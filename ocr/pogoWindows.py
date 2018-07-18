@@ -11,7 +11,7 @@ import sys
 sys.path.insert(0, '../')
 from vnc.vncWrapper import VncWrapper
 import collections
-
+import re
 import time
 
 Coordinate = collections.namedtuple("Coordinate", ['x', 'y'])
@@ -76,7 +76,8 @@ class PogoWindows:
         os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.png")
 
         log.debug("checkPostLoginOkButton: Checking for post-login OK button found: %s" % text)
-        if 'O. K.' in text:
+        #if 'O. K.' in text:
+        if re.match(r'O.*K.*', text):
             log.debug('checkPostLoginOkButton: Found post login OK button - closing ...')
             pos = None
             if type == 'post_login_ok_driving':

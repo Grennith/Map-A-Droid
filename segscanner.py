@@ -154,12 +154,15 @@ class Scanner:
                     break; #we found the mon that's most likely to be the one that's in the crop
 
         else:
+            os.remove(picName)
             return monHash, monAsset
 
         if monID:
             self.imageHash(picName, monID, False, 'mon-' + str(lvl))
+            os.remove(picName)
             return monID, monAsset
 
+        os.remove(picName)
         return None, monAsset
 
     def detectEgg(self, raidpic, hash, raidcount):
@@ -333,6 +336,8 @@ class Scanner:
                 #we could not determine the mon... let's move the crop to unknown and stop analysing
                 log.info("start_detect: Could not determine mon in crop, aborting and moving crop to unknown")
                 self.unknownfound(filenameOfCrop, 'mon', False, raidNo)
+                os.remove(filenameOfCrop)
+                os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
                 return True #since a raid is present, we just failed analysing the mon... SOOO CLOSE Q_Q
 
             log.debug("start_detect: submitting mon. ID: %s, gymId: %s" % (str(monFound[0]), str(gymId)))
