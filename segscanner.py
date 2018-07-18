@@ -47,10 +47,6 @@ class Scanner:
             log.info('Unknow directory created')
             os.makedirs(self.unknownPath)
 
-        if not os.path.exists('hash'):
-            log.info('Hash directory created')
-            os.makedirs('hash')
-
     def submitRaid(self, guid, pkm, lvl, start, end, type):
         log.debug("Submitting raid")
         now = datetime.datetime.now()
