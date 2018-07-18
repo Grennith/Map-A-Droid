@@ -102,7 +102,7 @@ class Scanner:
         raidFound = len(raidtimer) > 0
 
         if raidFound:
-            if "R" not in raidtimer:
+            if ':' in raidtimer:
                 now = datetime.datetime.now()
                 log.info("getHatchTime: found raidtimer '%s'" % str(raidtimer))
                 hatchTime = getHatchTime(self, raidtimer)
