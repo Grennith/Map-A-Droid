@@ -23,6 +23,8 @@ monegg.append(args.egg3_mon_id)
 monegg.append(args.egg4_mon_id)
 monegg.append(args.egg5_mon_id)
 
+eggIdsByLevel = [1, 1, 2, 2, 3] #egg IDs are always the same, just remember to decrement your raidlevel
+
 class Scanner:
     def __init__(self, dbIp, dbPort, dbUser, dbPassword, dbName, tempPath, unknownPath, timezone):
         self.dbIp = dbIp
@@ -69,45 +71,53 @@ class Scanner:
                 'FROM_UNIXTIME(%s), %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE level = %s, ' +
                 'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
                 'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
-            data = (guid, lvl, start, start, end, pkm, "999", "1", "1", time.time(),
-                lvl, start, start, end, pkm, "999", "1", "1", time.time())
+            data = (guid, lvl, start, start, end, None, "999", "1", "1", time.time(), #TODO: check None vs null?
+                lvl, start, start, end, None, "999", "1", "1", time.time())
             #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
             cursor.execute(query, data)
         else:
             log.info("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, guid))
-            query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
-            data = (lvl, pkm, "999", "1", "1",  time.time(), guid)
+            #query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
+            query = " UPDATE raid SET pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s) WHERE gym_id = %s "
+            data = (pkm, "999", "1", "1",  time.time(), guid)
+            #data = (lvl, pkm, "999", "1", "1",  time.time(), guid)
             cursor.execute(query, data)
 
         connection.commit()
         return 0
 
-    def detectRaidTime(self, raidpic, hash):
+    def detectRaidTime(self, raidpic, hash, raidNo):
         log.debug('Reading Raidtimer')
         raidtimer = raidpic[180:210, 0:297]
         raidtimer = cv2.resize(raidtimer, (0,0), fx=3, fy=3)
-        cv2.imwrite(self.tempPath + "/" + str(hash) + "_emptyraid.png", raidtimer)
-        rt = Image.open(self.tempPath + "/" + str(hash) + "_emptyraid.png")
+        emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_emptyraid.png"
+        cv2.imwrite(emptyRaidTempPath, raidtimer)
+        rt = Image.open(emptyRaidTempPath)
         gray = rt.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
         raidtimer = pytesseract.image_to_string(bw, config='-psm 7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
         log.debug(raidtimer)
+        #cleanup
+        os.remove(emptyRaidTempPath)
+        raidFound = len(raidtimer) > 0
 
-        if "R" not in raidtimer:
-            now = datetime.datetime.now()
-            log.error(raidtimer)
-            hatchTime = getHatchTime(self, raidtimer)
-            log.error("getHatchTime: %s" % str(hatchTime))
-            #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
-            raidstart = hatchTime - (self.timezone * 60 * 60)
-            raidend = hatchTime + 45 * 60 - (self.timezone * 60 * 60)
-            #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
+        if raidFound:
+            if "R" not in raidtimer:
+                now = datetime.datetime.now()
+                log.info("getHatchTime: found raidtimer '%s'" % str(raidtimer))
+                hatchTime = getHatchTime(self, raidtimer)
+                log.info("getHatchTime: Hatchtime %s" % str(hatchTime))
+                #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
+                raidstart = hatchTime - (self.timezone * 60 * 60)
+                raidend = hatchTime + 45 * 60 - (self.timezone * 60 * 60)
+                #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
 
-            log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
-            return raidstart, raidend, raidtimer
+                log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
+                return (raidFound, True, raidstart, raidend)
+            else:
+                return (raidFound, False, 0, 0)
         else:
-            return 0, 0, raidtimer
-        return False
+            return (raidFound, False, None, None)
 
     def detectRaidBoss(self, raidpic, lvl, hash, raidcount):
         foundmon = None
@@ -127,9 +137,9 @@ class Scanner:
         picName = self.tempPath + "/" + str(hash) + "_raidboss" + str(raidcount) +".jpg"
         cv2.imwrite(picName, monAsset)
 
-        log.debug('Scanning Raidboss')
+        log.debug('detectRaidBoss: Scanning Raidboss')
         monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(raidcount) +".jpg", False, 'mon-' + str(lvl))
-        log.debug('Monhash: ' + str(monHash))
+        log.debug('detectRaidBoss: Monhash: ' + str(monHash))
 
         if not monHash:
             for file in glob.glob("mon_img/_mon_*_" + str(lvl) + ".png"):
@@ -137,10 +147,11 @@ class Scanner:
                 if foundmon is None or find_mon > foundmon[0]:
                     foundmon = find_mon, file
 
-                if not foundmon is None and foundmon[0]>0.7:
+                if foundmon and foundmon[0]>0.7:
                     monSplit = foundmon[1].split('_')
                     monID = monSplit[3]
-
+                    log.debug('detectRaidBoss: Found mon in mon_img: ' + str(monID))
+                    break; #we found the mon that's most likely to be the one that's in the crop
 
         else:
             return monHash, monAsset
@@ -149,7 +160,7 @@ class Scanner:
             self.imageHash(picName, monID, False, 'mon-' + str(lvl))
             return monID, monAsset
 
-        return False, monAsset
+        return None, monAsset
 
     def detectEgg(self, raidpic, hash, raidcount):
         foundegg = None
@@ -187,39 +198,42 @@ class Scanner:
             if not foundlvl is None and foundlvl[0]>0.5:
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
-                log.debug('Level: ' + str(lvl))
 
         if lvl:
             log.debug("detectLevel: found level '%s'" % str(lvl))
             return lvl
-
-        log.info("detectLevel: could not find level")
-        return False
+        else:
+            log.info("detectLevel: could not find level")
+            return None
 
     def detectGym(self, raidpic, hash, raidcount):
         foundgym = None
-        gymID = None
+        gymId = None
 
         gymHash = self.imageHashExists(raidpic, True, 'gym')
-        if not gymHash:
+        #if gymHash is none, we haven't seen the gym yet, otherwise, gymHash == gymId we are looking for
+        if gymHash is None:
             for file in glob.glob("gym_img/*.jpg"):
                 find_gym = mt.fort_image_matching(raidpic, file, True, 0.55)
                 if foundgym is None or find_gym > foundgym[0]:
     	        	foundgym = find_gym, file
 
-                if not foundgym is None and foundgym[0]>0.55:
+                if foundgym and foundgym[0]>0.55:
+                    #okay, we very likely found our gym
                     gymSplit = foundgym[1].split('_')
-                    gymID = gymSplit[2]
+                    gymId = gymSplit[2]
+                    #if we are looking by coords (TODO), we will likely get additional checks somewhere around here and before the for-loop
+                    break;
 
         else:
             return gymHash
 
-        if gymID:
-            self.imageHash(raidpic, gymID, True, 'gym')
-            return gymID
-
-        return False
-
+        if gymId:
+            self.imageHash(raidpic, gymId, True, 'gym')
+            return gymId
+        else:
+            #we could not find the gym...
+            return None
 
     def unknownfound(self, raidpic, type, zoom, raidcount):
         found = None
@@ -253,100 +267,81 @@ class Scanner:
         resized = cv2.resize(image, dim, interpolation = inter)
         return resized
 
-    def start_detect(self, filename, hash, RaidNo):
-        log.debug("Starting detection")
-        if not os.path.isfile(filename):
-            log.error("File does not exist: %s" % str(filename))
+    def start_detect(self, filenameOfCrop, hash, raidNo):
+        log.debug("start_detect: Starting detection of crop")
+        if not os.path.isfile(filenameOfCrop):
+            log.error("start_detect: File does not exist: %s" % str(filenameOfCrop))
             return
 
         #gymfound = False
         monfound = False
         eggfound = False
 
-        log.debug("Starting analysis")
+        log.debug("start_detect: Starting analysis of crop")
 
-        img = cv2.imread(filename)
+        img = cv2.imread(filenameOfCrop)
         img = imutils.resize(img, height=270)
         #img = cv2.resize(img, (176, 270), interpolation = cv2.INTER_CUBIC)
-        cv2.imwrite(filename, img)
-        img = cv2.imread(filename)
+        cv2.imwrite(filenameOfCrop, img)
+        img = cv2.imread(filenameOfCrop)
 
-        raidtimer = self.detectRaidTime(img, hash)
+        #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
+        raidtimer = self.detectRaidTime(img, hash, raidNo)
         log.debug("start_detect: got raidtime %s" % str(raidtimer))
-        if len(raidtimer[2]) > 0:
+        #first item in tuple stands for raid present in crop or not
+        if (not raidtimer[0]):
+            #there is no raid, stop analysis of crop, abandon ship
+            os.remove(filenameOfCrop)
+            log.debug("start_detect: Crop does not show a raid, stopping analysis")
+            return False
 
-            raidstart = raidtimer[0]
-            raidend = raidtimer[1]
+        #second item is true for egg present, False for mon present
+        eggfound = raidtimer[1]
+        raidstart = raidtimer[2] #will be 0 if eggfound = False. We report a mon anyway
+        raidend = raidtimer[3] #will be 0 if eggfound = False. We report a mon anyway
 
-            detectLevel = self.detectLevel(img, hash, RaidNo)
-            detectEgg = self.detectEgg(filename, hash, RaidNo)
-            log.debug("start_detect: got level %s and egg %s" % (str(detectLevel), str(detectEgg)))
-            if detectEgg:
-                log.debug("start_detect: Found egg")
-                eggfound = True
-            else:
-                log.debug("start_detect: Trying to detect raidboss")
-                detectRaidBoss = self.detectRaidBoss(img, detectLevel, hash, RaidNo)
-                log.debug("start_detect: Got raidboss '%s'" % str(detectRaidBoss))
-                if detectRaidBoss[0]:
-                    detectRaidBoss = detectRaidBoss[0]
-                    detectRaidBossBW = detectRaidBoss[1]
-                    monfound = True
-                else:
-                    detectRaidBossBW = detectRaidBoss[1]
+        #let's get the gym we're likely scanning the image of
+        gymId = self.detectGym(filenameOfCrop, hash, raidNo)
+        #gymId is either None for Gym not found or contains the gymId as String
 
-            detectGym = self.detectGym(filename, hash, RaidNo)
-            log.debug("start_detect: got gym %s" % str(detectGym))
-            if detectGym and eggfound:
-                logtext = 'Egg - ID: ' + str(detectEgg)
-                log.debug("Found egg Lv %s starting at %s and ending at %s. GymID: %s" % (detectEgg, raidstart, raidend, detectGym))
-                self.submitRaid(str(detectGym), monegg[int(detectLevel)-1], detectLevel, raidstart, raidend, 'EGG')
-                log.debug("Raid %s | Gym-ID: %s | %s | Level: %s" % (RaidNo, detectGym, logtext, detectLevel))
+        if gymId is None:
+            #gym unknown...
+            log.debug("start_detect: could not determine gym, aborting analysis")
+            self.unknownfound(filenameOfCrop, 'gym', True, raidNo)
+            os.remove(filenameOfCrop)
+            return True #return true since a raid is present, we just couldn't find the correct gym
 
-            if detectGym and monfound:
-                logtext = 'Mon - ID: ' + str(detectRaidBoss)
-                self.submitRaid(str(detectGym), detectRaidBoss, detectLevel, '-', '-', 'MON')
-                log.debug("Raid %s | Gym-ID: %s | %s | Level: %s" % (RaidNo, detectGym, logtext, detectLevel))
+        raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
+        log.debug("start_detect: determined raidlevel to be %s" % str(raidlevel))
+        if raidlevel is None:
+            log.error("start_detect: could not determine raidlevel. Filename of Crop: %s" % filenameOfCrop)
+            return True
 
-            if detectGym and (not monfound and not eggfound):
-                logtext = 'Mon or Egg unknown'
-                self.unknownfound(filename, 'mon', False, RaidNo)
-                log.debug("Raid %s | Gym-ID: %s | %s | Level: %s" % (RaidNo, detectGym, logtext, detectLevel))
+        if eggfound:
+            log.debug("start_detect: found the crop to contain an egg")
 
-
-            if not detectGym and (monfound or eggfound):
-                logtext = 'start_detect: Gym unknown'
-                log.info(logtext)
-                if monfound:
-                    logtext_add = 'Mon - ID: ' + str(detectRaidBoss)
-                else:
-                    logtext_add = 'Egg - ID: ' + str(detectEgg)
-                self.unknownfound(filename, 'gym', True, RaidNo)
-                log.debug("Raid %s | %s | %s | Level: %s" % (RaidNo, logtext, logtext_add, detectLevel))
-
-            if not detectGym and not monfound and not eggfound:
-                logtext = 'Gym unknown & Mon/Egg unknown'
-                log.info(logtext)
-                self.unknownfound(filename, 'gym', True, RaidNo)
-                self.unknownfound(filename, 'mon', False, RaidNo)
-                log.debug("Raid %s | %s | Level: %s" % (RaidNo, logtext, detectLevel))
-
-
+            eggId = eggIdsByLevel[int(raidlevel) - 1]
+            log.debug("Found egg level %s starting at %s and ending at %s. GymID: %s" % (raidlevel, raidstart, raidend, gymId))
+            self.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG')
+            #guid, pkm, lvl, start, end, type
         else:
-            os.remove(filename)
-            if RaidNo == 1:
-                log.debug('No active Raids')
-                return False
-            else:
-                log.debug('No more active Raids')
-                return False
+            log.debug("start_detect: found the crop to contain a raidboss, let's see what boss it is")
+            #detectRaidBoss either returns None if the mon cannot be determined or a monID
+            monFound = self.detectRaidBoss(img, raidlevel, hash, raidNo)
 
-        os.remove(filename)
-        #os.remove(self.tempPath + "/" + str(hash) + "_emptyraid.png")
-        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(RaidNo) + ".jpg")
-        log.debug("start_detect: permutation found: monfound '%s', eggfound '%s'" % (str(monfound), str(eggfound)))
+            if monFound is None:
+                #we could not determine the mon... let's move the crop to unknown and stop analysing
+                log.info("start_detect: Could not determine mon in crop, aborting and moving crop to unknown")
+                self.unknownfound(filenameOfCrop, 'mon', False, raidNo)
+                return True #since a raid is present, we just failed analysing the mon... SOOO CLOSE Q_Q
+
+            log.debug("start_detect: submitting mon. ID: %s, gymId: %s" % (str(monFound[0]), str(gymId)))
+            self.submitRaid(str(gymId), monFound[0], None, None, None, 'MON')
+
+        #cleanup
+        os.remove(filenameOfCrop)
+        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
         log.debug("start_detect: finished")
-        return True
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
         image2 = cv2.imread(image,3)
@@ -366,7 +361,7 @@ class Scanner:
             log.debug(Split)
             return Split[2]
 
-        return False
+        return None
 
     def imageHash(self, image, id, zoom, type, hashSize=8):
         image2 = cv2.imread(image,3)

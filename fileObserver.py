@@ -8,6 +8,7 @@ import logging
 from ocr.resolutionCalculator import *
 import collections
 import cv2
+import multiprocessing
 
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
@@ -27,19 +28,15 @@ class RaidScan:
 class checkScreenshot(PatternMatchingEventHandler):
     def __init__(self, width, height):
         self.resolutionCalculator = ResolutionCalc(width, height)
+        #self.procPool = Pool(10)
 
-    patterns = ['*.png']
-    ignore_directories = True
-    ignore_patterns = ""
-    case_sensitive = False
-    def on_created(self, event):
-
-        #TODO: code this better....
+    def process(self, event):
         if args.ocr_multitask:
             import multiprocessing
             raidNo = 1
             raidPic = cv2.imread(event.src_path)
-            log.info("Got new file, running ocr scanner")
+            log.info("Got new file, running ocr scanner with processes")
+            processes = []
             while raidNo < 7:
                 curTime = time.time()
                 hash = str(curTime)
@@ -49,14 +46,20 @@ class checkScreenshot(PatternMatchingEventHandler):
                 log.debug("on_created: scanning bounds: %s of %s" % (str(bounds), str(event.src_path)))
                 raid = raidPic[bounds.top:bounds.bottom, bounds.left:bounds.right]
                 cv2.imwrite(raidPicCrop, raid)
-                p = multiprocessing.Process(target=RaidScan.process, args=(raidPicCrop, hash, raidNo,))
+                p = multiprocessing.Process(target=RaidScan.process, name='OCR-Process', args=(raidPicCrop, hash, raidNo,))
+                processes.append(p)
                 p.daemon = True
                 p.start()
                 raidNo += 1
+
+            log.info("Finished starting off processes")
+            #for process in processes:
+                #process.join()
+            log.info("Done with new screenshot")
         else:
             raidNo = 1
             raidPic = cv2.imread(event.src_path)
-            log.error("Got new file, running ocr scanner")
+            log.error("Got new file, running ocr scanner as normal thread")
             while raidNo < 7:
                 curTime = time.time()
                 hash = str(curTime)
@@ -70,3 +73,13 @@ class checkScreenshot(PatternMatchingEventHandler):
                 if not checkcrop:
                     break
                 raidNo += 1
+
+    patterns = ['*.png']
+    ignore_directories = True
+    ignore_patterns = ""
+    case_sensitive = False
+    def on_created(self, event):
+        t = Thread(target=self.process(event), name='OCR-processing')
+        t.daemon = True
+        t.start()
+        #TODO: code this better....

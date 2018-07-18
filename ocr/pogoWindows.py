@@ -172,7 +172,7 @@ class PogoWindows:
             log.debug('checkRaidscreen: RAID-tab found')
             return True
         else:
-            log.error('checkRaidscreen: Could not locate RAID-tab')
+            log.warning('checkRaidscreen: Could not locate RAID-tab')
             return False
 
     def checkNearby(self, filename, hash):
@@ -185,7 +185,7 @@ class PogoWindows:
             self.vncWrapper.clickVnc(posRaids.x, posRaids.y)
             return False
         else:
-            log.error('Nearby already open')
+            log.info('Nearby already open')
             return True
 
     def checkGameQuitPopup(self, filename, hash):
@@ -224,7 +224,7 @@ class PogoWindows:
             self.vncWrapper.rightClickVnc()
             return True
         else:
-            log.error('checkGameQuitPopup: Could not find quit popup')
+            log.debug('checkGameQuitPopup: Could not find quit popup')
             return False
 
     def checkSpeedwarning(self, filename, hash):
