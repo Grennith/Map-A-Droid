@@ -39,13 +39,19 @@ class MonRaidImages(object):
         for mons in data:
             for mon in mons['DexID']:
                 lvl = mons['Level']
+                if str(mon).find("_") > -1:
+                    mon_split = str(mon).split("_")
+                    mon = mon_split[0]
+                    frmadd = mon_split[1] 
+                else:
+                    frmadd = "00"
 
                 mon = '{:03d}'.format(int(mon))
                 monFile = monImgPath + '_mon_' + str(mon) + '_' + str(lvl) + '.png'
 
                 if not os.path.isfile(monFile):
 
-                    monFileAsset = assetPath + 'decrypted_assets/pokemon_icon_' + str(mon) + '_00.png'
+                    monFileAsset = assetPath + 'decrypted_assets/pokemon_icon_' + str(mon) + '_' + frmadd + '.png'
 
                     if not os.path.isfile(monFileAsset):
                         log.error('File ' + str(monFileAsset) + ' not found')
