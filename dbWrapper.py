@@ -52,3 +52,61 @@ class DbWrapper:
 
         connection.commit()
         return data
+
+    def createHashDatabaseIfNotExists(self):
+        log.debug('Creating hash db in database')
+        try:
+            connection = mysql.connector.connect(host = self.host,
+                user = self.user, port = self.port, passwd = self.password,
+                db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return []
+        cursor = connection.cursor()
+	query = (' Create table if not exists trshash ( ' +
+	    ' hashid MEDIUMINT NOT NULL AUTO_INCREMENT, ' +
+            ' hash CHAR(255) NOT NULL, ' +
+            ' typ char(10) NOT NULL, ' +
+            ' id CHAR(255) NOT NULL, ' +
+            ' PRIMARY KEY (hashid))' )
+        log.debug(query)
+        cursor.execute(query)
+        connection.commit()
+        return True
+
+	def checkForHash(self, hash, type):
+	    try:
+                connection = mysql.connector.connect(host = self.host,
+                    user = self.user, port = self.port, passwd = self.password,
+                    db = self.database)
+            except:
+                log.error("Could not connect to the SQL database")
+                return []
+            cursor = connection.cursor()
+	    query = (' SELECT id FROM trshash ' +
+                'WHERE type = \'%s\' and hash = \'%s\''
+                % str(type), str(hash))
+	    log.debug(query)
+
+            cursor.execute(query)
+            for (id) in cursor:
+                if id is None:
+                   return None
+            return id
+
+	def insertHash(self, hash, type, id):
+	    try:
+                connection = mysql.connector.connect(host = self.host,
+                user = self.user, port = self.port, passwd = self.password,
+                db = self.database)
+            except:
+                log.error("Could not connect to the SQL database")
+                return []
+            cursor = connection.cursor()
+	    query = (' insert into trshash ' +
+		' ( hash, typ, id ) values ' +
+                ' (\'%s\', \'%s\', \'%s\')'
+                % str(hash), str(typ), str(id))
+	    log.debug(query)
+            cursor.execute(query)
+	    return True

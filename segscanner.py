@@ -12,10 +12,8 @@ import glob, os
 import mysql
 import mysql.connector
 import imutils
-from tinydb import TinyDB, Query
+from dbWrapper import *
 
-hashdb = TinyDB('hashing.json')
-Hash = Query()
 log = logging.getLogger(__name__)
 args = parseArgs()
 
@@ -356,6 +354,7 @@ class Scanner:
         os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
+        dbWrapper = DbWrapper(self.dbIp, self.dbPort, self.dbUser, self.dbPassword, self.dbName, self.timezone)
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -366,18 +365,15 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        existHash = hashdb.search((Hash.type == str(type)) & (Hash.hash == str(imageHash)))
+        existHash = dbWrapper.checkForHash( str(imageHash), str(type) )
         if not existHash:
             log.debug('Hash not exists')
             return None
-        for hashvalue in existHash:
-            log.debug('Found Hash in Database')
-            log.debug(hashvalue)
-            log.debug(hashvalue['id'])
-            return hashvalue['id']
-        return None
+        log.debu(existHash)
+        return existHash
 
     def imageHash(self, image, id, zoom, type, hashSize=8):
+        dbWrapper = DbWrapper(self.dbIp, self.dbPort, self.dbUser, self.dbPassword, self.dbName, self.timezone)
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -391,9 +387,7 @@ class Scanner:
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
         log.debug('Adding Hash to Database')
         log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
-        hashdb.insert({'type': str(type),'hash': str(imageHash), 'id': str(id)})
-
-
+        dbWrapper.insertHash(str(imageHash), str(type), str(id))
 
 def checkHourMin(hour_min):
         hour_min[0] = unicode(hour_min[0].replace('O','0').replace('o','0').replace('A','4'))
