@@ -7,5 +7,6 @@ screenshots/*
 unknown/*
 screenshot.png
 *.log
+hashing.json
 
 mon_img/_mon*

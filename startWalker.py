@@ -84,13 +84,20 @@ if not args.only_ocr:
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
 
 
+
 def main():
     log.info("Starting TheRaidMap")
     sys.excepthook = handle_exception
     log.info("Parsing arguments")
     args = parseArgs()
-    print(args.vnc_ip)
     set_log_and_verbosity(log)
+
+    if args.clean_hash_database:
+        log.info('Cleanup Hash Database')
+        from tinydb import TinyDB, Query
+        hashdb = TinyDB('hashing.json')
+        hashdb.purge()
+        hashdb.all()
 
     if not os.path.exists(args.raidscreen_path):
         log.info('Raidscreen directory created')

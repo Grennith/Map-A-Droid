@@ -12,7 +12,10 @@ import glob, os
 import mysql
 import mysql.connector
 import imutils
+from tinydb import TinyDB, Query
 
+hashdb = TinyDB('hashing.json')
+Hash = Query()
 log = logging.getLogger(__name__)
 args = parseArgs()
 
@@ -43,10 +46,6 @@ class Scanner:
         if not os.path.exists(self.unknownPath):
             log.info('Unknow directory created')
             os.makedirs(self.unknownPath)
-
-        if not os.path.exists('hash'):
-            log.info('Hash directory created')
-            os.makedirs('hash')
 
     def submitRaid(self, guid, pkm, lvl, start, end, type):
         log.debug("Submitting raid")
@@ -88,7 +87,7 @@ class Scanner:
 
     def detectRaidTime(self, raidpic, hash, raidNo):
         log.debug('Reading Raidtimer')
-        raidtimer = raidpic[180:210, 0:297]
+        raidtimer = raidpic[170:210, 0:297]
         raidtimer = cv2.resize(raidtimer, (0,0), fx=3, fy=3)
         emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_emptyraid.png"
         cv2.imwrite(emptyRaidTempPath, raidtimer)
@@ -106,14 +105,17 @@ class Scanner:
                 now = datetime.datetime.now()
                 log.info("getHatchTime: found raidtimer '%s'" % raidtimer)
                 hatchTime = getHatchTime(self, raidtimer)
-                log.info("getHatchTime: Hatchtime %s" % str(hatchTime))
-                #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
-                raidstart = hatchTime - (self.timezone * 60 * 60)
-                raidend = hatchTime + 45 * 60 - (self.timezone * 60 * 60)
-                #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
+                if hatchTime:
+                    log.info("getHatchTime: Hatchtime %s" % str(hatchTime))
+                    #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
+                    raidstart = hatchTime - (self.timezone * 60 * 60)
+                    raidend = hatchTime + 45 * 60 - (self.timezone * 60 * 60)
+                    #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
+                    log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
+                    return (raidFound, True, raidstart, raidend)
+                else:
+                    return (raidFound, False, None, None)
 
-                log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
-                return (raidFound, True, raidstart, raidend)
             else:
                 return (raidFound, False, 0, 0)
         else:
@@ -151,7 +153,7 @@ class Scanner:
                     monSplit = foundmon[1].split('_')
                     monID = monSplit[3]
                     log.debug('detectRaidBoss: Found mon in mon_img: ' + str(monID))
-                    break; #we found the mon that's most likely to be the one that's in the crop
+                    #we found the mon that's most likely to be the one that's in the crop
 
         else:
             os.remove(picName)
@@ -187,21 +189,21 @@ class Scanner:
     def detectLevel(self, raidpic, hash, raidcount):
         foundlvl = None
         lvl = None
-        raidlevel = raidpic[210:240, 0:297]
+        raidlevel = raidpic[200:240, 0:150]
         raidlevel = cv2.resize(raidlevel, (0,0), fx=3, fy=3)
 
         cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", raidlevel)
 
         log.debug('Scanning Level')
         for file in glob.glob("mon_img/_raidlevel_*.jpg"):
-            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.5)
+            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.9)
             if foundlvl is None or find_lvl > foundlvl[0]:
     	    	foundlvl = find_lvl, file
 
-            if not foundlvl is None and foundlvl[0]>0.5:
+            if not foundlvl is None and foundlvl[0]>0.9:
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
-                break;
+                
 
         if lvl:
             log.debug("detectLevel: found level '%s'" % str(lvl))
@@ -218,16 +220,16 @@ class Scanner:
         #if gymHash is none, we haven't seen the gym yet, otherwise, gymHash == gymId we are looking for
         if gymHash is None:
             for file in glob.glob("gym_img/*.jpg"):
-                find_gym = mt.fort_image_matching(raidpic, file, True, 0.55)
+                find_gym = mt.fort_image_matching(raidpic, file, True, 0.8)
                 if foundgym is None or find_gym > foundgym[0]:
     	        	foundgym = find_gym, file
 
-                if foundgym and foundgym[0]>0.55:
+                if foundgym and foundgym[0]>=0.8:
                     #okay, we very likely found our gym
                     gymSplit = foundgym[1].split('_')
                     gymId = gymSplit[2]
                     #if we are looking by coords (TODO), we will likely get additional checks somewhere around here and before the for-loop
-                    break;
+                    
 
         else:
             return gymHash
@@ -273,7 +275,7 @@ class Scanner:
         return resized
 
     def start_detect(self, filenameOfCrop, hash, raidNo):
-        log.debug("start_detect: Starting detection of crop")
+        log.debug("start_detect: Starting detection of crop" + str(raidNo))
         if not os.path.isfile(filenameOfCrop):
             log.error("start_detect: File does not exist: %s" % str(filenameOfCrop))
             return
@@ -314,6 +316,7 @@ class Scanner:
             log.warning("start_detect: could not determine gym, aborting analysis")
             self.unknownfound(filenameOfCrop, 'gym', True, raidNo)
             os.remove(filenameOfCrop)
+            log.debug("start_detect: finished")
             return True #return true since a raid is present, we just couldn't find the correct gym
 
         raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
@@ -328,6 +331,9 @@ class Scanner:
             eggId = eggIdsByLevel[int(raidlevel) - 1]
             log.debug("Found egg level %s starting at %s and ending at %s. GymID: %s" % (raidlevel, raidstart, raidend, gymId))
             self.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG')
+            self.cleanup(filenameOfCrop, hash, raidNo)
+            log.debug("start_detect: finished")
+            return True
             #guid, pkm, lvl, start, end, type
         else:
             log.debug("start_detect: found the crop to contain a raidboss, let's see what boss it is")
@@ -338,17 +344,21 @@ class Scanner:
                 #we could not determine the mon... let's move the crop to unknown and stop analysing
                 log.error("start_detect: Could not determine mon in crop, aborting and moving crop to unknown")
                 self.unknownfound(filenameOfCrop, 'mon', False, raidNo)
-                os.remove(filenameOfCrop)
-                os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
+                self.cleanup(filenameOfCrop, hash, raidNo)
+                log.debug("start_detect: finished")
                 return True #since a raid is present, we just failed analysing the mon... SOOO CLOSE Q_Q
 
             log.debug("start_detect: submitting mon. ID: %s, gymId: %s" % (str(monFound[0]), str(gymId)))
             self.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
+            self.cleanup(filenameOfCrop, hash, raidNo)
+            log.debug("start_detect: finished")
+            return True     
 
+    def cleanup(self, filenameOfCrop, hash, raidNo):
         #cleanup
+        log.debug('Cleanup')
         os.remove(filenameOfCrop)
         os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
-        log.debug("start_detect: finished")
 
     def imageHashExists(self, image, zoom, type, hashSize=8):
         image2 = cv2.imread(image,3)
@@ -361,13 +371,15 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        log.debug('hash/_' + str(imageHash) + '_*_' + str(type) + '_')
-        for file in glob.glob('hash/_' + str(imageHash) + '_*_' + str(type) + '_'):
-            log.debug(file)
-            Split = file.split('_')
-            log.debug(Split)
-            return Split[2]
-
+        existHash = hashdb.search((Hash.type == str(type)) & (Hash.hash == str(imageHash)))
+        if not existHash:
+            log.debug('Hash not exists')
+            return None
+        for hashvalue in existHash:
+            log.debug('Found Hash in Database')
+            log.debug(hashvalue)
+            log.debug(hashvalue['id'])
+            return hashvalue['id']
         return None
 
     def imageHash(self, image, id, zoom, type, hashSize=8):
@@ -382,9 +394,11 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        file = open('hash/_' + str(imageHash) + '_' + str(id) + '_' + str(type) + '_','w')
-        file.write(id)
-        file.close()
+        log.debug('Adding Hash to Database')
+        log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
+        hashdb.insert({'type': str(type),'hash': str(imageHash), 'id': str(id)})
+        
+
 
 def checkHourMin(hour_min):
         hour_min[0] = unicode(hour_min[0].replace('O','0').replace('o','0').replace('A','4'))
@@ -408,7 +422,7 @@ def getHatchTime(self,data):
                 if ret == True:
                     return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
                 else:
-                    return -1
+                    return False
             elif PM >= 4:
                 data = data.replace('P','').replace('M','').replace('~','').replace('-','').replace(' ','')
                 hour_min = data.split(':')
@@ -419,7 +433,7 @@ def getHatchTime(self,data):
                     else:
                         return int(unix_zero)+(int(hour_min[0])+12)*3600+int(hour_min[1])*60
                 else:
-                    return -1
+                    return False
             else:
                 data = data.replace('~','').replace('-','').replace(' ','')
                 hour_min = data.split(':')
@@ -427,9 +441,9 @@ def getHatchTime(self,data):
                 if ret == True:
                     return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
                 else:
-                    return -1
+                    return False
         else:
-            return -1
+            return False
 
 if __name__ == '__main__':
     scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path, args.unknown_path, args.timezone)

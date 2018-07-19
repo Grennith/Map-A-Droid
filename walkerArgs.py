@@ -113,6 +113,10 @@ def parseArgs():
     parser.add_argument('-egg5mon', '--egg5_mon_id', default='198',
             help=('Mon Placeholder for Level 5. Default: 198'))
 
+    # Cleanup Hash Database
+    parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
+            help=('Cleanup the hashing database.'))
+
     #timezone
     parser.add_argument('-tz', '--timezone', type=int, required=True,
             help=('Hours Difference to GMT0. f.e.: +2 for Berlin/Germany'))
