@@ -11,3 +11,5 @@ mysql-connector-python-rf
 twisted
 gpxdata
 tinydb
+json
+
