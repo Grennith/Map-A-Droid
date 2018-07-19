@@ -187,13 +187,17 @@ class Scanner:
     def detectLevel(self, raidpic, hash, raidcount):
         foundlvl = None
         lvl = None
+        lvlTypes = ['mon_img/_raidlevel_5_.jpg', 'mon_img/_raidlevel_4_.jpg',
+                    'mon_img/_raidlevel_3_.jpg', 'mon_img/_raidlevel_2_.jpg',
+                    'mon_img/_raidlevel_1_.jpg']
+
         raidlevel = raidpic[200:240, 0:150]
         raidlevel = cv2.resize(raidlevel, (0,0), fx=3, fy=3)
 
         cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", raidlevel)
 
         log.debug('Scanning Level')
-        for file in glob.glob("mon_img/_raidlevel_*.jpg"):
+        for file in lvlTypes:
             find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.9)
             if foundlvl is None or find_lvl > foundlvl[0]:
     	    	foundlvl = find_lvl, file
