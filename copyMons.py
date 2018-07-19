@@ -28,7 +28,7 @@ class MonRaidImages(object):
                     2: [125, 303, 185, 310],
                     3: [68, 142, 135, 95],
                     4: [359, 248, 76, 112],
-                    5: [378, 249]
+                    5: [377, 145]
                 }
 
         if not os.path.exists(assetPath):
