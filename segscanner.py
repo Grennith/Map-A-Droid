@@ -203,7 +203,7 @@ class Scanner:
             if not foundlvl is None and foundlvl[0]>0.9:
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
-                
+
 
         if lvl:
             log.debug("detectLevel: found level '%s'" % str(lvl))
@@ -229,7 +229,7 @@ class Scanner:
                     gymSplit = foundgym[1].split('_')
                     gymId = gymSplit[2]
                     #if we are looking by coords (TODO), we will likely get additional checks somewhere around here and before the for-loop
-                    
+
 
         else:
             return gymHash
@@ -284,7 +284,7 @@ class Scanner:
         monfound = False
         eggfound = False
 
-        log.debug("start_detect: Starting analysis of crop")
+        log.debug("start_detect: Starting analysis of crop %s" % str(raidNo))
 
         img = cv2.imread(filenameOfCrop)
         img = imutils.resize(img, height=270)
@@ -294,12 +294,12 @@ class Scanner:
 
         #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
         raidtimer = self.detectRaidTime(img, hash, raidNo)
-        log.debug("start_detect: got raidtime %s" % str(raidtimer))
+        log.debug("start_detect[crop %s]: got raidtime %s" % (str(raidNo), str(raidtimer)))
         #first item in tuple stands for raid present in crop or not
         if (not raidtimer[0]):
             #there is no raid, stop analysis of crop, abandon ship
             os.remove(filenameOfCrop)
-            log.debug("start_detect: Crop does not show a raid, stopping analysis")
+            log.debug("start_detect[crop %s]: Crop does not show a raid, stopping analysis" % str(raidNo))
             return False
 
         #second item is true for egg present, False for mon present
@@ -313,46 +313,41 @@ class Scanner:
 
         if gymId is None:
             #gym unknown...
-            log.warning("start_detect: could not determine gym, aborting analysis")
+            log.warning("start_detect[crop %s]: could not determine gym, aborting analysis" % str(raidNo))
             self.unknownfound(filenameOfCrop, 'gym', True, raidNo)
             os.remove(filenameOfCrop)
-            log.debug("start_detect: finished")
+            log.debug("start_detect[crop %s]: finished" % str(raidNo))
             return True #return true since a raid is present, we just couldn't find the correct gym
 
         raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
-        log.debug("start_detect: determined raidlevel to be %s" % str(raidlevel))
+        log.debug("start_detect[crop %s]: determined raidlevel to be %s" % (str(raidNo), str(raidlevel)))
         if raidlevel is None:
-            log.error("start_detect: could not determine raidlevel. Filename of Crop: %s" % filenameOfCrop)
+            log.error("start_detect[crop %s]: could not determine raidlevel. Filename of Crop: %s" % (str(raidNo), filenameOfCrop))
             return True
 
         if eggfound:
-            log.debug("start_detect: found the crop to contain an egg")
+            log.debug("start_detect[crop %s]: found the crop to contain an egg" % str(raidNo))
 
             eggId = eggIdsByLevel[int(raidlevel) - 1]
-            log.debug("Found egg level %s starting at %s and ending at %s. GymID: %s" % (raidlevel, raidstart, raidend, gymId))
+            log.debug("start_detect[crop %s]: Found egg level %s starting at %s and ending at %s. GymID: %s" % (str(raidNo), raidlevel, raidstart, raidend, gymId))
             self.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG')
-            self.cleanup(filenameOfCrop, hash, raidNo)
-            log.debug("start_detect: finished")
-            return True
             #guid, pkm, lvl, start, end, type
         else:
-            log.debug("start_detect: found the crop to contain a raidboss, let's see what boss it is")
+            log.debug("start_detect[crop %s]: found the crop to contain a raidboss, let's see what boss it is" % str(raidNo))
             #detectRaidBoss either returns None if the mon cannot be determined or a monID
             monFound = self.detectRaidBoss(img, raidlevel, hash, raidNo)
 
             if monFound is None:
                 #we could not determine the mon... let's move the crop to unknown and stop analysing
-                log.error("start_detect: Could not determine mon in crop, aborting and moving crop to unknown")
+                log.error("start_detect[crop %s]: Could not determine mon in crop, aborting and moving crop to unknown" % str(raidNo))
                 self.unknownfound(filenameOfCrop, 'mon', False, raidNo)
-                self.cleanup(filenameOfCrop, hash, raidNo)
-                log.debug("start_detect: finished")
-                return True #since a raid is present, we just failed analysing the mon... SOOO CLOSE Q_Q
+            else:
+                log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(monFound[0]), str(gymId)))
+                self.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
 
-            log.debug("start_detect: submitting mon. ID: %s, gymId: %s" % (str(monFound[0]), str(gymId)))
-            self.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
-            self.cleanup(filenameOfCrop, hash, raidNo)
-            log.debug("start_detect: finished")
-            return True     
+        self.cleanup(filenameOfCrop, hash, raidNo)
+        log.debug("start_detect[crop %s]: finished" % str(raidNo))
+        return True
 
     def cleanup(self, filenameOfCrop, hash, raidNo):
         #cleanup
@@ -397,7 +392,7 @@ class Scanner:
         log.debug('Adding Hash to Database')
         log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
         hashdb.insert({'type': str(type),'hash': str(imageHash), 'id': str(id)})
-        
+
 
 
 def checkHourMin(hour_min):
