@@ -342,7 +342,7 @@ class Scanner:
                 log.error("start_detect[crop %s]: Could not determine mon in crop, aborting and moving crop to unknown" % str(raidNo))
                 self.unknownfound(filenameOfCrop, 'mon', False, raidNo)
             else:
-                log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(monFound[0]), str(gymId)))
+                log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(raidNo), str(monFound[0]), str(gymId)))
                 self.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
 
         self.cleanup(filenameOfCrop, hash, raidNo)
