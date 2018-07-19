@@ -5,6 +5,7 @@ import imutils
 import glob, os
 import os.path
 import logging
+import json
 from shutil import copyfile
 from PIL import Image
 
@@ -15,6 +16,9 @@ class MonRaidImages(object):
     def copyMons(pogoasset):
 
         log.info('Processing Pokemon Matching....')
+        
+        with open('raidmons.json') as f:
+            data = json.load(f)
 
         monImgPath = os.getcwd() + '/mon_img/'
         filePath = os.path.dirname(monImgPath)
@@ -24,12 +28,6 @@ class MonRaidImages(object):
             os.makedirs(filePath)
 
         assetPath = pogoasset
-        raidMons = {1: [129, 140, 320, 138], 
-                    2: [125, 303, 185, 310],
-                    3: [68, 142, 135, 95],
-                    4: [359, 248, 76, 112],
-                    5: [377, 145]
-                }
 
         if not os.path.exists(assetPath):
             log.error('PogoAssets not found')
@@ -38,8 +36,9 @@ class MonRaidImages(object):
         for file in glob.glob(monImgPath + "*mon*.png"):
                     os.remove(file)
 
-        for lvl, mons in raidMons.iteritems():
-            for mon in mons:
+        for mons in data:
+            for mon in mons['DexID']:
+                lvl = mons['Level']
 
                 mon = '{:03d}'.format(int(mon))
                 monFile = monImgPath + '_mon_' + str(mon) + '_' + str(lvl) + '.png'
