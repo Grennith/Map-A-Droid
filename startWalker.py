@@ -103,6 +103,9 @@ def main():
         log.info('Raidscreen directory created')
         os.makedirs(args.raidscreen_path)
 
+    dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
+    dbWrapper.createHashDatabaseIfNotExists()
+
     MonRaidImages.runAll(args.pogoasset)
 
     if not args.only_ocr:

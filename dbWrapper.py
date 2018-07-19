@@ -52,3 +52,66 @@ class DbWrapper:
 
         connection.commit()
         return data
+
+    def createHashDatabaseIfNotExists(self):
+        log.debug('Creating hash db in database')
+        try:
+            connection = mysql.connector.connect(host = self.host,
+                user = self.user, port = self.port, passwd = self.password,
+                db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+        cursor = connection.cursor()
+        query = (' Create table if not exists trshash ( ' +
+            ' hashid MEDIUMINT NOT NULL AUTO_INCREMENT, ' +
+            ' hash CHAR(255) NOT NULL, ' +
+            ' type char(10) NOT NULL, ' +
+            ' id CHAR(255) NOT NULL, ' +
+            ' PRIMARY KEY (hashid))' )
+        log.debug(query)
+        cursor.execute(query)
+        connection.commit()
+        return True
+
+    def checkForHash(self, hash, type):
+        log.debug('Checking for hash in db')
+        try:
+            connection = mysql.connector.connect(host = self.host,
+                user = self.user, port = self.port, passwd = self.password,
+                db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return None
+        cursor = connection.cursor()
+        query = (' SELECT id FROM trshash ' +
+                'WHERE type = \'%s\' and hash = \'%s\''
+                % (str(type), str(hash)))
+        log.debug(query)
+
+        cursor.execute(query)
+        id = None
+        for (id) in cursor:
+            if id is None:
+                return None
+            else:
+                log.debug("checkForHash: Found hash %s" % str(id[0]))
+                return id[0]
+
+    def insertHash(self, hash, type, id):
+        try:
+            connection = mysql.connector.connect(host = self.host,
+            user = self.user, port = self.port, passwd = self.password,
+            db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+        cursor = connection.cursor()
+        query = (' INSERT INTO trshash ' +
+              ' ( hash, type, id ) VALUES ' +
+              ' (\'%s\', \'%s\', \'%s\')'
+              % (str(hash), str(type), str(id)))
+        log.debug(query)
+        cursor.execute(query)
+        connection.commit()
+        return True
