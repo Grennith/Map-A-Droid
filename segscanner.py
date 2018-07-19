@@ -365,11 +365,11 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        existHash = dbWrapper.checkForHash( str(imageHash), str(type) )
+        existHash = dbWrapper.checkForHash(str(imageHash), str(type))
         if not existHash:
             log.debug('Hash not exists')
             return None
-        log.debu(existHash)
+        log.debug(existHash)
         return existHash
 
     def imageHash(self, image, id, zoom, type, hashSize=8):
