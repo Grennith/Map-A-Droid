@@ -367,9 +367,9 @@ class Scanner:
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
         existHash = dbWrapper.checkForHash(str(imageHash), str(type))
         if not existHash:
-            log.debug('Hash not exists')
+            log.debug('Hash not found')
             return None
-        log.debug(existHash)
+        log.debug('Hash found: %s' % existHash)
         return existHash
 
     def imageHash(self, image, id, zoom, type, hashSize=8):

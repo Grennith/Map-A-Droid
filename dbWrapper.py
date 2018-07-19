@@ -61,12 +61,12 @@ class DbWrapper:
                 db = self.database)
         except:
             log.error("Could not connect to the SQL database")
-            return []
+            return False
         cursor = connection.cursor()
         query = (' Create table if not exists trshash ( ' +
             ' hashid MEDIUMINT NOT NULL AUTO_INCREMENT, ' +
             ' hash CHAR(255) NOT NULL, ' +
-            ' typ char(10) NOT NULL, ' +
+            ' type char(10) NOT NULL, ' +
             ' id CHAR(255) NOT NULL, ' +
             ' PRIMARY KEY (hashid))' )
         log.debug(query)
@@ -82,7 +82,7 @@ class DbWrapper:
                 db = self.database)
         except:
             log.error("Could not connect to the SQL database")
-            return []
+            return None
         cursor = connection.cursor()
         query = (' SELECT id FROM trshash ' +
                 'WHERE type = \'%s\' and hash = \'%s\''
@@ -90,10 +90,13 @@ class DbWrapper:
         log.debug(query)
 
         cursor.execute(query)
+        id = None
         for (id) in cursor:
             if id is None:
-               return None
-        return id
+                return None
+            else:
+                log.debug("checkForHash: Found hash %s" % str(id[0]))
+                return id[0]
 
     def insertHash(self, hash, type, id):
         try:
@@ -102,12 +105,13 @@ class DbWrapper:
             db = self.database)
         except:
             log.error("Could not connect to the SQL database")
-            return []
+            return False
         cursor = connection.cursor()
-        query = (' insert into trshash ' +
-              ' ( hash, typ, id ) values ' +
+        query = (' INSERT INTO trshash ' +
+              ' ( hash, type, id ) VALUES ' +
               ' (\'%s\', \'%s\', \'%s\')'
-              % (str(hash), str(typ), str(id)))
+              % (str(hash), str(type), str(id)))
         log.debug(query)
         cursor.execute(query)
+        connection.commit()
         return True
