@@ -104,8 +104,8 @@ class DbWrapper:
             user = self.user, port = self.port, passwd = self.password,
             db = self.database)
         except:
-            log.error("Could not connect to the SQL database")
-            return False
+           log.error("Could not connect to the SQL database")
+           return False
         cursor = connection.cursor()
         query = (' INSERT INTO trshash ' +
               ' ( hash, type, id ) VALUES ' +
@@ -115,3 +115,24 @@ class DbWrapper:
         cursor.execute(query)
         connection.commit()
         return True
+
+    def deleteHashTable(self, ids, type):
+        log.debug('Deleting old Hashes of type %s' % type)
+        _List = ','.join(map(str, ids))
+        log.debug('Valid ids: %s' %  _List)
+        try:
+            connection = mysql.connector.connect(host = self.host,
+            user = self.user, port = self.port, passwd = self.password,
+            db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+        cursor = connection.cursor()
+        query = (' DELETE FROM trshash ' +
+              ' where id not in (' + _List + ') ' +
+              ' and type like \'%' + type + '%\'')
+        log.debug(query)
+        cursor.execute(query)
+        connection.commit()
+        return True
+

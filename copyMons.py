@@ -8,15 +8,20 @@ import logging
 import json
 from shutil import copyfile
 from PIL import Image
+from walkerArgs import parseArgs
+from dbWrapper import *
 
 log = logging.getLogger(__name__)
+args = parseArgs()
 
 class MonRaidImages(object):
+
     @staticmethod
     def copyMons(pogoasset):
 
+        monList = []
+
         log.info('Processing Pokemon Matching....')
-        
         with open('raidmons.json') as f:
             data = json.load(f)
 
@@ -47,6 +52,8 @@ class MonRaidImages(object):
                     frmadd = "00"
 
                 mon = '{:03d}'.format(int(mon))
+                monList.append(mon)
+
                 monFile = monImgPath + '_mon_' + str(mon) + '_' + str(lvl) + '.png'
 
                 if not os.path.isfile(monFile):
@@ -56,9 +63,9 @@ class MonRaidImages(object):
                     if not os.path.isfile(monFileAsset):
                         log.error('File ' + str(monFileAsset) + ' not found')
                         exit(0)
-                
+
                     copyfile(monFileAsset, monFile)
-            
+
                     image = Image.open(monFile)
                     image.convert("RGBA")
                     canvas = Image.new('RGBA', image.size, (255,255,255,255)) # Empty canvas colour (r,g,b,a)
@@ -74,6 +81,12 @@ class MonRaidImages(object):
                     kernel = np.ones((3,3),np.uint8)
                     crop = cv2.erode(crop,kernel,iterations = 1)
                     cv2.imwrite(monFile, crop)
+
+        _monList = myList = ','.join(map(str, monList))
+        dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
+        dbWrapper.deleteHashTable(monList, 'Mon%')
+
+
 
     @staticmethod
     def copyEggs(pogoasset):
