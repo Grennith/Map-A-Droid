@@ -7,7 +7,7 @@ import logging
 
 log = logging.getLogger(__name__)
 
-def fort_image_matching(url_img_name, fort_img_name, zoom, ttest):
+def fort_image_matching(url_img_name, fort_img_name, zoom, value, x1=135, x2=200, y1=65, y2=95):
     #log.debug("fort_image_matching: Reading url_img_name '%s'" % str(url_img_name))
     url_img = cv2.imread(url_img_name,3)
     if (url_img is None):
@@ -34,7 +34,7 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, ttest):
             #cv2.imwrite('test2_' + str(time.time()) + '.png', fort_img)
 
         url_img = cv2.resize(url_img,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
-        crop = url_img[int(135):int(200),int(65):int(95)]
+        crop = url_img[int(y1):int(y2),int(x1):int(x2)]
         #cv2.imwrite('test_' + str(time.time()) + '.png', crop)
     else:
         fort_img = cv2.resize(fort_img,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
@@ -61,7 +61,7 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, ttest):
 	        found = (maxVal, maxLoc, r)
 
 
-    if found[0] < ttest:
+    if found[0] < value:
         return 0.0
 
     return found[0]

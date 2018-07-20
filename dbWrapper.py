@@ -118,8 +118,7 @@ class DbWrapper:
 
     def deleteHashTable(self, ids, type):
         log.debug('Deleting old Hashes of type %s' % type)
-        _List = ','.join(map(str, ids))
-        log.debug('Valid ids: %s' %  _List)
+        log.debug('Valid ids: %s' %  ids)
         try:
             connection = mysql.connector.connect(host = self.host,
             user = self.user, port = self.port, passwd = self.password,
@@ -129,7 +128,7 @@ class DbWrapper:
             return False
         cursor = connection.cursor()
         query = (' DELETE FROM trshash ' +
-              ' where id not in (' + _List + ') ' +
+              ' where id not in (' + ids + ') ' +
               ' and type like \'%' + type + '%\'')
         log.debug(query)
         cursor.execute(query)

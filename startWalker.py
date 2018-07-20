@@ -91,19 +91,17 @@ def main():
     log.info("Parsing arguments")
     args = parseArgs()
     set_log_and_verbosity(log)
+    dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
 
     if args.clean_hash_database:
         log.info('Cleanup Hash Database')
-        from tinydb import TinyDB, Query
-        hashdb = TinyDB('hashing.json')
-        hashdb.purge()
-        hashdb.all()
+        dbWrapper.deleteHashTable('999', '')
 
     if not os.path.exists(args.raidscreen_path):
         log.info('Raidscreen directory created')
         os.makedirs(args.raidscreen_path)
 
-    dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
+    
     dbWrapper.createHashDatabaseIfNotExists()
 
     MonRaidImages.runAll(args.pogoasset)

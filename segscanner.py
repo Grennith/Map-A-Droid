@@ -13,6 +13,7 @@ import mysql
 import mysql.connector
 import imutils
 from dbWrapper import *
+import json
 
 log = logging.getLogger(__name__)
 args = parseArgs()
@@ -92,7 +93,7 @@ class Scanner:
         rt = Image.open(emptyRaidTempPath)
         gray = rt.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        raidtimer = pytesseract.image_to_string(bw, config='-psm 7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
+        raidtimer = pytesseract.image_to_string(bw, config='-psm 7 -c tessedit_char_whitelist=0123456789:APM').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
         log.debug(raidtimer)
         #cleanup
         os.remove(emptyRaidTempPath)
@@ -141,17 +142,18 @@ class Scanner:
         monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(raidcount) +".jpg", False, 'mon-' + str(lvl))
         log.debug('detectRaidBoss: Monhash: ' + str(monHash))
 
-        if not monHash:
+        if monHash is None:
             for file in glob.glob("mon_img/_mon_*_" + str(lvl) + ".png"):
-                find_mon = mt.fort_image_matching(file, picName, False, 0.7)
+                find_mon = mt.fort_image_matching(file, picName, False, 0.75)
                 if foundmon is None or find_mon > foundmon[0]:
                     foundmon = find_mon, file
 
-                if foundmon and foundmon[0]>0.7:
+                if foundmon and foundmon[0]>0.75:
                     monSplit = foundmon[1].split('_')
                     monID = monSplit[3]
-                    log.debug('detectRaidBoss: Found mon in mon_img: ' + str(monID))
-                    #we found the mon that's most likely to be the one that's in the crop
+                    
+            #we found the mon that's most likely to be the one that's in the crop
+            log.debug('detectRaidBoss: Found mon in mon_img: ' + str(monID))
 
         else:
             os.remove(picName)
@@ -161,9 +163,11 @@ class Scanner:
             self.imageHash(picName, monID, False, 'mon-' + str(lvl))
             os.remove(picName)
             return monID, monAsset
+            
+        log.debug('No Mon found!')
 
         os.remove(picName)
-        return None, monAsset
+        return False, monAsset
 
     def detectEgg(self, raidpic, hash, raidcount):
         foundegg = None
@@ -176,7 +180,8 @@ class Scanner:
             if not foundegg is None and foundegg[0]>0.9:
                 eggSplit = foundegg[1].split('_')
                 eggID = eggSplit[3]
-                log.debug('Eggfound: ' + str(eggID))
+                
+        log.debug('Eggfound: ' + str(eggID))
 
         if eggID:
             return eggID
@@ -214,15 +219,35 @@ class Scanner:
             log.info("detectLevel: could not find level")
             return None
 
-    def detectGym(self, raidpic, hash, raidcount):
+    def detectGym(self, raidpic, hash, raidcount, monId = None):
         foundgym = None
         gymId = None
+        x1 = 65
+        x2 = 95
+        y1 = 135
+        y2 = 200
 
-        gymHash = self.imageHashExists(raidpic, True, 'gym')
+        
         #if gymHash is none, we haven't seen the gym yet, otherwise, gymHash == gymId we are looking for
+        if monId:
+            log.debug('Got Mon-ID for Gym-Detection %s' % monId)
+            with open('monsspec.json') as f:
+                data = json.load(f)
+            
+            if str(monId) in data:
+                crop = data[str(monId)]["Crop"]
+                log.debug('Found other Crops for Mon %s' % monId)
+                log.debug(str(crop))
+                x1 = crop['X1']
+                x2 = crop['X2']
+                y1 = crop['Y1']
+                y2 = crop['Y2']
+                
+        gymHash = self.imageHashExists(raidpic, True, 'gym', x1, x2, y1, y2)
+
         if gymHash is None:
             for file in glob.glob("gym_img/*.jpg"):
-                find_gym = mt.fort_image_matching(raidpic, file, True, 0.8)
+                find_gym = mt.fort_image_matching(raidpic, file, True, 0.8, x1, x2, y1, y2)
                 if foundgym is None or find_gym > foundgym[0]:
     	        	foundgym = find_gym, file
 
@@ -237,7 +262,7 @@ class Scanner:
             return gymHash
 
         if gymId:
-            self.imageHash(raidpic, gymId, True, 'gym')
+            self.imageHash(raidpic, gymId, True, 'gym', x1, x2, y1, y2)
             return gymId
         else:
             #we could not find the gym...
@@ -261,6 +286,23 @@ class Scanner:
             cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(time.time()) +".jpg", raidpic)
 
         return True
+        
+    def decodeHashJson(self, hashJson):
+        data = json.loads(hashJson)
+        log.debug('Decoding Raid Hash Json')
+        log.debug(data)
+        
+        raidGym = data['gym']
+        raidLvl = data["lvl"]
+        raidMon = data["mon"]
+        
+        return raidGym, raidLvl, raidMon
+        
+    def encodeHashJson(self, gym, lvl, mon):
+        log.debug('Encoding Raid Hash Json')
+        hashJson = json.dumps({'gym': gym, 'lvl': lvl, 'mon': mon, 'lvl': lvl}, separators=(',',':'))
+        log.debug(hashJson)
+        return hashJson
 
     def resize(image, width = None, height = None, inter = cv2.INTER_AREA):
         dim = None
@@ -282,7 +324,7 @@ class Scanner:
             log.error("start_detect: File does not exist: %s" % str(filenameOfCrop))
             return
 
-        #gymfound = False
+
         monfound = False
         eggfound = False
 
@@ -290,9 +332,13 @@ class Scanner:
 
         img = cv2.imread(filenameOfCrop)
         img = imutils.resize(img, height=270)
-        #img = cv2.resize(img, (176, 270), interpolation = cv2.INTER_CUBIC)
         cv2.imwrite(filenameOfCrop, img)
         img = cv2.imread(filenameOfCrop)
+        
+        
+        raidhash = img[0:170, 0:280]
+        raidhashPic = self.tempPath + "/" + str(hash) + "_raidhash" + str(raidNo) +".jpg"
+        cv2.imwrite(raidhashPic, raidhash)
 
         #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
         raidtimer = self.detectRaidTime(img, hash, raidNo)
@@ -301,25 +347,38 @@ class Scanner:
         if (not raidtimer[0]):
             #there is no raid, stop analysis of crop, abandon ship
             os.remove(filenameOfCrop)
+            os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: Crop does not show a raid, stopping analysis" % str(raidNo))
             return False
-
+        
         #second item is true for egg present, False for mon present
         eggfound = raidtimer[1]
         raidstart = raidtimer[2] #will be 0 if eggfound = False. We report a mon anyway
         raidend = raidtimer[3] #will be 0 if eggfound = False. We report a mon anyway
-
-        #let's get the gym we're likely scanning the image of
-        gymId = self.detectGym(filenameOfCrop, hash, raidNo)
-        #gymId is either None for Gym not found or contains the gymId as String
-
-        if gymId is None:
-            #gym unknown...
-            log.warning("start_detect[crop %s]: could not determine gym, aborting analysis" % str(raidNo))
-            self.unknownfound(filenameOfCrop, 'gym', True, raidNo)
+        
+        log.debug('Creating Hash overall')  
+        raidHash = self.imageHashExists(raidhashPic, False, 'raid')
+        log.debug('detectRaidHash: ' + str(raidHash))
+        
+        if raidHash:
+            raidHash = self.decodeHashJson(raidHash)
+            gym = raidHash[0]
+            lvl = raidHash[1]
+            mon = raidHash[2]
+            
+            if not mon:
+                log.debug('Found Raidhash with an egg - fast submit')
+                log.debug("start_detect[crop %s]: Found egg level %s starting at %s and ending at %s. GymID: %s" % (str(raidNo), lvl, raidstart, raidend, gym))
+                self.submitRaid(str(gym), None, lvl, raidstart, raidend, 'EGG')
+            else:
+                log.debug('Found Raidhash with an mon - fast submit')
+                log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(raidNo), str(mon), str(gym)))
+                self.submitRaid(str(gym), mon, lvl, None, None, 'MON')
             os.remove(filenameOfCrop)
+            os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
-            return True #return true since a raid is present, we just couldn't find the correct gym
+            return True
+        
 
         raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
         log.debug("start_detect[crop %s]: determined raidlevel to be %s" % (str(raidNo), str(raidlevel)))
@@ -329,23 +388,54 @@ class Scanner:
 
         if eggfound:
             log.debug("start_detect[crop %s]: found the crop to contain an egg" % str(raidNo))
-
             eggId = eggIdsByLevel[int(raidlevel) - 1]
-            log.debug("start_detect[crop %s]: Found egg level %s starting at %s and ending at %s. GymID: %s" % (str(raidNo), raidlevel, raidstart, raidend, gymId))
-            self.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG')
-            #guid, pkm, lvl, start, end, type
-        else:
+            
+        if not eggfound: 
             log.debug("start_detect[crop %s]: found the crop to contain a raidboss, let's see what boss it is" % str(raidNo))
-            #detectRaidBoss either returns None if the mon cannot be determined or a monID
             monFound = self.detectRaidBoss(img, raidlevel, hash, raidNo)
-
-            if monFound is None:
+            if not monFound[0]:
                 #we could not determine the mon... let's move the crop to unknown and stop analysing
                 log.error("start_detect[crop %s]: Could not determine mon in crop, aborting and moving crop to unknown" % str(raidNo))
                 self.unknownfound(filenameOfCrop, 'mon', False, raidNo)
-            else:
-                log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(raidNo), str(monFound[0]), str(gymId)))
-                self.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
+                log.warning("start_detect[crop %s]: could not determine mon, aborting analysis" % str(raidNo))
+                os.remove(filenameOfCrop)
+                os.remove(raidhashPic)
+                os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
+                return True
+            log.debug('Scanning Mon')    
+            gymId = self.detectGym(filenameOfCrop, hash, raidNo, monFound[0])
+            
+        else:
+            #let's get the gym we're likely scanning the image of
+            gymId = self.detectGym(filenameOfCrop, hash, raidNo)
+            #gymId is either None for Gym not found or contains the gymId as String
+
+        if gymId is None:
+            #gym unknown...
+            log.warning("start_detect[crop %s]: could not determine gym, aborting analysis" % str(raidNo))
+            self.unknownfound(filenameOfCrop, 'gym', True, raidNo)
+            os.remove(filenameOfCrop)
+            os.remove(raidhashPic)
+            os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
+            log.debug("start_detect[crop %s]: finished" % str(raidNo))
+            return True #return true since a raid is present, we just couldn't find the correct gym
+         
+        if eggfound:
+            log.debug("start_detect[crop %s]: Found egg level %s starting at %s and ending at %s. GymID: %s" % (str(raidNo), raidlevel, raidstart, raidend, gymId))
+            self.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG')
+            raidHashJson = self.encodeHashJson(gymId, raidlevel, False)
+            log.debug('Adding Raidhash to Database')
+            self.imageHash(raidhashPic, raidHashJson, False, 'raid')
+            os.remove(raidhashPic)
+            #guid, pkm, lvl, start, end, type
+                
+        else:
+            log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(raidNo), str(monFound[0]), str(gymId)))
+            self.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
+            raidHashJson = self.encodeHashJson(gymId, raidlevel, monFound[0])
+            log.debug('Adding Raidhash to Database')
+            self.imageHash(raidhashPic, raidHashJson, False, 'raid')
+            os.remove(raidhashPic)
 
         self.cleanup(filenameOfCrop, hash, raidNo)
         log.debug("start_detect[crop %s]: finished" % str(raidNo))
@@ -357,13 +447,13 @@ class Scanner:
         os.remove(filenameOfCrop)
         os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
 
-    def imageHashExists(self, image, zoom, type, hashSize=8):
+    def imageHashExists(self, image, zoom, type, x1=135, x2=200, y1=65, y2=95, hashSize=8):
         dbWrapper = DbWrapper(self.dbIp, self.dbPort, self.dbUser, self.dbPassword, self.dbName, self.timezone)
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
             image2 = cv2.resize(image2,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
-            crop = image2[int(135):int(200),int(65):int(95)]
+            crop = image2[int(y1):int(y2),int(x1):int(x2)]
         else:
             crop = image2
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
@@ -376,13 +466,13 @@ class Scanner:
         log.debug('Hash found: %s' % existHash)
         return existHash
 
-    def imageHash(self, image, id, zoom, type, hashSize=8):
+    def imageHash(self, image, id, zoom, type, x1=135, x2=200, y1=65, y2=95, hashSize=8):
         dbWrapper = DbWrapper(self.dbIp, self.dbPort, self.dbUser, self.dbPassword, self.dbName, self.timezone)
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
             image2 = cv2.resize(image2,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
-            crop = image2[int(135):int(200),int(65):int(95)]
+            crop = image2[int(y1):int(y2),int(x1):int(x2)]
         else:
             crop = image2
 
