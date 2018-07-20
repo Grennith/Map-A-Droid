@@ -115,6 +115,16 @@ def main():
         t.start()
 
     if not args.only_scan:
+        #if args.ocr_multitask:
+        #    import multiprocessing
+        #    p = multiprocessing.Process(target=observer, name='OCR-Process', args=(args.raidscreen_path, args.screen_width, args.screen_height,))
+        #    p.daemon = True
+        #    p.start()
+        #else:
+        #    log.info('Starting OCR Thread....')
+        #    t_observ = Thread(name='observer', target=observer(args.raidscreen_path, args.screen_width, args.screen_height))
+        #    t_observ.daemon = True
+        #    t_observ.start()
         log.info('Starting OCR Thread....')
         t_observ = Thread(name='observer', target=observer(args.raidscreen_path, args.screen_width, args.screen_height))
         t_observ.daemon = True

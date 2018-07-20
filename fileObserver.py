@@ -46,7 +46,7 @@ class checkScreenshot(PatternMatchingEventHandler):
                 log.debug("on_created: scanning bounds: %s of %s" % (str(bounds), str(event.src_path)))
                 raid = raidPic[bounds.top:bounds.bottom, bounds.left:bounds.right]
                 cv2.imwrite(raidPicCrop, raid)
-                p = multiprocessing.Process(target=RaidScan.process, name='OCR-Process', args=(raidPicCrop, hash, raidNo,))
+                p = multiprocessing.Process(target=RaidScan.process, name='OCR-crop-analysis-' + str(raidNo), args=(raidPicCrop, hash, raidNo,))
                 processes.append(p)
                 p.daemon = True
                 p.start()
