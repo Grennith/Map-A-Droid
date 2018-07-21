@@ -356,15 +356,22 @@ class Scanner:
         raidstart = raidtimer[2] #will be 0 if eggfound = False. We report a mon anyway
         raidend = raidtimer[3] #will be 0 if eggfound = False. We report a mon anyway
         
+        raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
+        log.debug("start_detect[crop %s]: determined raidlevel to be %s" % (str(raidNo), str(raidlevel)))
+        
         log.debug('Creating Hash overall')  
         raidHash = self.imageHashExists(raidhashPic, False, 'raid')
         log.debug('detectRaidHash: ' + str(raidHash))
-        
+            
         if raidHash:
             raidHash = self.decodeHashJson(raidHash)
             gym = raidHash[0]
             lvl = raidHash[1]
             mon = raidHash[2]
+            
+            if lvl <> raidlevel:
+                log.debug('Scanned Raidlevel is different to hash - taking scanned level')
+                lvl = raidlevel
             
             if not mon:
                 log.debug('Found Raidhash with an egg - fast submit')
@@ -380,8 +387,7 @@ class Scanner:
             return True
         
 
-        raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
-        log.debug("start_detect[crop %s]: determined raidlevel to be %s" % (str(raidNo), str(raidlevel)))
+        
         if raidlevel is None:
             log.error("start_detect[crop %s]: could not determine raidlevel. Filename of Crop: %s" % (str(raidNo), filenameOfCrop))
             return True
