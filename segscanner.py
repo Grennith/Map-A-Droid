@@ -14,6 +14,7 @@ import mysql.connector
 import imutils
 from dbWrapper import *
 import json
+import hashlib 
 
 log = logging.getLogger(__name__)
 args = parseArgs()
@@ -93,7 +94,7 @@ class Scanner:
         rt = Image.open(emptyRaidTempPath)
         gray = rt.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        raidtimer = pytesseract.image_to_string(bw, config='-psm 7 -c tessedit_char_whitelist=0123456789:APM').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
+        raidtimer = pytesseract.image_to_string(bw, config='-psm 7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
         log.debug(raidtimer)
         #cleanup
         os.remove(emptyRaidTempPath)
@@ -144,11 +145,11 @@ class Scanner:
 
         if monHash is None:
             for file in glob.glob("mon_img/_mon_*_" + str(lvl) + ".png"):
-                find_mon = mt.fort_image_matching(file, picName, False, 0.75)
+                find_mon = mt.fort_image_matching(file, picName, False, 0.7)
                 if foundmon is None or find_mon > foundmon[0]:
                     foundmon = find_mon, file
 
-                if foundmon and foundmon[0]>0.75:
+                if foundmon and foundmon[0]>0.7:
                     monSplit = foundmon[1].split('_')
                     monID = monSplit[3]
                     
@@ -287,6 +288,11 @@ class Scanner:
 
         return True
         
+    def md5Hash(self, code):
+        
+        md5Hash = hashlib.md5(code).hexdigest()
+        return md5Hash
+        
     def decodeHashJson(self, hashJson):
         data = json.loads(hashJson)
         log.debug('Decoding Raid Hash Json')
@@ -335,10 +341,19 @@ class Scanner:
         cv2.imwrite(filenameOfCrop, img)
         img = cv2.imread(filenameOfCrop)
         
+        #test md5 hashing
+        log.debug('MD5 Raidcrop')
+        md5RaidCrop = self.md5Hash(img)
+        log.debug(md5RaidCrop)
         
         raidhash = img[0:170, 0:280]
         raidhashPic = self.tempPath + "/" + str(hash) + "_raidhash" + str(raidNo) +".jpg"
         cv2.imwrite(raidhashPic, raidhash)
+        
+        #test md5 hashing
+        log.debug('MD5 Raidpic')
+        md5RaidPic = self.md5Hash(raidhash)
+        log.debug(md5RaidPic)
 
         #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
         raidtimer = self.detectRaidTime(img, hash, raidNo)
@@ -385,8 +400,6 @@ class Scanner:
             os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
             return True
-        
-
         
         if raidlevel is None:
             log.error("start_detect[crop %s]: could not determine raidlevel. Filename of Crop: %s" % (str(raidNo), filenameOfCrop))
@@ -485,6 +498,7 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
+        
         log.debug('Adding Hash to Database')
         log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
         dbWrapper.insertHash(str(imageHash), str(type), str(id))
