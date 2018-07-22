@@ -101,7 +101,7 @@ def main():
         log.info('Raidscreen directory created')
         os.makedirs(args.raidscreen_path)
 
-    
+
     dbWrapper.createHashDatabaseIfNotExists()
 
     MonRaidImages.runAll(args.pogoasset)
@@ -214,12 +214,29 @@ def restartPogo():
     global telnMore
     global lastPogoRestart
     curTime = time.time()
-    successfulRestart = telnMore.restartApp("com.nianticlabs.pokemongo")
+    successfulStop = telnMore.stopApp("com.nianticlabs.pokemongo")
     #TODO: errorhandling if it returned false, maybe try again next round?
-    if successfulRestart:
-        lastPogoRestart = curTime
-        time.sleep(25) #just sleep for a couple seconds to have the game come back up again
+    #TODO: check if pogo was closed...
+    if successfulStop:
+        time.sleep(5)
+        if telnMore.startApp("com.nianticlabs.pokemongo"):
+            log.warning("Starting pogo...")
+            time.sleep(60)
+            lastPogoRestart = curTime
         #TODO: handle login screen... ?
+
+def turnScreenOnAndStartPogo():
+    global telnMore
+    if not telnMore.isScreenOn():
+        #telnMore.startApp("de.grennith.rgc.remotegpscontroller")
+        log.warning("Turning screen on")
+        telnMore.turnScreenOn()
+        time.sleep(10)
+    #check if pogo is running and start it if necessary
+    if not telnMore.isPogoTopmost():
+        log.warning("Starting Pogo")
+        telnMore.startApp("com.nianticlabs.pokemongo")
+        time.sleep(60)
 
 def main_thread():
     global nextRaidQueue
@@ -243,6 +260,8 @@ def main_thread():
     print(route)
     #sys.exit(0)
     log.info("Max_distance before teleporting: %s" % args.max_distance)
+    log.info("Checking if screen is on and pogo is running")
+    turnScreenOnAndStartPogo()
     #sys.exit(0)
     while True:
         while sleep:
@@ -363,7 +382,8 @@ def main_thread():
 
             #we got the latest raids. To avoid the mobile from killing apps,
             #let's restart pogo every 2hours or whatever TODO: consider args
-            if (curTime - lastPogoRestart >= (180 * 60)):
+            log.debug("Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
+            if (curTime - lastPogoRestart >= (10 * 60)):
                 restartPogo()
 
 def observer(scrPath, width, height):

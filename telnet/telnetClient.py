@@ -26,6 +26,7 @@ class TelnetClient:
         else:
             self.connected = True
         #Retrieve the help instructions to have auth only receive "OK"
+        #log.error(self.__sock.recv(1024))
         self.__sock.recv(1024)
         self.authenticated = self.__auth()
 
@@ -50,18 +51,16 @@ class TelnetClient:
     def __sendCommandRecursive(self, command, again):
         x = self.__sendCommandWithoutChecks(command)
         log.debug("__sendCommandRecursive: Sending '%s' resulted in '%s'" % (str(command), x))
-        if "OK" in x:
-            return True
-        elif ("KO: password required. Use 'password' or 'auth'" in x
+        if ("KO: password required. Use 'password' or 'auth'" in x
             and not again):
             #handle missing auth
             log.debug('__sendCommandRecursive: Auth required')
             self.__auth();
             self.__sendCommandRecursive(command, True);
         else:
-            log.debug('__sendCommandRecursive: Input failed. Aborting')
+            log.debug('__sendCommandRecursive: Sent command successfully')
             self.authenticated = False
-            return False
+            return (True, x)
 
     #just a function to make the function call look better
     def sendCommand(self, command):
