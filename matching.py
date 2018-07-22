@@ -25,11 +25,11 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, x1=135, x2=200
     if zoom == True:
         if width_f < 180:
             fort_img = cv2.resize(fort_img,None,fx=3, fy=3, interpolation = cv2.INTER_NEAREST)
-        else:
-            if height_f > width_f:
-                fort_img = fort_img[int((height_f/2)-(height_f/3)):int((height_f/2)+(height_f/3)), int((width_f/2)-(width_f/2)):int((width_f/2)+(width_f/2))]
-            else:
-                fort_img = fort_img[int((height_f/2)-(height_f/2)):int((height_f/2)+(height_f/2)), int((width_f/2)-(width_f/3)):int((width_f/2)+(width_f/3))]
+        #else:
+            #if height_f > width_f:
+                #fort_img = fort_img[int((height_f/2)-(height_f/3)):int((height_f/2)+(height_f/3)), int((width_f/2)-(width_f/2)):int((width_f/2)+(width_f/2))]
+            #else:
+                #fort_img = fort_img[int((height_f/2)-(height_f/2)):int((height_f/2)+(height_f/2)), int((width_f/2)-(width_f/3)):int((width_f/2)+(width_f/3))]
                 
             #cv2.imwrite('test2_' + str(time.time()) + '.png', fort_img)
 
