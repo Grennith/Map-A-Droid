@@ -15,6 +15,7 @@ import imutils
 from dbWrapper import *
 import json
 import hashlib 
+import re
 
 log = logging.getLogger(__name__)
 args = parseArgs()
@@ -38,6 +39,8 @@ class Scanner:
         self.tempPath = tempPath
         self.unknownPath = unknownPath
         self.timezone = timezone
+        
+        self.dbWrapper = DbWrapper(self.dbIp, self.dbPort, self.dbUser, self.dbPassword, self.dbName, self.timezone)
 
         if not os.path.exists(self.tempPath):
             log.info('Temp directory created')
@@ -87,8 +90,9 @@ class Scanner:
 
     def detectRaidTime(self, raidpic, hash, raidNo):
         log.debug('Reading Raidtimer')
-        raidtimer = raidpic[170:210, 0:297]
-        raidtimer = cv2.resize(raidtimer, (0,0), fx=3, fy=3)
+        #raidtimer = raidpic[170:210, 0:297]
+        raidtimer = raidpic[170:210, 0:95]
+        #raidtimer = cv2.resize(raidtimer, (0,0), fx=3, fy=3)
         emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_emptyraid.png"
         cv2.imwrite(emptyRaidTempPath, raidtimer)
         rt = Image.open(emptyRaidTempPath)
@@ -96,6 +100,7 @@ class Scanner:
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
         raidtimer = pytesseract.image_to_string(bw, config='-psm 7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
         log.debug(raidtimer)
+        #log.debug(re.match(r'\d\d:\d\d[am|pm]*', raidtimer))
         #cleanup
         os.remove(emptyRaidTempPath)
         raidFound = len(raidtimer) > 0
@@ -114,12 +119,12 @@ class Scanner:
                     log.debug('Start: ' + str(raidstart) + ' End: ' + str(raidend))
                     return (raidFound, True, raidstart, raidend)
                 else:
-                    return (raidFound, False, None, None)
+                    return (raidFound, True, False, False)
 
             else:
-                return (raidFound, False, 0, 0)
+                return (raidFound, False, '0', '0')
         else:
-            return (raidFound, False, None, None)
+            return (raidFound, False, False, False)
 
     def detectRaidBoss(self, raidpic, lvl, hash, raidcount):
         foundmon = None
@@ -145,11 +150,11 @@ class Scanner:
 
         if monHash is None:
             for file in glob.glob("mon_img/_mon_*_" + str(lvl) + ".png"):
-                find_mon = mt.fort_image_matching(file, picName, False, 0.7)
+                find_mon = mt.fort_image_matching(file, picName, False, 0.75)
                 if foundmon is None or find_mon > foundmon[0]:
                     foundmon = find_mon, file
 
-                if foundmon and foundmon[0]>0.7:
+                if foundmon and foundmon[0]>0.75:
                     monSplit = foundmon[1].split('_')
                     monID = monSplit[3]
                     
@@ -248,11 +253,11 @@ class Scanner:
 
         if gymHash is None:
             for file in glob.glob("gym_img/*.jpg"):
-                find_gym = mt.fort_image_matching(raidpic, file, True, 0.8, x1, x2, y1, y2)
+                find_gym = mt.fort_image_matching(raidpic, file, True, 0.7, x1, x2, y1, y2)
                 if foundgym is None or find_gym > foundgym[0]:
     	        	foundgym = find_gym, file
 
-                if foundgym and foundgym[0]>=0.8:
+                if foundgym and foundgym[0]>=0.7:
                     #okay, we very likely found our gym
                     gymSplit = foundgym[1].split('_')
                     gymId = gymSplit[2]
@@ -330,7 +335,6 @@ class Scanner:
             log.error("start_detect: File does not exist: %s" % str(filenameOfCrop))
             return
 
-
         monfound = False
         eggfound = False
 
@@ -371,6 +375,13 @@ class Scanner:
         raidstart = raidtimer[2] #will be 0 if eggfound = False. We report a mon anyway
         raidend = raidtimer[3] #will be 0 if eggfound = False. We report a mon anyway
         
+        if (not raidstart or not raidend):
+            #there is no raid, stop analysis of crop, abandon ship
+            os.remove(filenameOfCrop)
+            os.remove(raidhashPic)
+            log.debug("start_detect[crop %s]: Crop does not show a valid time, stopping analysis" % str(raidNo))
+            return False
+        
         raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
         log.debug("start_detect[crop %s]: determined raidlevel to be %s" % (str(raidNo), str(raidlevel)))
         
@@ -391,11 +402,11 @@ class Scanner:
             if not mon:
                 log.debug('Found Raidhash with an egg - fast submit')
                 log.debug("start_detect[crop %s]: Found egg level %s starting at %s and ending at %s. GymID: %s" % (str(raidNo), lvl, raidstart, raidend, gym))
-                self.submitRaid(str(gym), None, lvl, raidstart, raidend, 'EGG')
+                self.dbWrapper.submitRaid(str(gym), None, lvl, raidstart, raidend, 'EGG')
             else:
                 log.debug('Found Raidhash with an mon - fast submit')
                 log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(raidNo), str(mon), str(gym)))
-                self.submitRaid(str(gym), mon, lvl, None, None, 'MON')
+                self.dbWrapper.submitRaid(str(gym), mon, lvl, None, None, 'MON')
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
@@ -432,7 +443,7 @@ class Scanner:
         if gymId is None:
             #gym unknown...
             log.warning("start_detect[crop %s]: could not determine gym, aborting analysis" % str(raidNo))
-            self.unknownfound(filenameOfCrop, 'gym', True, raidNo)
+            self.unknownfound(filenameOfCrop, 'gym', False, raidNo)
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
             os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
@@ -441,7 +452,7 @@ class Scanner:
          
         if eggfound:
             log.debug("start_detect[crop %s]: Found egg level %s starting at %s and ending at %s. GymID: %s" % (str(raidNo), raidlevel, raidstart, raidend, gymId))
-            self.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG')
+            self.dbWrapper.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG')
             raidHashJson = self.encodeHashJson(gymId, raidlevel, False)
             log.debug('Adding Raidhash to Database')
             self.imageHash(raidhashPic, raidHashJson, False, 'raid')
@@ -450,7 +461,7 @@ class Scanner:
                 
         else:
             log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(raidNo), str(monFound[0]), str(gymId)))
-            self.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
+            self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
             raidHashJson = self.encodeHashJson(gymId, raidlevel, monFound[0])
             log.debug('Adding Raidhash to Database')
             self.imageHash(raidhashPic, raidHashJson, False, 'raid')
@@ -467,7 +478,6 @@ class Scanner:
         os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
 
     def imageHashExists(self, image, zoom, type, x1=135, x2=200, y1=65, y2=95, hashSize=8):
-        dbWrapper = DbWrapper(self.dbIp, self.dbPort, self.dbUser, self.dbPassword, self.dbName, self.timezone)
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -478,7 +488,7 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        existHash = dbWrapper.checkForHash(str(imageHash), str(type))
+        existHash = self.dbWrapper.checkForHash(str(imageHash), str(type))
         if not existHash:
             log.debug('Hash not found')
             return None
@@ -486,7 +496,6 @@ class Scanner:
         return existHash
 
     def imageHash(self, image, id, zoom, type, x1=135, x2=200, y1=65, y2=95, hashSize=8):
-        dbWrapper = DbWrapper(self.dbIp, self.dbPort, self.dbUser, self.dbPassword, self.dbName, self.timezone)
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -501,7 +510,7 @@ class Scanner:
         
         log.debug('Adding Hash to Database')
         log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
-        dbWrapper.insertHash(str(imageHash), str(type), str(id))
+        self.dbWrapper.insertHash(str(imageHash), str(type), str(id))
 
 def checkHourMin(hour_min):
         hour_min[0] = unicode(hour_min[0].replace('O','0').replace('o','0').replace('A','4'))

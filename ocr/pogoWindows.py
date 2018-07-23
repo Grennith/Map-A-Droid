@@ -77,7 +77,7 @@ class PogoWindows:
 
         log.debug("checkPostLoginOkButton: Checking for post-login OK button found: %s" % text)
         #if 'O. K.' in text:
-        if re.match(r'.*O.*K.*', text):
+        if re.match(r'.*[o|O|0].*[k|K].*', text):
             log.debug('checkPostLoginOkButton: Found post login OK button - closing ...')
             pos = None
             if type == 'post_login_ok_driving':

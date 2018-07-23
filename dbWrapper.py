@@ -3,6 +3,8 @@ import mysql
 import mysql.connector
 import datetime
 import collections
+import datetime
+import time
 
 log = logging.getLogger(__name__)
 
@@ -134,3 +136,14 @@ class DbWrapper:
         cursor.execute(query)
         connection.commit()
         return True
+        
+    def submitRaid(self, gym, pkm, lvl, start, end, type):
+        log.debug("Submitting raid")
+        now = datetime.datetime.now()
+        date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
+        today1 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
+        
+        if self.raidExist(gym, type):
+            log.debug('%s already submitted - ignoring' % str(type))
+            return False
+
