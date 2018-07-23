@@ -143,6 +143,7 @@ class PogoWindows:
         log.debug('__checkRaidTabOnScreen: Checking for raidscreen ...')
         col = cv2.imread(filename)
         bounds = self.resolutionCalculator.getNearbyRaidTabBounds()
+        log.debug("__checkRaidTabOnScreen: Bounds %s" % str(bounds))
         raidtimer = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
         cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_message.png", raidtimer)
         col = Image.open(self.tempDirPath + "/" + str(hash) + "_message.png")

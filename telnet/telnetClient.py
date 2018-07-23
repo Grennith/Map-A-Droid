@@ -51,6 +51,7 @@ class TelnetClient:
         return self.__sock.recv(1024)
 
     def __sendCommandRecursive(self, command, again):
+        log.debug("__sendCommandRecursive: Waiting for result of %s" % str(command))
         x = self.__sendCommandWithoutChecks(command)
         log.debug("__sendCommandRecursive: Sending '%s' resulted in '%s'" % (str(command), x))
         if ("KO: password required. Use 'password' or 'auth'" in x

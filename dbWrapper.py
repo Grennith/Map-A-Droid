@@ -136,14 +136,98 @@ class DbWrapper:
         cursor.execute(query)
         connection.commit()
         return True
-        
+
     def submitRaid(self, gym, pkm, lvl, start, end, type):
         log.debug("Submitting raid")
         now = datetime.datetime.now()
         date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
         today1 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
-        
+
         if self.raidExist(gym, type):
             log.debug('%s already submitted - ignoring' % str(type))
             return False
 
+        try:
+            connection = mysql.connector.connect(host = self.host,
+            user = self.user, port = self.port, passwd = self.password,
+            db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+
+        cursor = connection.cursor()
+        log.debug("Submitting something of type %s" % type)
+        if type == 'EGG':
+            #query = " UPDATE raid SET level = %s, spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
+            #data = (lvl, start, start, end, monegg[int(lvl) - 1], "999", "1", "1",  today1, guid)
+            log.info("Submitting Egg. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, last_scanned: %s" % (gym, lvl, start, end, today1))
+            query = (' INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, ' +
+                'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
+                'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
+                'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
+                'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
+            data = (gym, lvl, start, start, end, None, "999", "1", "1", time.time(), #TODO: check None vs null?
+                lvl, start, start, end, None, "999", "1", "1", time.time())
+            #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
+            cursor.execute(query, data)
+        else:
+            log.info("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, gym))
+            #query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
+            query = " UPDATE raid SET pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s) WHERE gym_id = %s "
+            data = (pkm, "999", "1", "1",  time.time(), gym)
+            #data = (lvl, pkm, "999", "1", "1",  time.time(), guid)
+            cursor.execute(query, data)
+
+        connection.commit()
+        return True
+
+    def raidExist(self, gym, type):
+        log.debug('Check DB for existing entry')
+        now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
+        log.debug(now)
+        try:
+            connection = mysql.connector.connect(host = self.host,
+            user = self.user, port = self.port, passwd = self.password,
+            db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+
+        if type == "EGG":
+            log.debug('Check for EGG')
+            cursor = connection.cursor()
+            query = (' SELECT count(*) FROM raid ' +
+                ' WHERE raid.start >= \'%s\' and gym_id = \'%s\' '
+                % (str(now), str(gym)))
+            log.debug(query)
+            cursor.execute(query)
+            result=cursor.fetchone()
+            number_of_rows=result[0]
+            log.debug('Found Rows: %s' % str(number_of_rows))
+            rows_affected=cursor.rowcount
+
+            if number_of_rows > 0:
+                log.info("Egg already submitted - ignore new entry")
+                return True
+
+            log.info('Egg is new - submitting')
+            return False
+        else:
+            log.debug('Check for Mon')
+            cursor = connection.cursor()
+            query = (' SELECT count(*) FROM raid ' +
+                ' WHERE raid.start <= \'%s\' and gym_id = \'%s\' and pokemon_id is not NULL '
+                % (str(now), str(gym)))
+            log.debug(query)
+            cursor.execute(query)
+            result=cursor.fetchone()
+            number_of_rows=result[0]
+            log.debug('Found Rows: %s' % str(number_of_rows))
+            rows_affected=number_of_rows
+
+            if rows_affected > 0:
+                log.info("Mon already submitted - ignore new entry")
+                return True
+
+            log.info('Mon is new - submitting')
+            return False

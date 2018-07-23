@@ -228,7 +228,7 @@ def restartPogo():
 def turnScreenOnAndStartPogo():
     global telnMore
     if not telnMore.isScreenOn():
-        #telnMore.startApp("de.grennith.rgc.remotegpscontroller")
+        telnMore.startApp("de.grennith.rgc.remotegpscontroller")
         log.warning("Turning screen on")
         telnMore.turnScreenOn()
         time.sleep(10)
@@ -333,8 +333,11 @@ def main_thread():
             attempts = 0
             while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123)):
                 if (attempts >= 15):
-                    #weird count of failures... restart pogo and try again
-                    restartPogo()
+                    #weird count of failures... stop pogo, wait 5mins and try again, could be PTC login issue
+                    telnMore.stopApp("com.nianticlabs.pokemongo")
+                    time.sleep(360)
+                    turnScreenOnAndStartPogo()
+                    #restartPogo()
                     attempts = 0
                 #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
                 found =  pogoWindowManager.checkPostLoginOkButton('screenshot.png', 123)
