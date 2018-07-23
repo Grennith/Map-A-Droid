@@ -335,6 +335,7 @@ def main_thread():
                 if (attempts >= 15):
                     #weird count of failures... restart pogo and try again
                     restartPogo()
+                    attempts = 0
                 #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
                 found =  pogoWindowManager.checkPostLoginOkButton('screenshot.png', 123)
                 if not found and pogoWindowManager.checkCloseExceptNearbyButton('screenshot.png', 123):
@@ -383,7 +384,7 @@ def main_thread():
             #we got the latest raids. To avoid the mobile from killing apps,
             #let's restart pogo every 2hours or whatever TODO: consider args
             log.debug("Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
-            if (curTime - lastPogoRestart >= (10 * 60)):
+            if (curTime - lastPogoRestart >= (120 * 60)):
                 restartPogo()
 
 def observer(scrPath, width, height):

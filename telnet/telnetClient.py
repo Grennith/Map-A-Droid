@@ -27,7 +27,9 @@ class TelnetClient:
             self.connected = True
         #Retrieve the help instructions to have auth only receive "OK"
         #log.error(self.__sock.recv(1024))
-        self.__sock.recv(1024)
+        result = ""
+        while not "OK" in result:
+            result = self.__sock.recv(1024)
         self.authenticated = self.__auth()
 
         #print(authenticated)

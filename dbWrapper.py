@@ -44,10 +44,10 @@ class DbWrapper:
             if latitude is None or longitude is None:
                 continue
             timestamp = self.dbTimeStringToUnixTimestamp(str(start))
-            data.append((timestamp, RaidLocation(latitude, longitude)))
-            data.append((timestamp + 60, RaidLocation(latitude, longitude)))
-            data.append((timestamp + 2 * 60, RaidLocation(latitude, longitude)))
-            data.append((timestamp + 3 * 60, RaidLocation(latitude, longitude)))
+            #data.append((timestamp, RaidLocation(latitude, longitude)))
+            #data.append((timestamp + 60, RaidLocation(latitude, longitude)))
+            #data.append((timestamp + 2 * 60, RaidLocation(latitude, longitude)))
+            #data.append((timestamp + 3 * 60, RaidLocation(latitude, longitude)))
             data.append((timestamp + 4 * 60, RaidLocation(latitude, longitude)))
 
         connection.commit()
@@ -134,4 +134,3 @@ class DbWrapper:
         cursor.execute(query)
         connection.commit()
         return True
-
