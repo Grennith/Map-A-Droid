@@ -79,6 +79,7 @@ log = logging.getLogger()
 log.addHandler(stdout_hdlr)
 log.addHandler(stderr_hdlr)
 
+telnMore = None
 if not args.only_ocr:
     print("Starting Telnet MORE Client")
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
@@ -156,7 +157,7 @@ def sleeptimer(sleeptime):
         if tmNow >= tmFrom or tmNow < tmTil:
             log.info('Going to sleep - byebye')
             #Stopping pogo...
-            if not args.only_ocr:
+            if telnMore:
                 telnMore.stopApp("com.nianticlabs.pokemongo")
             sleep = True
 
@@ -166,7 +167,7 @@ def sleeptimer(sleeptime):
                 if tmNow < tmTil and tmNow >= tmTil:
                     log.warning('Wakeup - here we go ...')
                     #Turning screen on and starting app
-                    if not args.only_ocr:
+                    if telnMore:
                         telnMore.turnScreenOn()
                         telnMore.startApp("com.nianticlabs.pokemongo")
                     sleep = False
