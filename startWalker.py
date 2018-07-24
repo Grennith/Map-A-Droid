@@ -145,26 +145,34 @@ def main():
 def sleeptimer(sleeptime):
     global sleep
     global telnMore
+    tmFrom = datetime.datetime.strptime(sleeptime[0],"%H:%M")
+    log.debug("tmFrom: %s" % str(tmFrom))
+    tmTil = datetime.datetime.strptime(sleeptime[1],"%H:%M")
+    log.debug("tmTil: %s" % str(tmTil))
     while True:
-        tmFrom = datetime.strptime(sleeptime[0],"%H:%M")
-        tmTil = datetime.strptime(sleeptime[1],"%H:%M")
-        tmNow = datetime.strptime(datetime.now().strftime('%H:%M'),"%H:%M")
+        tmNow = datetime.datetime.strptime(datetime.datetime.now().strftime('%H:%M'),"%H:%M")
+        #log.debug("tmNow: %s" % str(tmNow))
 
-        if tmNow >= tmFrom and tmNow < tmTil:
+        if tmNow >= tmFrom or tmNow < tmTil:
             log.info('Going to sleep - byebye')
             #Stopping pogo...
-            telnMore.stopApp("com.nianticlabs.pokemongo")
+            if not args.only_ocr:
+                telnMore.stopApp("com.nianticlabs.pokemongo")
             sleep = True
 
-        while tmNow >= tmFrom and tmNow < tmTil:
-            tmNow = datetime.strptime(datetime.now().strftime('%H:%M'),"%H:%M")
-            if tmNow >= tmTil:
-                log.info('Wakeup - here we go ...')
-                #Turning screen on and starting app
-                telnMore.turnScreenOn()
-                telnMore.startApp("com.nianticlabs.pokemongo")
-                sleep = False
-                break
+            while sleep:
+                log.debug('Still sleeping, getting current time...')
+                tmNow = datetime.datetime.strptime(datetime.datetime.now().strftime('%H:%M'),"%H:%M")
+                if tmNow < tmTil and tmNow >= tmTil:
+                    log.warning('Wakeup - here we go ...')
+                    #Turning screen on and starting app
+                    if not args.only_ocr:
+                        telnMore.turnScreenOn()
+                        telnMore.startApp("com.nianticlabs.pokemongo")
+                    sleep = False
+                    break
+                time.sleep(1)
+        time.sleep(1)
 
 def handle_exception(exc_type, exc_value, exc_traceback):
     if issubclass(exc_type, KeyboardInterrupt):
@@ -242,6 +250,7 @@ def main_thread():
     global nextRaidQueue
     global lastPogoRestart
     global telnMore
+    global sleep
     log.info("Starting VNC client")
     vncWrapper = VncWrapper(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
     log.info("Starting TelnetGeo Client")
@@ -264,8 +273,6 @@ def main_thread():
     turnScreenOnAndStartPogo()
     #sys.exit(0)
     while True:
-        while sleep:
-            time.sleep(1)
         log.info("Next round")
         lastLat = 0.0
         lastLng = 0.0
@@ -280,6 +287,9 @@ def main_thread():
         i = 0 #index, iterating with it to either get to the next gym or the priority of our queue
         failcount = 0
         while i < len(route):
+            while sleep:
+                time.sleep(1)
+                #TODO: check if not sleep -> start pogo, if sleep, stop it
             lastLat = curLat
             lastLng = curLng
             log.debug("Checking for raidqueue priority. Current time: %s, Current queue: %s" % (str(time.time()), str(nextRaidQueue)))
