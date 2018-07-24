@@ -50,49 +50,9 @@ class Scanner:
             log.info('Unknow directory created')
             os.makedirs(self.unknownPath)
 
-    def submitRaid(self, guid, pkm, lvl, start, end, type):
-        log.debug("Submitting raid")
-        now = datetime.datetime.now()
-        date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
-        today1 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
-
-        try:
-            connection = mysql.connector.connect(host = self.dbIp, user = self.dbUser, passwd = self.dbPassword, db = self.dbName, port = self.dbPort)
-        except:
-            log.error("Error while connect to MySql Database")
-            exit(0)
-
-        cursor = connection.cursor()
-        log.debug("Submitting something of type %s" % type)
-        if type == 'EGG':
-            #query = " UPDATE raid SET level = %s, spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
-            #data = (lvl, start, start, end, monegg[int(lvl) - 1], "999", "1", "1",  today1, guid)
-            log.info("Submitting Egg. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, last_scanned: %s" % (guid, lvl, start, end, today1))
-            query = (' INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, ' +
-                'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
-                'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
-                'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
-                'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
-            data = (guid, lvl, start, start, end, None, "999", "1", "1", time.time(), #TODO: check None vs null?
-                lvl, start, start, end, None, "999", "1", "1", time.time())
-            #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
-            cursor.execute(query, data)
-        else:
-            log.info("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, guid))
-            #query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE gym_id = %s "
-            query = " UPDATE raid SET pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s) WHERE gym_id = %s "
-            data = (pkm, "999", "1", "1",  time.time(), guid)
-            #data = (lvl, pkm, "999", "1", "1",  time.time(), guid)
-            cursor.execute(query, data)
-
-        connection.commit()
-        return 0
-
     def detectRaidTime(self, raidpic, hash, raidNo):
         log.debug('Reading Raidtimer')
-        #raidtimer = raidpic[170:210, 0:297]
-        raidtimer = raidpic[170:210, 0:95]
-        #raidtimer = cv2.resize(raidtimer, (0,0), fx=3, fy=3)
+        raidtimer = raidpic[200:230, 0:110]
         emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_emptyraid.png"
         cv2.imwrite(emptyRaidTempPath, raidtimer)
         rt = Image.open(emptyRaidTempPath)
@@ -125,6 +85,39 @@ class Scanner:
                 return (raidFound, False, '0', '0')
         else:
             return (raidFound, False, False, False)
+
+    def detectRaidEndtimer(self, raidpic, hash, raidNo):
+        log.debug('Reading Raidtimer')
+        raidtimer = raidpic[175:200, 45:130]
+        emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_endraid.png"
+        cv2.imwrite(emptyRaidTempPath, raidtimer)
+        rt = Image.open(emptyRaidTempPath)
+        gray = rt.convert('L')
+        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
+        raidtimer = pytesseract.image_to_string(bw, config='-psm 7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
+        log.debug(raidtimer)
+        os.remove(emptyRaidTempPath)
+        raidEndFound = len(raidtimer) > 0
+
+        if raidEndFound:
+            if ':' in raidtimer:
+                now = datetime.datetime.now()
+                log.info("detectRaidEndtimer: found raidendtimer '%s'" % raidtimer)
+                endTime = getEndTime(self, raidtimer)
+                if endTime:
+                    log.info("detectRaidEndtimer: Endtime %s" % str(endTime))
+                    #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
+                    raidend = endTime  - (self.timezone * 60 * 60)
+                    #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
+                    log.debug(' End: ' + str(raidend))
+                    return (raidEndFound, True, raidend)
+                else:
+                    return (raidEndFound, False, False)
+
+            else:
+                return (raidEndFound, False, '0')
+        else:
+            return (raidEndFound, False, False)
 
     def detectRaidBoss(self, raidpic, lvl, hash, raidcount):
         foundmon = None
@@ -202,8 +195,8 @@ class Scanner:
                     'mon_img/_raidlevel_3_.jpg', 'mon_img/_raidlevel_2_.jpg',
                     'mon_img/_raidlevel_1_.jpg']
 
-        raidlevel = raidpic[200:240, 0:150]
-        raidlevel = cv2.resize(raidlevel, (0,0), fx=3, fy=3)
+        raidlevel = raidpic[230:260, 0:170]
+        raidlevel = cv2.resize(raidlevel, (0,0), fx=2, fy=2)
 
         cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", raidlevel)
 
@@ -228,8 +221,8 @@ class Scanner:
     def detectGym(self, raidpic, hash, raidcount, monId = None):
         foundgym = None
         gymId = None
-        x1 = 65
-        x2 = 95
+        x1 = 85
+        x2 = 115
         y1 = 135
         y2 = 200
 
@@ -344,20 +337,10 @@ class Scanner:
         img = imutils.resize(img, height=270)
         cv2.imwrite(filenameOfCrop, img)
         img = cv2.imread(filenameOfCrop)
-        
-        #test md5 hashing
-        log.debug('MD5 Raidcrop')
-        md5RaidCrop = self.md5Hash(img)
-        log.debug(md5RaidCrop)
-        
-        raidhash = img[0:170, 0:280]
+          
+        raidhash = img[0:175, 0:170]
         raidhashPic = self.tempPath + "/" + str(hash) + "_raidhash" + str(raidNo) +".jpg"
         cv2.imwrite(raidhashPic, raidhash)
-        
-        #test md5 hashing
-        log.debug('MD5 Raidpic')
-        md5RaidPic = self.md5Hash(raidhash)
-        log.debug(md5RaidPic)
 
         #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
         raidtimer = self.detectRaidTime(img, hash, raidNo)
@@ -409,11 +392,15 @@ class Scanner:
                 self.dbWrapper.submitRaid(str(gym), mon, lvl, None, None, 'MON')
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
+            os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
             return True
         
         if raidlevel is None:
             log.error("start_detect[crop %s]: could not determine raidlevel. Filename of Crop: %s" % (str(raidNo), filenameOfCrop))
+            os.remove(filenameOfCrop)
+            os.remove(raidhashPic)
+            os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
             return True
 
         if eggfound:
@@ -428,8 +415,8 @@ class Scanner:
                 log.error("start_detect[crop %s]: Could not determine mon in crop, aborting and moving crop to unknown" % str(raidNo))
                 self.unknownfound(filenameOfCrop, 'mon', False, raidNo)
                 log.warning("start_detect[crop %s]: could not determine mon, aborting analysis" % str(raidNo))
-                os.remove(filenameOfCrop)
                 os.remove(raidhashPic)
+                os.remove(filenameOfCrop)
                 os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
                 return True
             log.debug('Scanning Mon')    
@@ -457,25 +444,34 @@ class Scanner:
             log.debug('Adding Raidhash to Database')
             self.imageHash(raidhashPic, raidHashJson, False, 'raid')
             os.remove(raidhashPic)
+            os.remove(filenameOfCrop)
+            os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
             #guid, pkm, lvl, start, end, type
                 
         else:
-            log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(raidNo), str(monFound[0]), str(gymId)))
-            self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
+            log.debug('Checking for Endtime')
+            if not self.dbWrapper.readRaidEndtime(str(gymId)):
+                log.debug('No Egg found')
+                raidend = self.detectRaidEndtimer(img, hash, raidNo)
+                log.debug(raidend)
+                if raidend[1]:
+                    log.debug(raidend[2])
+                    log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(raidNo), str(monFound[0]), str(gymId)))
+                    self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, raidend[2], 'MON', True)
+            else:
+                log.debug('Egg found')
+                log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(raidNo), str(monFound[0]), str(gymId)))
+                self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
+        
             raidHashJson = self.encodeHashJson(gymId, raidlevel, monFound[0])
             log.debug('Adding Raidhash to Database')
             self.imageHash(raidhashPic, raidHashJson, False, 'raid')
             os.remove(raidhashPic)
+            os.remove(filenameOfCrop)
+            os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
 
-        self.cleanup(filenameOfCrop, hash, raidNo)
         log.debug("start_detect[crop %s]: finished" % str(raidNo))
         return True
-
-    def cleanup(self, filenameOfCrop, hash, raidNo):
-        #cleanup
-        log.debug('Cleanup')
-        os.remove(filenameOfCrop)
-        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
 
     def imageHashExists(self, image, zoom, type, x1=135, x2=200, y1=65, y2=95, hashSize=8):
         image2 = cv2.imread(image,3)
@@ -520,6 +516,15 @@ def checkHourMin(hour_min):
         else:
             return False, hour_min
 
+def checkHourMinSec(hour_min_sec):
+        hour_min_sec[0] = unicode(hour_min_sec[0].replace('O','0').replace('o','0').replace('A','4'))
+        hour_min_sec[1] = unicode(hour_min_sec[1].replace('O','0').replace('o','0').replace('A','4'))
+        hour_min_sec[2] = unicode(hour_min_sec[2].replace('O','0').replace('o','0').replace('A','4'))
+        if (hour_min_sec[0]).isnumeric()==True and (hour_min_sec[1]).isnumeric()==True and (hour_min_sec[2]).isnumeric()==True:
+            return True, hour_min_sec
+        else:
+            return False, hour_min_sec
+
 def getHatchTime(self,data):
         zero = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
         unix_zero =  time.mktime(zero.timetuple())
@@ -557,6 +562,22 @@ def getHatchTime(self,data):
         else:
             return False
 
+def getEndTime(self,data):
+        zero = datetime.datetime.now()
+        unix_zero =  time.mktime(zero.timetuple())
+        hour_min_divider = data.find(':')
+        if hour_min_divider != -1:
+            data = data.replace('~','').replace('-','').replace(' ','')
+            hour_min = data.split(':')
+            ret, hour_min = checkHourMinSec(hour_min)
+            if ret == True:
+                return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60+int(hour_min[2])
+            else:
+                return False
+        else:
+            return False
+
 if __name__ == '__main__':
     scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path, args.unknown_path, args.timezone)
-    scanner.start_detect('1080_02.png', '12313231331213', 1)
+    test = scanner.start_detect('crop2_new.png', '123123123', 1)
+    print test
