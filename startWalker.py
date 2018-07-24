@@ -148,13 +148,15 @@ def sleeptimer(sleeptime):
     global telnMore
     tmFrom = datetime.datetime.strptime(sleeptime[0],"%H:%M")
     log.debug("tmFrom: %s" % str(tmFrom))
-    tmTil = datetime.datetime.strptime(sleeptime[1],"%H:%M")
+    tmTil = datetime.datetime.strptime(sleeptime[1],"%H:%M") + datetime.timedelta(hours = 24)
     log.debug("tmTil: %s" % str(tmTil))
     while True:
+        #we assume sleep is always at night...
         tmNow = datetime.datetime.strptime(datetime.datetime.now().strftime('%H:%M'),"%H:%M")
+        tmNowNextDay = tmNow + datetime.timedelta(hours = 24)
         #log.debug("tmNow: %s" % str(tmNow))
 
-        if tmNow >= tmFrom or tmNow < tmTil:
+        if tmNow >= tmFrom and tmNowNextDay < tmTil:
             log.info('Going to sleep - byebye')
             #Stopping pogo...
             if telnMore:
@@ -162,9 +164,10 @@ def sleeptimer(sleeptime):
             sleep = True
 
             while sleep:
-                log.debug('Still sleeping, getting current time...')
                 tmNow = datetime.datetime.strptime(datetime.datetime.now().strftime('%H:%M'),"%H:%M")
-                if tmNow < tmTil and tmNow >= tmTil:
+                tmNowNextDay = tmNow + datetime.timedelta(hours = 24)
+                log.debug('Still sleeping, current time... %s' % str(tmNow))
+                if tmNow < tmFrom and tmNowNextDay >= tmTil:
                     log.warning('Wakeup - here we go ...')
                     #Turning screen on and starting app
                     if telnMore:
@@ -271,7 +274,8 @@ def main_thread():
     #sys.exit(0)
     log.info("Max_distance before teleporting: %s" % args.max_distance)
     log.info("Checking if screen is on and pogo is running")
-    turnScreenOnAndStartPogo()
+    if not sleep:
+        turnScreenOnAndStartPogo()
     #sys.exit(0)
     while True:
         log.info("Next round")
@@ -291,6 +295,18 @@ def main_thread():
             while sleep:
                 time.sleep(1)
                 #TODO: check if not sleep -> start pogo, if sleep, stop it
+            curTime = time.time()
+            #update the raid queue every 5mins...
+            if (curTime - lastRaidQueueUpdate) >= (5 * 60):
+                updateRaidQueue(dbWrapper)
+                lastRaidQueueUpdate = curTime
+
+            #we got the latest raids. To avoid the mobile from killing apps,
+            #let's restart pogo every 2hours or whatever TODO: consider args
+            log.debug("Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
+            if (curTime - lastPogoRestart >= (120 * 60)):
+                restartPogo()
+
             lastLat = curLat
             lastLng = curLng
             log.debug("Checking for raidqueue priority. Current time: %s, Current queue: %s" % (str(time.time()), str(nextRaidQueue)))
@@ -389,17 +405,6 @@ def main_thread():
             log.info("Saving raid screenshot")
             curTime = time.time()
             copyfile('screenshot.png', args.raidscreen_path + '/Raidscreen' + str(curTime) + '.png')
-
-            #update the raid queue every 5mins...
-            if (curTime - lastRaidQueueUpdate) >= (5 * 60):
-                updateRaidQueue(dbWrapper)
-                lastRaidQueueUpdate = curTime
-
-            #we got the latest raids. To avoid the mobile from killing apps,
-            #let's restart pogo every 2hours or whatever TODO: consider args
-            log.debug("Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
-            if (curTime - lastPogoRestart >= (120 * 60)):
-                restartPogo()
 
 def observer(scrPath, width, height):
         observer = Observer()
