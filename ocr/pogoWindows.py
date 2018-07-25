@@ -102,7 +102,7 @@ class PogoWindows:
         screenshotRead = cv2.imread(filename)
         bounds = self.resolutionCalculator.getRaidcountBounds()
         log.debug("readAmountOfRaids: bounds are %s" % str(bounds))
-        raidCount = screenshotRead[bounds.top : bounds.bottom, bounts.left : bounds.right]
+        raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
         tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.png"
         cv2.imwrite(tempPathColoured, raidCount)
 
