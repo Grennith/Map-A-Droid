@@ -112,6 +112,8 @@ class PogoWindows:
         #check for most present colours... if there's no orange, we can stop immediately
         mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
         if (mostPresentColour != (255, 120, 55)):
+            log.info("readAmountOfRaids: No raidcount found, assuming no raids nearby")
+            #cv2.imwrite(str(hash) + "_derp.png", raidCount)
             return 0
 
         tempPathBw = self.tempDirPath + "/" + str(hash) + "_raidcount_bw.png"
@@ -125,8 +127,8 @@ class PogoWindows:
             count = int(text)
         except ValueError:
             #Handle exception when tesseract read bullshit...
-            log.error("readAmountOfRaids: could not read a number... " +
-                "Text read: %s" % text)
+            log.info("readAmountOfRaids: could not read a number... " +
+                "Text read: %s. Fallback to 6" % text)
             return 6 #we do read 1 and 2 pretty good... 3 gives us trouble, just assume 6 to be good to go
 
         log.debug("readAmountOfRaids: read raidcount of %s" % str(count))

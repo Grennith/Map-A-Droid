@@ -14,7 +14,7 @@ import mysql.connector
 import imutils
 from dbWrapper import *
 import json
-import hashlib 
+import hashlib
 import re
 
 log = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class Scanner:
         self.tempPath = tempPath
         self.unknownPath = unknownPath
         self.timezone = timezone
-        
+
         self.dbWrapper = DbWrapper(self.dbIp, self.dbPort, self.dbUser, self.dbPassword, self.dbName, self.timezone)
 
         if not os.path.exists(self.tempPath):
@@ -69,7 +69,7 @@ class Scanner:
             if ':' in raidtimer:
                 now = datetime.datetime.now()
                 log.info("getHatchTime: found raidtimer '%s'" % raidtimer)
-                hatchTime = getHatchTime(self, raidtimer)
+                hatchTime = self.getHatchTime(self, raidtimer)
                 if hatchTime:
                     log.info("getHatchTime: Hatchtime %s" % str(hatchTime))
                     #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
@@ -103,7 +103,7 @@ class Scanner:
             if ':' in raidtimer:
                 now = datetime.datetime.now()
                 log.info("detectRaidEndtimer: found raidendtimer '%s'" % raidtimer)
-                endTime = getEndTime(self, raidtimer)
+                endTime = self.getEndTime(raidtimer)
                 if endTime:
                     log.info("detectRaidEndtimer: Endtime %s" % str(endTime))
                     #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
@@ -150,7 +150,7 @@ class Scanner:
                 if foundmon and foundmon[0]>0.75:
                     monSplit = foundmon[1].split('_')
                     monID = monSplit[3]
-                    
+
             #we found the mon that's most likely to be the one that's in the crop
             log.debug('detectRaidBoss: Found mon in mon_img: ' + str(monID))
 
@@ -162,7 +162,7 @@ class Scanner:
             self.imageHash(picName, monID, False, 'mon-' + str(lvl))
             os.remove(picName)
             return monID, monAsset
-            
+
         log.debug('No Mon found!')
 
         os.remove(picName)
@@ -179,7 +179,7 @@ class Scanner:
             if not foundegg is None and foundegg[0]>0.9:
                 eggSplit = foundegg[1].split('_')
                 eggID = eggSplit[3]
-                
+
         log.debug('Eggfound: ' + str(eggID))
 
         if eggID:
@@ -211,6 +211,8 @@ class Scanner:
                 lvl = lvlSplit[3]
 
 
+        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
+
         if lvl:
             log.debug("detectLevel: found level '%s'" % str(lvl))
             return lvl
@@ -226,13 +228,13 @@ class Scanner:
         y1 = 135
         y2 = 200
 
-        
+
         #if gymHash is none, we haven't seen the gym yet, otherwise, gymHash == gymId we are looking for
         if monId:
             log.debug('Got Mon-ID for Gym-Detection %s' % monId)
             with open('monsspec.json') as f:
                 data = json.load(f)
-            
+
             if str(monId) in data:
                 crop = data[str(monId)]["Crop"]
                 log.debug('Found other Crops for Mon %s' % monId)
@@ -241,7 +243,7 @@ class Scanner:
                 x2 = crop['X2']
                 y1 = crop['Y1']
                 y2 = crop['Y2']
-                
+
         gymHash = self.imageHashExists(raidpic, True, 'gym', x1, x2, y1, y2)
 
         if gymHash is None:
@@ -285,23 +287,23 @@ class Scanner:
             cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(time.time()) +".jpg", raidpic)
 
         return True
-        
+
     def md5Hash(self, code):
-        
+
         md5Hash = hashlib.md5(code).hexdigest()
         return md5Hash
-        
+
     def decodeHashJson(self, hashJson):
         data = json.loads(hashJson)
         log.debug('Decoding Raid Hash Json')
         log.debug(data)
-        
+
         raidGym = data['gym']
         raidLvl = data["lvl"]
         raidMon = data["mon"]
-        
+
         return raidGym, raidLvl, raidMon
-        
+
     def encodeHashJson(self, gym, lvl, mon):
         log.debug('Encoding Raid Hash Json')
         hashJson = json.dumps({'gym': gym, 'lvl': lvl, 'mon': mon, 'lvl': lvl}, separators=(',',':'))
@@ -337,7 +339,7 @@ class Scanner:
         img = imutils.resize(img, height=270)
         cv2.imwrite(filenameOfCrop, img)
         img = cv2.imread(filenameOfCrop)
-          
+
         raidhash = img[0:175, 0:170]
         raidhashPic = self.tempPath + "/" + str(hash) + "_raidhash" + str(raidNo) +".jpg"
         cv2.imwrite(raidhashPic, raidhash)
@@ -352,36 +354,36 @@ class Scanner:
             os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: Crop does not show a raid, stopping analysis" % str(raidNo))
             return False
-        
+
         #second item is true for egg present, False for mon present
         eggfound = raidtimer[1]
         raidstart = raidtimer[2] #will be 0 if eggfound = False. We report a mon anyway
         raidend = raidtimer[3] #will be 0 if eggfound = False. We report a mon anyway
-        
+
         if (not raidstart or not raidend):
             #there is no raid, stop analysis of crop, abandon ship
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: Crop does not show a valid time, stopping analysis" % str(raidNo))
             return False
-        
+
         raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
         log.debug("start_detect[crop %s]: determined raidlevel to be %s" % (str(raidNo), str(raidlevel)))
-        
-        log.debug('Creating Hash overall')  
+
+        log.debug('Creating Hash overall')
         raidHash = self.imageHashExists(raidhashPic, False, 'raid')
         log.debug('detectRaidHash: ' + str(raidHash))
-            
+
         if raidHash:
             raidHash = self.decodeHashJson(raidHash)
             gym = raidHash[0]
             lvl = raidHash[1]
             mon = raidHash[2]
-            
-            if lvl <> raidlevel:
+
+            if lvl != raidlevel:
                 log.debug('Scanned Raidlevel is different to hash - taking scanned level')
                 lvl = raidlevel
-            
+
             if not mon:
                 log.debug('Found Raidhash with an egg - fast submit')
                 log.debug("start_detect[crop %s]: Found egg level %s starting at %s and ending at %s. GymID: %s" % (str(raidNo), lvl, raidstart, raidend, gym))
@@ -392,22 +394,20 @@ class Scanner:
                 self.dbWrapper.submitRaid(str(gym), mon, lvl, None, None, 'MON')
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
-            os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
             return True
-        
+
         if raidlevel is None:
             log.error("start_detect[crop %s]: could not determine raidlevel. Filename of Crop: %s" % (str(raidNo), filenameOfCrop))
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
-            os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
             return True
 
         if eggfound:
             log.debug("start_detect[crop %s]: found the crop to contain an egg" % str(raidNo))
             eggId = eggIdsByLevel[int(raidlevel) - 1]
-            
-        if not eggfound: 
+
+        if not eggfound:
             log.debug("start_detect[crop %s]: found the crop to contain a raidboss, let's see what boss it is" % str(raidNo))
             monFound = self.detectRaidBoss(img, raidlevel, hash, raidNo)
             if not monFound[0]:
@@ -417,11 +417,10 @@ class Scanner:
                 log.warning("start_detect[crop %s]: could not determine mon, aborting analysis" % str(raidNo))
                 os.remove(raidhashPic)
                 os.remove(filenameOfCrop)
-                os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
                 return True
-            log.debug('Scanning Mon')    
+            log.debug('Scanning Mon')
             gymId = self.detectGym(filenameOfCrop, hash, raidNo, monFound[0])
-            
+
         else:
             #let's get the gym we're likely scanning the image of
             gymId = self.detectGym(filenameOfCrop, hash, raidNo)
@@ -433,21 +432,17 @@ class Scanner:
             self.unknownfound(filenameOfCrop, 'gym', False, raidNo)
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
-            os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
             return True #return true since a raid is present, we just couldn't find the correct gym
-         
+
         if eggfound:
             log.debug("start_detect[crop %s]: Found egg level %s starting at %s and ending at %s. GymID: %s" % (str(raidNo), raidlevel, raidstart, raidend, gymId))
             self.dbWrapper.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG')
             raidHashJson = self.encodeHashJson(gymId, raidlevel, False)
             log.debug('Adding Raidhash to Database')
             self.imageHash(raidhashPic, raidHashJson, False, 'raid')
-            os.remove(raidhashPic)
-            os.remove(filenameOfCrop)
-            os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
             #guid, pkm, lvl, start, end, type
-                
+
         else:
             log.debug('Checking for Endtime')
             if not self.dbWrapper.readRaidEndtime(str(gymId)):
@@ -462,13 +457,13 @@ class Scanner:
                 log.debug('Egg found')
                 log.debug("start_detect[crop %s]: Submitting mon. ID: %s, gymId: %s" % (str(raidNo), str(monFound[0]), str(gymId)))
                 self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON')
-        
+
             raidHashJson = self.encodeHashJson(gymId, raidlevel, monFound[0])
             log.debug('Adding Raidhash to Database')
             self.imageHash(raidhashPic, raidHashJson, False, 'raid')
-            os.remove(raidhashPic)
-            os.remove(filenameOfCrop)
-            os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
+            
+        os.remove(raidhashPic)
+        os.remove(filenameOfCrop)
 
         log.debug("start_detect[crop %s]: finished" % str(raidNo))
         return True
@@ -503,12 +498,12 @@ class Scanner:
         resized = cv2.resize(crop, (hashSize + 1, hashSize))
         diff = resized[:, 1:] > resized[:, :-1]
         imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        
+
         log.debug('Adding Hash to Database')
         log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
         self.dbWrapper.insertHash(str(imageHash), str(type), str(id))
 
-def checkHourMin(hour_min):
+    def checkHourMin(self, hour_min):
         hour_min[0] = unicode(hour_min[0].replace('O','0').replace('o','0').replace('A','4'))
         hour_min[1] = unicode(hour_min[1].replace('O','0').replace('o','0').replace('A','4'))
         if (hour_min[0]).isnumeric()==True and (hour_min[1]).isnumeric()==True:
@@ -516,7 +511,7 @@ def checkHourMin(hour_min):
         else:
             return False, hour_min
 
-def checkHourMinSec(hour_min_sec):
+    def checkHourMinSec(self, hour_min_sec):
         hour_min_sec[0] = unicode(hour_min_sec[0].replace('O','0').replace('o','0').replace('A','4'))
         hour_min_sec[1] = unicode(hour_min_sec[1].replace('O','0').replace('o','0').replace('A','4'))
         hour_min_sec[2] = unicode(hour_min_sec[2].replace('O','0').replace('o','0').replace('A','4'))
@@ -525,51 +520,46 @@ def checkHourMinSec(hour_min_sec):
         else:
             return False, hour_min_sec
 
-def getHatchTime(self,data):
+    def getHatchTime(self,data):
         zero = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
         unix_zero =  time.mktime(zero.timetuple())
         hour_min_divider = data.find(':')
-        if hour_min_divider != -1:
-            AM = data.find('AM')
-            PM = data.find('PM')
-            if AM >= 4:
-                data = data.replace('A','').replace('M','').replace('~','').replace('-','').replace(' ','')
-                hour_min = data.split(':')
-                ret, hour_min = checkHourMin(hour_min)
-                if ret == True:
-                    return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
-                else:
-                    return False
-            elif PM >= 4:
-                data = data.replace('P','').replace('M','').replace('~','').replace('-','').replace(' ','')
-                hour_min = data.split(':')
-                ret, hour_min = checkHourMin(hour_min)
-                if ret == True:
-                    if hour_min[0] == '12':
-                        return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
-                    else:
-                        return int(unix_zero)+(int(hour_min[0])+12)*3600+int(hour_min[1])*60
-                else:
-                    return False
-            else:
-                data = data.replace('~','').replace('-','').replace(' ','')
-                hour_min = data.split(':')
-                ret, hour_min = checkHourMin(hour_min)
-                if ret == True:
-                    return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
-                else:
-                    return False
-        else:
+        if hour_min_divider is None or hour_min_divider == -1:
             return False
 
-def getEndTime(self,data):
+        #TODO: think about only one big fat regex noone wants to read lateron
+        am_found = re.search(r'[a|A]\w+', data)
+        pm_found = re.search(r'[p|P]\w+', data)
+        hour_min = re.search(r'([\d]{1,2}:[\d]{1,2})', data)
+
+        if hour_min is None:
+            log.fatal("getHatchTime: Could not locate a HH:MM")
+            return False
+        else:
+            hour_min = hour_min.group(1).split(':')
+
+        ret, hour_min = self.checkHourMin(hour_min)
+        if not ret:
+            return False
+
+        if am_found:
+            return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
+        elif pm_found:
+            if hour_min[0] == '12':
+                return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
+            else:
+                return int(unix_zero)+(int(hour_min[0])+12)*3600+int(hour_min[1])*60
+        else:
+            return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
+
+    def getEndTime(self, data):
         zero = datetime.datetime.now()
         unix_zero =  time.mktime(zero.timetuple())
         hour_min_divider = data.find(':')
         if hour_min_divider != -1:
             data = data.replace('~','').replace('-','').replace(' ','')
             hour_min = data.split(':')
-            ret, hour_min = checkHourMinSec(hour_min)
+            ret, hour_min = self.checkHourMinSec(hour_min)
             if ret == True:
                 return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60+int(hour_min[2])
             else:
