@@ -69,7 +69,7 @@ class Scanner:
             if ':' in raidtimer:
                 now = datetime.datetime.now()
                 log.info("getHatchTime: found raidtimer '%s'" % raidtimer)
-                hatchTime = self.getHatchTime(self, raidtimer)
+                hatchTime = self.getHatchTime(raidtimer)
                 if hatchTime:
                     log.info("getHatchTime: Hatchtime %s" % str(hatchTime))
                     #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
@@ -461,7 +461,7 @@ class Scanner:
             raidHashJson = self.encodeHashJson(gymId, raidlevel, monFound[0])
             log.debug('Adding Raidhash to Database')
             self.imageHash(raidhashPic, raidHashJson, False, 'raid')
-            
+
         os.remove(raidhashPic)
         os.remove(filenameOfCrop)
 
