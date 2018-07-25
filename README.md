@@ -59,7 +59,7 @@ sudo apt install tesseract-ocr python-opencv
 
 #Discord
 For minor help, reporting resolutions (instructions on how to do so will be given sometime in the future), bugreports
-[Join the discord server](https://discord.gg/qTK7gq)
+[Join the discord server](https://discord.gg/MC3vAH9)
 
 
 License
