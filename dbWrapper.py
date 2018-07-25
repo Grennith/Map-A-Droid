@@ -67,9 +67,9 @@ class DbWrapper:
         cursor = connection.cursor()
         query = (' Create table if not exists trshash ( ' +
             ' hashid MEDIUMINT NOT NULL AUTO_INCREMENT, ' +
-            ' hash CHAR(255) NOT NULL, ' +
-            ' type char(10) NOT NULL, ' +
-            ' id CHAR(255) NOT NULL, ' +
+            ' hash VARCHAR(255) NOT NULL, ' +
+            ' type VARCHAR(10) NOT NULL, ' +
+            ' id VARCHAR(255) NOT NULL, ' +
             ' PRIMARY KEY (hashid))' )
         log.debug(query)
         cursor.execute(query)
@@ -236,8 +236,7 @@ class DbWrapper:
             log.debug('Check for EGG')
             cursor = connection.cursor()
             query = (' SELECT count(*) FROM raid ' +
-                ' WHERE raid.start >= \'%s\' and gym_id = \'%s\' '
-                % (str(now), str(gym)))
+                ' WHERE STR_TO_DATE(raid.start,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\'')
             log.debug(query)
             cursor.execute(query)
             result=cursor.fetchone()
@@ -255,8 +254,7 @@ class DbWrapper:
             log.debug('Check for Mon')
             cursor = connection.cursor()
             query = (' SELECT count(*) FROM raid ' +
-                ' WHERE raid.start <= \'%s\' and gym_id = \'%s\' and pokemon_id is not NULL '
-                % (str(now), str(gym)))
+                ' WHERE STR_TO_DATE(raid.start,\'%Y-%m-%d %H:%i:%s\') <= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\' and pokemon_id is not NULL ')
             log.debug(query)
             cursor.execute(query)
             result=cursor.fetchone()

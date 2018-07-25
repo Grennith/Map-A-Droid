@@ -88,14 +88,17 @@ class Scanner:
 
     def detectRaidEndtimer(self, raidpic, hash, raidNo):
         log.debug('Reading Raidtimer')
-        raidtimer = raidpic[175:200, 45:130]
+        raidtimer = raidpic[178:200, 45:130]
         emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_endraid.png"
         cv2.imwrite(emptyRaidTempPath, raidtimer)
         rt = Image.open(emptyRaidTempPath)
         gray = rt.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        raidtimer = pytesseract.image_to_string(bw, config='-psm 7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
-        log.debug(raidtimer)
+        bw = gray.point(lambda x: 0 if x<200 else 255, '1')
+
+        
+        raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','').replace('.',':')
+        log.debug('Raid-End-Text: ' + str(raidtimer))
+
         os.remove(emptyRaidTempPath)
         raidEndFound = len(raidtimer) > 0
 
@@ -270,22 +273,8 @@ class Scanner:
             return None
 
     def unknownfound(self, raidpic, type, zoom, raidcount):
-        found = None
-        unknownfound = 0
-        for file in glob.glob(self.unknownPath + "/" + str(type) + "_*.jpg"):
-                    foundunknown = mt.fort_image_matching(raidpic, file, zoom, 0.8)
-                    if found is None or foundunknown > found[0]:
-        	    		found = foundunknown, file
-
-                    if not found is None and found[0]>=0.8:
-                        unknownfound = 1
-                        found = None
-                        break;
-
-        if unknownfound == 0:
-            raidpic = cv2.imread(raidpic)
-            cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(time.time()) +".jpg", raidpic)
-
+        raidpic = cv2.imread(raidpic)
+        cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(time.time()) +".jpg", raidpic)
         return True
 
     def md5Hash(self, code):
@@ -340,9 +329,13 @@ class Scanner:
         cv2.imwrite(filenameOfCrop, img)
         img = cv2.imread(filenameOfCrop)
 
+        log.info(int(hashlib.md5(str(img).encode('utf-8')).hexdigest(), 16))
+
         raidhash = img[0:175, 0:170]
         raidhashPic = self.tempPath + "/" + str(hash) + "_raidhash" + str(raidNo) +".jpg"
         cv2.imwrite(raidhashPic, raidhash)
+        
+        log.info(int(hashlib.md5(str(raidhashPic).encode('utf-8')).hexdigest(), 16))
 
         #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
         raidtimer = self.detectRaidTime(img, hash, raidNo)
@@ -447,7 +440,7 @@ class Scanner:
             log.debug('Checking for Endtime')
             if not self.dbWrapper.readRaidEndtime(str(gymId)):
                 log.debug('No Egg found')
-                raidend = self.detectRaidEndtimer(img, hash, raidNo)
+                raidend = self.detectRaidEndtimer(img, gymId, raidNo)
                 log.debug(raidend)
                 if raidend[1]:
                     log.debug(raidend[2])
@@ -476,9 +469,8 @@ class Scanner:
             crop = image2[int(y1):int(y2),int(x1):int(x2)]
         else:
             crop = image2
-        resized = cv2.resize(crop, (hashSize + 1, hashSize))
-        diff = resized[:, 1:] > resized[:, :-1]
-        imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
+
+        imageHash = int(hashlib.md5(str(crop).encode('utf-8')).hexdigest(), 16)
         existHash = self.dbWrapper.checkForHash(str(imageHash), str(type))
         if not existHash:
             log.debug('Hash not found')
@@ -495,9 +487,7 @@ class Scanner:
         else:
             crop = image2
 
-        resized = cv2.resize(crop, (hashSize + 1, hashSize))
-        diff = resized[:, 1:] > resized[:, :-1]
-        imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
+        imageHash = int(hashlib.md5(str(crop).encode('utf-8')).hexdigest(), 16)
 
         log.debug('Adding Hash to Database')
         log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
@@ -556,16 +546,18 @@ class Scanner:
         zero = datetime.datetime.now()
         unix_zero =  time.mktime(zero.timetuple())
         hour_min_divider = data.find(':')
-        if hour_min_divider != -1:
-            data = data.replace('~','').replace('-','').replace(' ','')
-            hour_min = data.split(':')
-            ret, hour_min = self.checkHourMinSec(hour_min)
-            if ret == True:
-                return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60+int(hour_min[2])
+        log.debug(': Count: ' + str(hour_min_divider))
+        if hour_min_divider == 1:
+            if hour_min_divider != -1:
+                data = data.replace('~','').replace('-','').replace(' ','')
+                hour_min = data.split(':')
+                ret, hour_min = self.checkHourMinSec(hour_min)
+                if ret == True:
+                    return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60+int(hour_min[2])
+                else:
+                    return False
             else:
                 return False
-        else:
-            return False
 
 if __name__ == '__main__':
     scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path, args.unknown_path, args.timezone)
