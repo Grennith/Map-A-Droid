@@ -9,6 +9,9 @@ from ocr.resolutionCalculator import *
 import collections
 import cv2
 import multiprocessing
+#from ocr.pogoWindows import PogoWindows
+import re
+
 
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
@@ -28,52 +31,66 @@ class RaidScan:
 class checkScreenshot(PatternMatchingEventHandler):
     def __init__(self, width, height):
         self.resolutionCalculator = ResolutionCalc(width, height)
+        log.info("Starting pogo window manager in OCR thread")
+        #self.pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password, args.screen_width, args.screen_height, args.temp_path)
+
         #self.procPool = Pool(10)
 
-    def process(self, event):
+    def prepareAnalysis(self, raidNo, bounds, screenshot):
+        curTime = time.time()
+        hash = str(curTime)
+        raidCropFilepath = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) + ".jpg"
+        log.debug("dispatchAnalysis: Scanning bounds %s" % str(bounds))
+        raidCrop = screenshot[bounds.top : bounds.bottom, bounds.left : bounds.right]
+        cv2.imwrite(raidCropFilepath, raidCrop)
+        p = None
         if args.ocr_multitask:
-            import multiprocessing
-            raidNo = 1
-            raidPic = cv2.imread(event.src_path)
-            log.info("Got new file, running ocr scanner with processes")
-            processes = []
-            while raidNo < 7:
-                curTime = time.time()
-                hash = str(curTime)
-                raidPicCrop = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) +".jpg"
-                bounds = None
-                bounds = self.resolutionCalculator.getRaidBounds(raidNo)
-                log.debug("on_created: scanning bounds: %s of %s" % (str(bounds), str(event.src_path)))
-                raid = raidPic[bounds.top:bounds.bottom, bounds.left:bounds.right]
-                cv2.imwrite(raidPicCrop, raid)
-                p = multiprocessing.Process(target=RaidScan.process, name='OCR-crop-analysis-' + str(raidNo), args=(raidPicCrop, hash, raidNo,))
-                processes.append(p)
-                p.daemon = True
-                p.start()
-                raidNo += 1
-
-            log.info("Finished starting off processes")
-            #for process in processes:
-                #process.join()
-            log.info("Done with new screenshot")
+            p = multiprocessing.Process(target=RaidScan.process, name='OCR-crop-analysis-' + str(raidNo), args=(raidCropFilepath, hash, raidNo,))
         else:
-            time.sleep(.5)
-            raidNo = 1
-            raidPic = cv2.imread(event.src_path)
-            log.error("Got new file, running ocr scanner as normal thread")
-            while raidNo < 7:
-                curTime = time.time()
-                hash = str(curTime)
-                raidPicCrop = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) +".jpg"
-                bounds = None
-                bounds = self.resolutionCalculator.getRaidBounds(raidNo)
-                log.debug("on_created: scanning bounds: %s of %s" % (str(bounds), str(event.src_path)))
-                raid = raidPic[bounds.top:bounds.bottom, bounds.left:bounds.right]
-                cv2.imwrite(raidPicCrop, raid)
-                checkcrop = RaidScan.process(raidPicCrop, hash, raidNo)
-                if not checkcrop:
-                    break
-                raidNo += 1
+            p = Thread(target=RaidScan.process, name='OCR-processing', args=(raidCropFilepath, hash, raidNo,))
+        return p
+
+    def process(self, event):
+        #pathSplit = event.src_path.split("/")
+        #filename = pathSplit[len(pathSplit) - 1]
+        #print filename
+        raidcount = re.search('.*_(\d*)\.png', event.src_path)
+        if raidcount is None:
+            #we could not read the raidcount... stop
+            log.warning("Could not read raidcount in %s" % event.src_path)
+            return
+        amountOfRaids = int(raidcount.group(1))
+        log.debug("Read a raidcount of %s in new file" % str(amountOfRaids))
+        raidPic = cv2.imread(event.src_path)
+        #amountOfRaids = self.pogoWindowManager.getAmountOfRaids(event.src_path)
+        if amountOfRaids is None or amountOfRaids == 0:
+            return
+
+        processes = []
+        bounds = []
+
+        if amountOfRaids == 1:
+            #we got just one raid...
+            boundsOfSingleRaid = self.resolutionCalculator.getRaidBoundsSingle()
+            p = self.prepareAnalysis(1, boundsOfSingleRaid, raidPic)
+            processes.append(p)
+        elif amountOfRaids == 2:
+            bounds.append(self.resolutionCalculator.getRaidBoundsTwo(1))
+            bounds.append(self.resolutionCalculator.getRaidBoundsTwo(2))
+        else:
+            if amountOfRaids is None or amountOfRaids > 6:
+                amountOfRaids = 6 #ignore any more raids, shouldn't be the case all too often
+            for i in range(amountOfRaids): #0 to 5....
+                bounds.append(self.resolutionCalculator.getRaidBounds(i + 1))
+
+        for i in range(len(bounds)):
+            p = self.prepareAnalysis(i + 1, bounds[i], raidPic)
+            processes.append(p)
+            p.daemon = True
+            p.start()
+
+        #TODO: join threads/processes
+        log.debug("process: Done starting off processes")
 
     patterns = ['*.png']
     ignore_directories = True

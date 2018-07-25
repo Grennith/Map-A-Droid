@@ -94,6 +94,46 @@ class PogoWindows:
         return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving')
             or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property'))
 
+    def readAmountOfRaids(self, filename, hash):
+        if not os.path.isfile(filename):
+            return None
+
+        log.debug("readAmountOfRaids: Cropping the number inside the circle showing raidcount")
+        screenshotRead = cv2.imread(filename)
+        bounds = self.resolutionCalculator.getRaidcountBounds()
+        log.debug("readAmountOfRaids: bounds are %s" % str(bounds))
+        raidCount = screenshotRead[bounds.top : bounds.bottom, bounts.left : bounds.right]
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.png"
+        cv2.imwrite(tempPathColoured, raidCount)
+
+        raidCountColoured = Image.open(tempPathColoured)
+        width, height = raidCountColoured.size
+
+        #check for most present colours... if there's no orange, we can stop immediately
+        mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
+        if (mostPresentColour != (255, 120, 55)):
+            return 0
+
+        tempPathBw = self.tempDirPath + "/" + str(hash) + "_raidcount_bw.png"
+        gray = raidCountColoured.convert('L')
+        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
+        bw.save(tempPathBw)
+        text = image_to_string(Image.open(tempPathBw),config='--oem 3 --psm 7')
+
+        count = None
+        try:
+            count = int(text)
+        except ValueError:
+            #Handle exception when tesseract read bullshit...
+            log.error("readAmountOfRaids: could not read a number... " +
+                "Text read: %s" % text)
+            return None
+
+        log.debug("readAmountOfRaids: read raidcount of %s" % str(count))
+
+        return count
+
+
     def checkPostLoginNewsMessage(self, filename, hash):
         if not os.path.isfile(filename):
             return False

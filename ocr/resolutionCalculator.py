@@ -110,13 +110,16 @@ class ResolutionCalc:
     def getMenuRaidsCloseButtonBounds(self):
         return self.__getBounds('menu_or_raids_close')
 
+    def getRaidcountBounds(self):
+        return self.__getBounds('raidcount')
+
     def getRaidBounds(self, numberOfRaid):
         #numberOfRaid is 1 to 6
         if numberOfRaid < 1 or numberOfRaid > 6:
             return None
         #shift numberOfRaid to have index
         numberOfRaid -= 1
-        lines = self.resolutionConfiguration['crop']['lines']
+        lines = self.resolutionConfiguration['crop']['lines']['3+']
         column = numberOfRaid % 3 #columns 0 to 2
         row = 0
         if numberOfRaid > 2: #we are in the 2nd row...
@@ -144,7 +147,42 @@ class ResolutionCalc:
         else:
             left = lines['vertical']['third']
             right = lines['vertical']['fourth']
-            
+
+        left = int(round(left * self.width))
+        right = int(round(right * self.width))
+        top = int(round(top * self.height))
+        bottom = int(round(bottom * self.height))
+        return Bounds(top, bottom, left, right)
+
+    def getRaidBoundsSingle(self):
+        lines = self.resolutionConfiguration['crop']['lines']['1']
+        top = lines['horizontal']['first']
+        bottom = lines['horizontal']['second']
+        left = lines['vertical']['first']
+        right = lines['vertical']['second']
+
+        left = int(round(left * self.width))
+        right = int(round(right * self.width))
+        top = int(round(top * self.height))
+        bottom = int(round(bottom * self.height))
+        return Bounds(top, bottom, left, right)
+
+    def getRaidBoundsTwo(self, numberOfRaid):
+        lines = self.resolutionConfiguration['crop']['lines']['2']
+        top = None
+        bottom = None
+        left = None
+        right = None
+        top = lines['horizontal']['first']
+        bottom = lines['horizontal']['second']
+
+        if numberOfRaid == 1:
+            left = lines['vertical']['first']
+            right = lines['vertical']['second']
+        else:
+            left = lines['vertical']['second']
+            right = lines['vertical']['third']
+
         left = int(round(left * self.width))
         right = int(round(right * self.width))
         top = int(round(top * self.height))

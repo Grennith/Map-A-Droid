@@ -74,6 +74,14 @@
         "bottom" : 0.312
       }
     },
+    "raidcount" : {
+      "bounds" : {
+        "left" : 0.799,
+        "right" : 0.80,
+        "top" : 0.284,
+        "bottom" : 0.305
+      }
+    },
     "news_or_quest_close" : {
       "click" : {
         "x" : 0.5,
@@ -104,16 +112,39 @@
         "y" : 1334
       },
       "lines" : {
-        "horizontal" : {
-          "first" : 0.365,
-          "second" : 0.614,
-          "third" : 0.863
+        "1" : {
+          "horizontal" : {
+            "first" : 0.367,
+            "second" : 0.59
+          },
+          "vertical" : {
+            "first" : 0.375,
+            "second" : 0.667
+          }
         },
-        "vertical" : {
-          "first" : 0.093,
-          "second" : 0.38,
-          "third" : 0.667,
-          "fourth" : 0.954
+        "2" : {
+          "horizontal" : {
+            "first" : 0.367,
+            "second" : 0.59
+          },
+          "vertical" : {
+            "first" : 0.23,
+            "second" : 0.52,
+            "third" : 0.811
+          }
+        },
+        "3+" : {
+          "horizontal" : {
+            "first" : 0.367,
+            "second" : 0.59,
+            "third" : 0.812
+          },
+          "vertical" : {
+            "first" : 0.083,
+            "second" : 0.375,
+            "third" : 0.667,
+            "fourth" : 0.958
+          }
         }
       }
     }

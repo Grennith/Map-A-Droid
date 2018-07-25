@@ -403,8 +403,12 @@ def main_thread():
                 time.sleep(1)
                 attempts += 1
             log.info("Saving raid screenshot")
-            curTime = time.time()
-            copyfile('screenshot.png', args.raidscreen_path + '/Raidscreen' + str(curTime) + '.png')
+            countOfRaids = pogoWindowManager.readAmountOfRaids('screenshot.png', 123)
+            if countOfRaids > 0:
+                curTime = time.time()
+                copyfile('screenshot.png', args.raidscreen_path
+                    + '/raidscreen_' + str(curTime) + "_" + str(countOfRaids) + '.png')
+
 
 def observer(scrPath, width, height):
         observer = Observer()
