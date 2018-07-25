@@ -118,7 +118,7 @@ class PogoWindows:
         gray = raidCountColoured.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
         bw.save(tempPathBw)
-        text = image_to_string(Image.open(tempPathBw),config='--oem 3 --psm 7')
+        text = image_to_string(Image.open(tempPathBw),config='--oem 3 --psm 10 --c tessedit_char_whitelist=0123456789')
 
         count = None
         try:
@@ -127,7 +127,7 @@ class PogoWindows:
             #Handle exception when tesseract read bullshit...
             log.error("readAmountOfRaids: could not read a number... " +
                 "Text read: %s" % text)
-            return None
+            return 6 #we do read 1 and 2 pretty good... 3 gives us trouble, just assume 6 to be good to go
 
         log.debug("readAmountOfRaids: read raidcount of %s" % str(count))
 
