@@ -211,7 +211,7 @@ class Scanner:
                 lvl = lvlSplit[3]
 
 
-        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
+        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) + ".jpg")
 
         if lvl:
             log.debug("detectLevel: found level '%s'" % str(lvl))
