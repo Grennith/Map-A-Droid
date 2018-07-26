@@ -189,6 +189,9 @@ class DbWrapper:
             cursor.execute(query, data)
 
         connection.commit()
+        
+        self.refreshTimes(gym)
+        
         return True
         
     def readRaidEndtime(self, gym):
@@ -269,3 +272,24 @@ class DbWrapper:
 
             log.info('Mon is new - submitting')
             return False
+            
+    def refreshTimes(self, gym):
+        log.debug('Refresh Gym Times')
+        now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
+        log.debug(now)
+        try:
+            connection = mysql.connector.connect(host = self.host,
+            user = self.user, port = self.port, passwd = self.password,
+            db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+            
+        cursor = connection.cursor()
+        query = (' update gym ' +
+            ' set last_modified = \'' + str(now) + '\', last_scanned = \'' + str(now) + '\' where gym_id = \'' + gym + '\'')
+        log.debug(query)
+        cursor.execute(query)
+        connection.commit()
+
+        return True
