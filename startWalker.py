@@ -325,8 +325,8 @@ def main_thread():
                 curLat = route[i]['lat']
                 curLng = route[i]['lng']
                 #remove whitespaces that might be on either side...
-                curLat = curLat.strip()
-                curLng = curLng.strip()
+                #curLat = curLat.strip()
+                #curLng = curLng.strip()
                 i += 1
 
             log.debug("next stop: %s, %s" % (str(curLat), str(curLng)))

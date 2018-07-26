@@ -214,7 +214,8 @@ def getJsonRoute(filePath):
 
     export_data = []
     for i in range(len(sol_best)):
-        export_data.append(lessCoordinates[ int(sol_best[i]) ])
+        export_data.append({'lat' : lessCoordinates[int(sol_best[i])][0].item(),
+            'lng' : lessCoordinates[int(sol_best[i])][1].item()})
 
     #return json.dumps(export_data)
     return export_data
