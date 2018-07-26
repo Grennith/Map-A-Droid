@@ -52,13 +52,13 @@ class Scanner:
 
     def detectRaidTime(self, raidpic, hash, raidNo):
         log.debug('Reading Raidtimer')
-        raidtimer = raidpic[200:230, 0:110]
+        raidtimer = raidpic[200:230, 30:150]
         emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_emptyraid.png"
         cv2.imwrite(emptyRaidTempPath, raidtimer)
         rt = Image.open(emptyRaidTempPath)
         gray = rt.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        raidtimer = pytesseract.image_to_string(bw, config='-psm 7').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','')
+        bw = gray.point(lambda x: 0 if x<200 else 255, '1')
+        raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','').replace('.',':')
         log.debug(raidtimer)
         #log.debug(re.match(r'\d\d:\d\d[am|pm]*', raidtimer))
         #cleanup
