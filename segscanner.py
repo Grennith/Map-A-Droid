@@ -205,11 +205,11 @@ class Scanner:
 
         log.debug('Scanning Level')
         for file in lvlTypes:
-            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.9)
+            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.8)
             if foundlvl is None or find_lvl > foundlvl[0]:
     	    	foundlvl = find_lvl, file
 
-            if not foundlvl is None and foundlvl[0]>0.9:
+            if not foundlvl is None and foundlvl[0]>0.8:
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
 
@@ -226,8 +226,8 @@ class Scanner:
     def detectGym(self, raidpic, hash, raidcount, monId = None):
         foundgym = None
         gymId = None
-        x1 = 85
-        x2 = 115
+        x1 = 90
+        x2 = 125
         y1 = 135
         y2 = 200
 
@@ -277,10 +277,6 @@ class Scanner:
         cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(time.time()) +".jpg", raidpic)
         return True
 
-    def md5Hash(self, code):
-
-        md5Hash = hashlib.md5(code).hexdigest()
-        return md5Hash
 
     def decodeHashJson(self, hashJson):
         data = json.loads(hashJson)
@@ -329,13 +325,9 @@ class Scanner:
         cv2.imwrite(filenameOfCrop, img)
         img = cv2.imread(filenameOfCrop)
 
-        log.info(int(hashlib.md5(str(img).encode('utf-8')).hexdigest(), 16))
-
         raidhash = img[0:175, 0:170]
         raidhashPic = self.tempPath + "/" + str(hash) + "_raidhash" + str(raidNo) +".jpg"
         cv2.imwrite(raidhashPic, raidhash)
-        
-        log.info(int(hashlib.md5(str(raidhashPic).encode('utf-8')).hexdigest(), 16))
 
         #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
         raidtimer = self.detectRaidTime(img, hash, raidNo)
@@ -461,7 +453,7 @@ class Scanner:
         log.debug("start_detect[crop %s]: finished" % str(raidNo))
         return True
 
-    def imageHashExists(self, image, zoom, type, x1=135, x2=200, y1=65, y2=95, hashSize=8):
+    def imageHashExists(self, image, zoom, type, x1=90, x2=125, y1=135, y2=200, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -470,7 +462,10 @@ class Scanner:
         else:
             crop = image2
 
-        imageHash = int(hashlib.md5(str(crop).encode('utf-8')).hexdigest(), 16)
+        resized = cv2.resize(crop, (hashSize + 1, hashSize))
+        diff = resized[:, 1:] > resized[:, :-1]
+        imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
+        #imageHash = int(hashlib.md5(str(crop).encode('utf-8')).hexdigest(), 16)
         existHash = self.dbWrapper.checkForHash(str(imageHash), str(type))
         if not existHash:
             log.debug('Hash not found')
@@ -478,7 +473,7 @@ class Scanner:
         log.debug('Hash found: %s' % existHash)
         return existHash
 
-    def imageHash(self, image, id, zoom, type, x1=135, x2=200, y1=65, y2=95, hashSize=8):
+    def imageHash(self, image, id, zoom, type, x1=90, x2=125, y1=135, y2=200, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -487,7 +482,10 @@ class Scanner:
         else:
             crop = image2
 
-        imageHash = int(hashlib.md5(str(crop).encode('utf-8')).hexdigest(), 16)
+        resized = cv2.resize(crop, (hashSize + 1, hashSize))
+        diff = resized[:, 1:] > resized[:, :-1]
+        imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
+        #imageHash = int(hashlib.md5(str(crop).encode('utf-8')).hexdigest(), 16)
 
         log.debug('Adding Hash to Database')
         log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
@@ -533,13 +531,16 @@ class Scanner:
             return False
 
         if am_found:
+            log.debug('Found AM')
             return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
         elif pm_found:
+            log.debug('Found PM')
             if hour_min[0] == '12':
                 return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
             else:
                 return int(unix_zero)+(int(hour_min[0])+12)*3600+int(hour_min[1])*60
         else:
+            log.debug('Found EU Time')
             return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
 
     def getEndTime(self, data):
@@ -547,17 +548,16 @@ class Scanner:
         unix_zero =  time.mktime(zero.timetuple())
         hour_min_divider = data.find(':')
         log.debug(': Count: ' + str(hour_min_divider))
-        if hour_min_divider == 1:
-            if hour_min_divider != -1:
-                data = data.replace('~','').replace('-','').replace(' ','')
-                hour_min = data.split(':')
-                ret, hour_min = self.checkHourMinSec(hour_min)
-                if ret == True:
-                    return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60+int(hour_min[2])
-                else:
-                    return False
+        if hour_min_divider != -1:
+            data = data.replace('~','').replace('-','').replace(' ','')
+            hour_min = data.split(':')
+            ret, hour_min = self.checkHourMinSec(hour_min)
+            if ret == True:
+                return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60+int(hour_min[2])
             else:
                 return False
+        else:
+            return False
 
 if __name__ == '__main__':
     scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path, args.unknown_path, args.timezone)

@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import cv2
 import numpy as np
 import logging
@@ -13,6 +15,10 @@ from vnc.vncWrapper import VncWrapper
 import collections
 import re
 import time
+
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 Coordinate = collections.namedtuple("Coordinate", ['x', 'y'])
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
@@ -118,9 +124,9 @@ class PogoWindows:
 
         tempPathBw = self.tempDirPath + "/" + str(hash) + "_raidcount_bw.png"
         gray = raidCountColoured.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
+        bw = gray.point(lambda x: 0 if x<200 else 255, '1')
         bw.save(tempPathBw)
-        text = image_to_string(Image.open(tempPathBw),config='--oem 3 --psm 10 --c tessedit_char_whitelist=0123456789')
+        text = image_to_string(Image.open(tempPathBw),config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','').replace('.','').replace(',','').replace('‘','')
 
         count = None
         try:

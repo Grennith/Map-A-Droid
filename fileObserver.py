@@ -66,7 +66,6 @@ class checkScreenshot(PatternMatchingEventHandler):
         if amountOfRaids is None or amountOfRaids == 0:
             return
         log.debug(amountOfRaids)    
-        log.debug('weiter')
         processes = []
         bounds = []
 
@@ -74,7 +73,6 @@ class checkScreenshot(PatternMatchingEventHandler):
             #we got just one raid...
             boundsOfSingleRaid = self.resolutionCalculator.getRaidBoundsSingle()
             log.debug(boundsOfSingleRaid)
-            log.debug('hiersindwir')
             p = self.prepareAnalysis(1, boundsOfSingleRaid, raidPic)
             processes.append(p)
             p.daemon = True
@@ -87,7 +85,6 @@ class checkScreenshot(PatternMatchingEventHandler):
                 amountOfRaids = 6 #ignore any more raids, shouldn't be the case all too often
             for i in range(amountOfRaids): #0 to 5....
                 bounds.append(self.resolutionCalculator.getRaidBounds(i + 1))
-        log.debug('weiter')
         log.debug(bounds)
         for i in range(len(bounds)):
             p = self.prepareAnalysis(i + 1, bounds[i], raidPic)

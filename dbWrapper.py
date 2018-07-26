@@ -139,6 +139,8 @@ class DbWrapper:
 
     def submitRaid(self, gym, pkm, lvl, start, end, type, MonWithNoEgg=False):
         log.debug("Submitting raid")
+        zero = datetime.datetime.now()
+        zero =  time.mktime(zero.timetuple())
         now = datetime.datetime.now()
         date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
         today1 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
@@ -181,8 +183,8 @@ class DbWrapper:
                     'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
                     'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
                     'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')  
-                data = (gym, lvl, end-1000, end-1000, end, pkm, "999", "1", "1", time.time(), #TODO: check None vs null?
-                    lvl, end-1000, end-1000, end, pkm, "999", "1", "1", time.time())
+                data = (gym, lvl, int(zero)-10000, int(zero)-10000, end, pkm, "999", "1", "1", time.time(), #TODO: check None vs null?
+                    lvl, int(zero)-10000, int(zero)-10000, end, pkm, "999", "1", "1", time.time())
                 
             cursor.execute(query, data)
 
@@ -203,8 +205,7 @@ class DbWrapper:
             
         cursor = connection.cursor()
         query = (' SELECT count(*) FROM raid ' +
-            ' WHERE raid.end > \'%s\' and gym_id = \'%s\''
-            % (str(now), str(gym)))
+            ' WHERE STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\'')
         log.debug(query)
         cursor.execute(query)
         result=cursor.fetchone()
@@ -254,7 +255,7 @@ class DbWrapper:
             log.debug('Check for Mon')
             cursor = connection.cursor()
             query = (' SELECT count(*) FROM raid ' +
-                ' WHERE STR_TO_DATE(raid.start,\'%Y-%m-%d %H:%i:%s\') <= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\' and pokemon_id is not NULL ')
+                ' WHERE STR_TO_DATE(raid.start,\'%Y-%m-%d %H:%i:%s\') <= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\' and pokemon_id is not NULL')
             log.debug(query)
             cursor.execute(query)
             result=cursor.fetchone()
