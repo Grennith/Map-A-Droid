@@ -205,11 +205,11 @@ class Scanner:
 
         log.debug('Scanning Level')
         for file in lvlTypes:
-            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.8)
+            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.7)
             if foundlvl is None or find_lvl > foundlvl[0]:
     	    	foundlvl = find_lvl, file
 
-            if not foundlvl is None and foundlvl[0]>0.8:
+            if not foundlvl is None and foundlvl[0]>0.7:
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
 

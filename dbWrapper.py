@@ -141,6 +141,8 @@ class DbWrapper:
         log.debug("Submitting raid")
         zero = datetime.datetime.now()
         zero =  time.mktime(zero.timetuple())
+        now_timezone = datetime.datetime.now()
+        now_timezone =  time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
         now = datetime.datetime.now()
         date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
         today1 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
@@ -169,23 +171,23 @@ class DbWrapper:
                 'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
                 'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
                 'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')  
-            data = (gym, lvl, start, start, end, None, "999", "1", "1", time.time(), #TODO: check None vs null?
-                lvl, start, start, end, None, "999", "1", "1", time.time())
+            data = (gym, lvl, start, start, end, None, "999", "1", "1", now_timezone, #TODO: check None vs null?
+                lvl, start, start, end, None, "999", "1", "1", now_timezone)
             #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
             cursor.execute(query, data)  
         else:
             log.info("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, gym))
             if not MonWithNoEgg:
                 query = " UPDATE raid SET pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s) WHERE gym_id = %s "
-                data = (pkm, "999", "1", "1",  time.time(), gym)
+                data = (pkm, "999", "1", "1",  now_timezone, gym)
             else:
                 query = (' INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, ' +
                     'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
                     'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
                     'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
                     'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')  
-                data = (gym, lvl, int(zero)-10000, int(zero)-10000, end, pkm, "999", "1", "1", time.time(), #TODO: check None vs null?
-                    lvl, int(zero)-10000, int(zero)-10000, end, pkm, "999", "1", "1", time.time())
+                data = (gym, lvl, int(zero)-10000, int(zero)-10000, end, pkm, "999", "1", "1", now_timezone, #TODO: check None vs null?
+                    lvl, int(zero)-10000, int(zero)-10000, end, pkm, "999", "1", "1", now_timezone)
                 
             cursor.execute(query, data)
 
@@ -277,6 +279,8 @@ class DbWrapper:
     def refreshTimes(self, gym):
         log.debug('Refresh Gym Times')
         now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
+        now_timezone = datetime.datetime.now()
+        now_timezone =  time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
         log.debug(now)
         try:
             connection = mysql.connector.connect(host = self.host,
@@ -289,6 +293,10 @@ class DbWrapper:
         cursor = connection.cursor()
         query = (' update gym ' +
             ' set last_modified = \'' + str(now) + '\', last_scanned = \'' + str(now) + '\' where gym_id = \'' + gym + '\'')
+        log.debug(query)
+        cursor.execute(query)
+        query = (' update raid ' +
+            ' set last_scanned = FROM_UNIXTIME(\'' + str(now_timezone) + '\') where gym_id = \'' + gym + '\'')
         log.debug(query)
         cursor.execute(query)
         connection.commit()
