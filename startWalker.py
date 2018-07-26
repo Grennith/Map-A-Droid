@@ -270,10 +270,11 @@ def main_thread():
     route = getJsonRoute(args.file)
     lastPogoRestart = time.time()
     lastRaidQueueUpdate = time.time()
-    print(route)
+    log.info("Route to be taken: %s, amount of coords: %s" % (str(route), str(len(route))))
     #sys.exit(0)
     log.info("Max_distance before teleporting: %s" % args.max_distance)
     log.info("Checking if screen is on and pogo is running")
+
     if not sleep:
         turnScreenOnAndStartPogo()
     #sys.exit(0)
@@ -328,6 +329,7 @@ def main_thread():
                 curLng = curLng.strip()
                 i += 1
 
+            log.debug("next stop: %s, %s" % (str(curLat), str(curLng)))
             log.debug('LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' % (lastLat, lastLng, curLat, curLng))
             #get the distance from our current position (last) to the next gym (cur)
             distance = getDistanceOfTwoPointsInMeters(float(lastLat), float(lastLng), float(curLat), float(curLng))
