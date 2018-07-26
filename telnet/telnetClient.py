@@ -1,8 +1,17 @@
 import socket
 import time
+import logging
+log = logging.getLogger()
 
 class TelnetClient:
     def __init__(self, ip, port, password):
+        if (password != None):
+            log.debug('Trying to build up a telnet connection to %s:%s with a password'
+                % (str(ip), str(port)))
+        else:
+            log.debug('Trying to build up a telnet connection to %s:%s without a password'
+                % (str(ip), str(port)))
+
         self.ip = ip
         self.port = port
         self.password = password
@@ -16,8 +25,13 @@ class TelnetClient:
             raise ValueError('Socket not connected')
         else:
             self.connected = True
-
+        #Retrieve the help instructions to have auth only receive "OK"
+        #log.error(self.__sock.recv(1024))
+        result = ""
+        while not "OK" in result:
+            result = self.__sock.recv(1024)
         self.authenticated = self.__auth()
+
         #print(authenticated)
 
 
@@ -37,24 +51,33 @@ class TelnetClient:
         return self.__sock.recv(1024)
 
     def __sendCommandRecursive(self, command, again):
+        log.debug("__sendCommandRecursive: Waiting for result of %s" % str(command))
         x = self.__sendCommandWithoutChecks(command)
-        if "OK" in x:
-            return True
-        elif ("KO: password required. Use 'password' or 'auth'" in x
+        log.debug("__sendCommandRecursive: Sending '%s' resulted in '%s'" % (str(command), x))
+        if ("KO: password required. Use 'password' or 'auth'" in x
             and not again):
             #handle missing auth
-            self.authenticate(self.password);
+            log.debug('__sendCommandRecursive: Auth required')
+            self.__auth();
             self.__sendCommandRecursive(command, True);
         else:
+            log.debug('__sendCommandRecursive: Sent command successfully')
             self.authenticated = False
-            return False
+            return (True, x)
 
     #just a function to make the function call look better
     def sendCommand(self, command):
         return self.__sendCommandRecursive(command, False)
 
     def __auth(self):
-        result = self.__sendCommandWithoutChecks("auth %s\r\n" % (self.password))
+        if (self.password == None):
+            log.debug("__auth: No password configured, not authenticating")
+            return False
+        log.debug("__auth: Trying to authenticate")
+        toSend = "auth %s\r\n" % str(self.password)
+        result = self.__sendCommandWithoutChecks(toSend)
+        log.debug("__auth: got: %s" % str(result))
         authenticated = ("OK" in result)
         self.authenticated = authenticated
+        log.debug("__auth: Authenticated: %s" % str(authenticated))
         return authenticated

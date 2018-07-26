@@ -22,7 +22,7 @@ def main():
     print('Downloading coords')
     lll = args.latlngleft
     llr = args.latlngright
-    
+    queryStr = ""
     if lll and llr:
         queryStr = ' where (latitude BETWEEN {} AND {}) AND (longitude BETWEEN {} AND {})'.format(lll[0], llr[0], lll[1], llr[1])
     query = ("SELECT latitude, longitude FROM gym {}").format(queryStr)

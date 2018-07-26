@@ -78,11 +78,11 @@ def parseArgs():
 
 
     #Runtypes
-    parser.add_argument('-os', '--only-scan', action='store_true', default=False,
+    parser.add_argument('-os', '--only_scan', action='store_true', default=False,
             help=('Use this instance only for scanning.'))
-    parser.add_argument('-oo', '--only-ocr', action='store_true', default=False,
+    parser.add_argument('-oo', '--only_ocr', action='store_true', default=False,
             help=('Use this instance only for OCR.'))
-    parser.add_argument('-om', '--ocr-multitask', action='store_true', default=False,
+    parser.add_argument('-om', '--ocr_multitask', action='store_true', default=False,
             help=('Running OCR in sub-processes (module multiprocessing) to speed up analysis of raids.'))
 
 
@@ -112,6 +112,10 @@ def parseArgs():
             help=('Mon Placeholder for Level 4. Default: 164'))
     parser.add_argument('-egg5mon', '--egg5_mon_id', default='198',
             help=('Mon Placeholder for Level 5. Default: 198'))
+
+    # Cleanup Hash Database
+    parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
+            help=('Cleanup the hashing database.'))
 
     #timezone
     parser.add_argument('-tz', '--timezone', type=int, required=True,

@@ -5,16 +5,25 @@ import imutils
 import glob, os
 import os.path
 import logging
+import json
 from shutil import copyfile
 from PIL import Image
+from walkerArgs import parseArgs
+from dbWrapper import *
 
 log = logging.getLogger(__name__)
+args = parseArgs()
 
 class MonRaidImages(object):
+
     @staticmethod
     def copyMons(pogoasset):
 
+        monList = []
+
         log.info('Processing Pokemon Matching....')
+        with open('raidmons.json') as f:
+            data = json.load(f)
 
         monImgPath = os.getcwd() + '/mon_img/'
         filePath = os.path.dirname(monImgPath)
@@ -24,12 +33,6 @@ class MonRaidImages(object):
             os.makedirs(filePath)
 
         assetPath = pogoasset
-        raidMons = {1: [129, 140, 320, 138], 
-                    2: [125, 303, 185, 310],
-                    3: [68, 142, 135, 95],
-                    4: [359, 248, 76, 112],
-                    5: [378, 249]
-                }
 
         if not os.path.exists(assetPath):
             log.error('PogoAssets not found')
@@ -38,22 +41,31 @@ class MonRaidImages(object):
         for file in glob.glob(monImgPath + "*mon*.png"):
                     os.remove(file)
 
-        for lvl, mons in raidMons.iteritems():
-            for mon in mons:
+        for mons in data:
+            for mon in mons['DexID']:
+                lvl = mons['Level']
+                if str(mon).find("_") > -1:
+                    mon_split = str(mon).split("_")
+                    mon = mon_split[0]
+                    frmadd = mon_split[1] 
+                else:
+                    frmadd = "00"
 
                 mon = '{:03d}'.format(int(mon))
+                monList.append(mon)
+
                 monFile = monImgPath + '_mon_' + str(mon) + '_' + str(lvl) + '.png'
 
                 if not os.path.isfile(monFile):
 
-                    monFileAsset = assetPath + 'decrypted_assets/pokemon_icon_' + str(mon) + '_00.png'
+                    monFileAsset = assetPath + 'decrypted_assets/pokemon_icon_' + str(mon) + '_' + frmadd + '.png'
 
                     if not os.path.isfile(monFileAsset):
                         log.error('File ' + str(monFileAsset) + ' not found')
                         exit(0)
-                
+
                     copyfile(monFileAsset, monFile)
-            
+
                     image = Image.open(monFile)
                     image.convert("RGBA")
                     canvas = Image.new('RGBA', image.size, (255,255,255,255)) # Empty canvas colour (r,g,b,a)
@@ -65,10 +77,16 @@ class MonRaidImages(object):
                     monAsset = cv2.inRange(monAsset,np.array([240,240,240]),np.array([255,255,255]))
                     cv2.imwrite(monFile, monAsset)
                     crop = cv2.imread(monFile,3)
-                    crop = crop[0:int(height), 0:int((width/10)*8)]
-                    kernel = np.ones((3,3),np.uint8)
+                    crop = crop[0:int(height), 0:int((width/10)*10)]
+                    kernel = np.ones((1,1),np.uint8)
                     crop = cv2.erode(crop,kernel,iterations = 1)
                     cv2.imwrite(monFile, crop)
+
+        _monList = myList = ','.join(map(str, monList))
+        dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
+        dbWrapper.deleteHashTable(_monList, 'Mon%')
+
+
 
     @staticmethod
     def copyEggs(pogoasset):

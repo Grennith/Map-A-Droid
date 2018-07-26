@@ -75,17 +75,12 @@ def __lessCoordsMiddle(coordinates):
 
 def __lessCoords(coordinates):
     less = []
+    #log.debug("Summing up gyms...")
     while coordinates.size > 0:
         coord = coordinates[0]
-        #indicesToDelete = []
-        #append the coord
+        #log.debug("Summing up up to 5 gyms around %s" % str(coord))
         less.append(coord)
-        #print("np.nonzero: %s\n" % str(np.nonzero(coordinates == coord)))
-        #coordIndex = np.nonzero(coordinates == coord)[0]#[0] #TODO: BREAKS
-        #coordIndex, = np.where(coordinates == coord)
-        #print coordIndex
-        #coordIndex, = np.where(coordinates == coord)[0]
-        #print("CoordIndex: %s\n" % coordIndex)
+
         coordinates = np.delete(coordinates, 0, 0)
         for x in range(4):
             if (coordinates.size == 0):
@@ -96,6 +91,7 @@ def __lessCoords(coordinates):
             if (shortestDistance.index == -1):
                 #no (more) gym found in range
                 break;
+            #log.debug("%s is %sm close to gym %s" % (str(coordinates[shortestDistance.index]), str(shortestDistance), str(coord)))
             coordinates = np.delete(coordinates, shortestDistance.index, 0)
     return np.array(less)
 
@@ -116,23 +112,32 @@ def __getShortestDistanceOfPointLessMax(point, coordinates, maxDistance):
     return ShortestDistance(index, shortestDistance)
 
 def getJsonRoute(filePath):
-    coordinates = np.loadtxt(filePath, delimiter=',')
-    if (coordinates.size > 1):
+    csvCoordinates = np.loadtxt(filePath, delimiter=',')
+    log.debug("Read %s coordinates from file" % str(len(csvCoordinates)))
+    #log.debug("Read from file: %s" % str(csvCoordinates))
+
+    if (csvCoordinates.size > 1):
         #TODO: consider randomizing coords and trying a couple times to get "best" result
-        log.info("Found %s coordinates" % (coordinates.size / 2))
-        log.info("Calculating")
-        coordinates = __lessCoords(coordinates)
-        #log.info("Still calculating")
-        #coordinates = __lessCoords(coordinates)
-        #log.info("Just a little longer")
-        #coordinates = __lessCoords(coordinates)
+        log.info("Found %s coordinates" % (csvCoordinates.size / 2))
+        log.info("Calculating...")
+        lessCoordinates = __lessCoords(csvCoordinates)
+        log.debug("Coords summed up: %s, that's just %s coords" % (str(lessCoordinates), str(len(lessCoordinates))))
         #TODO: use smallest enclosing ball instead of this shit or just make __lessCoords better
 
-    log.info("Got %s coordinates" % (coordinates.size / 2.0))
+    log.info("Got %s coordinates" % (lessCoordinates.size / 2.0))
+    if (not len(lessCoordinates) > 2):
+        log.info("less than 3 coordinates... not gonna take a shortest route on that")
+        export_data = []
+        for i in range(len(lessCoordinates)):
+            export_data.append(lessCoordinates[i])
+        return export_data
+
+    log.info("Calculating a short route through all those coords. Might take a while")
     # Constant Definitions
     NUM_NEW_SOLUTION_METHODS = 3
     SWAP, REVERSE, TRANSPOSE = 0, 1, 2
 
+    coordinates = lessCoordinates.copy()
     # Params Initial
     num_location = coordinates.shape[0]
     markov_step = 10 * num_location
@@ -207,14 +212,10 @@ def getJsonRoute(filePath):
         #      " Distance:", "%.2fm" % round(cost_best, 2),
         #      " Optimization Threshold:", "%d" % cost_best_counter)
 
-    coord = []
-    for line in open(filePath,"r").readlines():
-        x=line.strip("\r\n").split(",")
-        coord.append({'lat':x[0],'lng':x[1]})
-
     export_data = []
     for i in range(len(sol_best)):
-        export_data.append(coord[ int(sol_best[i]) ])
+        export_data.append({'lat' : lessCoordinates[int(sol_best[i])][0].item(),
+            'lng' : lessCoordinates[int(sol_best[i])][1].item()})
 
     #return json.dumps(export_data)
     return export_data

@@ -2,24 +2,42 @@ import cv2
 import os
 import numpy as np
 import imutils
+import logging
 #import time
 
-def fort_image_matching(url_img_name, fort_img_name, zoom, ttest):
+log = logging.getLogger(__name__)
+
+def fort_image_matching(url_img_name, fort_img_name, zoom, value, x1=90, x2=125, y1=135, y2=200):
+    log.debug("fort_image_matching: Reading url_img_name '%s'" % str(url_img_name))
     url_img = cv2.imread(url_img_name,3)
+    if (url_img is None):
+        log.error("fort_image_matching: '%s' appears to be corrupted" % str(url_img_name))
+        return 0.0
+
+    log.debug("fort_image_matching: Reading fort_img_name '%s'" % str(fort_img_name))
     fort_img = cv2.imread(fort_img_name,3)
+    if (fort_img is None):
+        log.error("fort_image_matching: '%s' appears to be corrupted" % str(fort_img_name))
+        return 0.0
     height, width, channels = url_img.shape
     height_f, width_f, channels_f = fort_img.shape
 
     if zoom == True:
-        if width_f == 160:
+        if width_f < 180:
             fort_img = cv2.resize(fort_img,None,fx=3, fy=3, interpolation = cv2.INTER_NEAREST)
         else:
-            fort_img = fort_img[int((height_f/2)-(height_f/3)):int((height_f/2)+(height_f/3)), int((width_f/2)-(width_f/3)):int((width_f/2)+(width_f/3))]
-            #cv2.imwrite('test2_' + str(time.time()) + '.png', fort_img)
+            if height_f > width_f:
+            
+                fort_img = fort_img[int((height_f/2)-(height_f/3)):int((height_f/2)+(height_f/3)), int(0):int(width_f)]
+            else:
+                fort_img = fort_img[int(0):int(height_f), int((width_f/2)-(width_f/3)):int((width_f/2)+(width_f/3))]
+                
+            #cv2.imwrite('Gym_' + str(time.time()) + '.png', fort_img)
 
         url_img = cv2.resize(url_img,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
-        crop = url_img[int(130):int(200),int(80):int(130)]
-        #cv2.imwrite('test_' + str(time.time()) + '.png', crop)
+        crop = url_img[int(y1):int(y2),int(x1):int(x2)]
+        #crop = cv2.resize(url_img,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
+        #cv2.imwrite('Crop_' + str(time.time()) + '.png', crop)
     else:
         fort_img = cv2.resize(fort_img,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
         crop = url_img
@@ -45,7 +63,7 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, ttest):
 	        found = (maxVal, maxLoc, r)
 
 
-    if found[0] < ttest:
+    if found[0] < value:
         return 0.0
 
     return found[0]
