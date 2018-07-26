@@ -146,6 +146,7 @@ class DbWrapper:
         today1 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
 
         if self.raidExist(gym, type):
+            self.refreshTimes(gym)
             log.debug('%s already submitted - ignoring' % str(type))
             return False
 
