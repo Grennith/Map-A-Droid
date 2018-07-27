@@ -40,8 +40,7 @@ class DbWrapper:
         dbTimeToCheck = datetime.datetime.now() - datetime.timedelta(hours = self.timezone)
         query = (' SELECT start, latitude, longitude FROM raid LEFT JOIN gym ' +
             'ON raid.gym_id = gym.gym_id WHERE raid.end > \'%s\' '  % str(dbTimeToCheck) +
-            'AND raid.pokemon_id IS NULL ' +
-            'AND raid.start < \'%s\'' % str(dbTimeToCheck))
+            'AND raid.pokemon_id IS NULL')
         #print(query)
         #data = (datetime.datetime.now())
         cursor.execute(query)
