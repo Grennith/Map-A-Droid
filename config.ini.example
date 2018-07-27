@@ -47,12 +47,22 @@ screen_height:
 #speed:                      # running speed (defaul: 50 km/h)
 #max_distance:               # Max. walking distance - otherwise teleport
 
+#gym_distance:               # Distance to sum up gyms within this range (meters). Default: 700
+#max_count_gym_sum_up_around_gym:               # maximum amount of gyms around a given gym to be summed up. Default: 5
+#post_teleport_delay:        # Delay in seconds after a teleport. Default: 4.0. Do mind the ".0". 500ms = 0.5s ;)
+#post_walk_delay:            # Delay in seconds after reaching destination with the speed given. Default: 2.0
+#post_screenshot_delay:      # Delay in seconds after a screenshot has been taken and about to be saved. Default: 0.2
+#restart_pogo:               # Restart pogo every N minutes. Default: 120. 0 for never
+#post_turn_screen_on_delay:       # Delay in seconds after sending the turn screen on command. Default: 7.0
+#post_pogo_start_delay:      # Delay in seconds to wait after starting pogo. Default: 60.0
+#delay_after_hatch:          # Delay to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. Default: 3.5 Minutes
+
 # Runtype settings
 ######################
 
 #only_scan                   # running this instance in scanning mode without OCR tracing
 #only_ocr                    # running this instance in ocr mode without Scanning
-#ocr_multitask               # running OCR as multiprocessing task 
+#ocr_multitask               # running OCR as multiprocessing task
 
 # path settings
 ######################

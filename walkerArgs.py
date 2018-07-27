@@ -74,7 +74,25 @@ def parseArgs():
     parser.add_argument('-s', '--speed', required=False, type=int, default=50,
             help=('The speed to walk from gym to gym in kmph. speed=0 means teleportation. Default: 50'))
     parser.add_argument('-m', '--max_distance', required=False, type=int,
-            help=('The maximum distance to be walked. Anything with a longer distance will be teleported to.'))
+            help=('The maximum distance [meters] to be walked. Anything with a longer distance to will be teleported to.'))
+    parser.add_argument('-gd', '--gym_distance', required=False, type=float, default=700.0,
+            help=('The maximum distance [meters] to sum up gyms around a given gym. Default: 700.0'))
+    parser.add_argument('-mcg', '--max_count_gym_sum_up_around_gym', required=False, type=int, default=5,
+            help=('The maximum distance [meters] to sum up gyms around a given gym. Default: 5'))
+    parser.add_argument('-ptd', '--post_teleport_delay', required=False, type=float, default=4.0,
+            help=('The delay in seconds to wait after a teleport. Default: 4.0'))
+    parser.add_argument('-pwd', '--post_walk_delay', required=False, type=float, default=2.0,
+            help=('The delay in seconds to wait after reaching a destination when walking. Default: 2.0'))
+    parser.add_argument('-psd', '--post_screenshot_delay', required=False, type=float, default=0.2,
+            help=('The delay in seconds to wait after taking a screenshot to copy it and start the next round. Default: 0.2'))
+    parser.add_argument('-rp', '--restart_pogo', required=False, type=int, default=120,
+            help=('The time in minutes inbetween pogo restarts. Default: 120'))
+    parser.add_argument('-ptsod', '--post_turn_screen_on_delay', required=False, type=float, default=7.0,
+            help=('The delay in seconds to wait after sending the turn screen on command. Default: 7.0'))
+    parser.add_argument('-ppsd', '--post_pogo_start_delay', required=False, type=float, default=60.0,
+            help=('The delay in seconds to wait after starting pogo. Default: 60.0'))
+    parser.add_argument('-dah', '--delay_after_hatch', required=False, type=float, default=3.5,
+            help=('The delay in minutes to wait after an egg has hatched to move to the location of the gym. Default: 3.5'))
 
 
     #Runtypes

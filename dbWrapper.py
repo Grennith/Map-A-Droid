@@ -25,7 +25,7 @@ class DbWrapper:
         unixtime = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
         return unixtime
 
-    def getNextRaidHatches(self):
+    def getNextRaidHatches(self, delayAfterHatch):
         try:
             connection = mysql.connector.connect(host = self.host,
                 user = self.user, port = self.port, passwd = self.password,
@@ -34,9 +34,12 @@ class DbWrapper:
             log.error("Could not connect to the SQL database")
             return []
         cursor = connection.cursor()
+        #query = (' SELECT start, latitude, longitude FROM raid LEFT JOIN gym ' +
+        #    'ON raid.gym_id = gym.gym_id WHERE raid.start >= \'%s\''
+        #    % str(datetime.datetime.now() - datetime.timedelta(hours = self.timezone)))
         query = (' SELECT start, latitude, longitude FROM raid LEFT JOIN gym ' +
-            'ON raid.gym_id = gym.gym_id WHERE raid.start >= \'%s\''
-            % str(datetime.datetime.now() - datetime.timedelta(hours = self.timezone)))
+            'ON raid.gym_id = gym.gym_id WHERE raid.start >= raid.last_scanned ' +
+            'AND raid.end > \'%s\'' % str(datetime.datetime.now() - datetime.timedelta(hours = self.timezone)))
         #print(query)
         #data = (datetime.datetime.now())
         cursor.execute(query)
@@ -46,11 +49,7 @@ class DbWrapper:
             if latitude is None or longitude is None:
                 continue
             timestamp = self.dbTimeStringToUnixTimestamp(str(start))
-            #data.append((timestamp, RaidLocation(latitude, longitude)))
-            #data.append((timestamp + 60, RaidLocation(latitude, longitude)))
-            #data.append((timestamp + 2 * 60, RaidLocation(latitude, longitude)))
-            #data.append((timestamp + 3 * 60, RaidLocation(latitude, longitude)))
-            data.append((timestamp + 4 * 60, RaidLocation(latitude, longitude)))
+            data.append((timestamp + delayAfterHatch * 60, RaidLocation(latitude, longitude)))
 
         connection.commit()
         return data
@@ -65,6 +64,7 @@ class DbWrapper:
             log.error("Could not connect to the SQL database")
             return False
         cursor = connection.cursor()
+
         query = (' Create table if not exists trshash ( ' +
             ' hashid MEDIUMINT NOT NULL AUTO_INCREMENT, ' +
             ' hash VARCHAR(255) NOT NULL, ' +
@@ -147,7 +147,7 @@ class DbWrapper:
 
         if self.raidExist(gym, type):
             log.debug('%s already submitted - ignoring' % str(type))
-            return False
+            return True
 
         try:
             connection = mysql.connector.connect(host = self.host,
@@ -167,11 +167,11 @@ class DbWrapper:
                 'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
                 'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
                 'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
-                'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')  
+                'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
             data = (gym, lvl, start, start, end, None, "999", "1", "1", time.time(), #TODO: check None vs null?
                 lvl, start, start, end, None, "999", "1", "1", time.time())
             #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
-            cursor.execute(query, data)  
+            cursor.execute(query, data)
         else:
             log.info("Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s" % (pkm, lvl, today1, gym))
             if not MonWithNoEgg:
@@ -182,18 +182,18 @@ class DbWrapper:
                     'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
                     'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
                     'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
-                    'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')  
+                    'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
                 data = (gym, lvl, int(zero)-10000, int(zero)-10000, end, pkm, "999", "1", "1", time.time(), #TODO: check None vs null?
                     lvl, int(zero)-10000, int(zero)-10000, end, pkm, "999", "1", "1", time.time())
-                
+
             cursor.execute(query, data)
 
         connection.commit()
-        
+
         self.refreshTimes(gym)
-        
+
         return True
-        
+
     def readRaidEndtime(self, gym):
         log.debug('Check DB for existing mon')
         now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
@@ -205,7 +205,7 @@ class DbWrapper:
         except:
             log.error("Could not connect to the SQL database")
             return False
-            
+
         cursor = connection.cursor()
         query = (' SELECT count(*) FROM raid ' +
             ' WHERE STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\'')
@@ -222,7 +222,7 @@ class DbWrapper:
 
         log.info('Endtime is new - submitting')
         return False
-        
+
 
     def raidExist(self, gym, type):
         log.debug('Check DB for existing entry')
@@ -272,7 +272,7 @@ class DbWrapper:
 
             log.info('Mon is new - submitting')
             return False
-            
+
     def refreshTimes(self, gym):
         log.debug('Refresh Gym Times')
         now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
@@ -284,7 +284,7 @@ class DbWrapper:
         except:
             log.error("Could not connect to the SQL database")
             return False
-            
+
         cursor = connection.cursor()
         query = (' update gym ' +
             ' set last_modified = \'' + str(now) + '\', last_scanned = \'' + str(now) + '\' where gym_id = \'' + gym + '\'')

@@ -211,7 +211,7 @@ def printHi():
 #to be called regularly... like every 5mins? no idea... would be nicer to simply insert updates
 def updateRaidQueue(dbWrapper):
     log.info("Updating raid queue")
-    newQueue = dbWrapper.getNextRaidHatches()
+    newQueue = dbWrapper.getNextRaidHatches(args.delay_after_hatch)
     heapq.heapify(newQueue)
     mergeRaidQueue(newQueue)
 
@@ -233,7 +233,7 @@ def restartPogo():
         time.sleep(5)
         if telnMore.startApp("com.nianticlabs.pokemongo"):
             log.warning("Starting pogo...")
-            time.sleep(60)
+            time.sleep(args.post_pogo_start_delay)
             lastPogoRestart = curTime
         #TODO: handle login screen... ?
 
@@ -243,12 +243,12 @@ def turnScreenOnAndStartPogo():
         telnMore.startApp("de.grennith.rgc.remotegpscontroller")
         log.warning("Turning screen on")
         telnMore.turnScreenOn()
-        time.sleep(10)
+        time.sleep(args.post_turn_screen_on_delay)
     #check if pogo is running and start it if necessary
     if not telnMore.isPogoTopmost():
         log.warning("Starting Pogo")
         telnMore.startApp("com.nianticlabs.pokemongo")
-        time.sleep(60)
+        time.sleep(args.post_pogo_start_delay)
 
 def main_thread():
     global nextRaidQueue
@@ -267,7 +267,7 @@ def main_thread():
     dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
     updateRaidQueue(dbWrapper)
 
-    route = getJsonRoute(args.file)
+    route = getJsonRoute(args.file, args.gym_distance, args.max_count_gym_sum_up_around_gym)
     lastPogoRestart = time.time()
     lastRaidQueueUpdate = time.time()
     log.info("Route to be taken: %s, amount of coords: %s" % (str(route), str(len(route))))
@@ -303,10 +303,11 @@ def main_thread():
                 lastRaidQueueUpdate = curTime
 
             #we got the latest raids. To avoid the mobile from killing apps,
-            #let's restart pogo every 2hours or whatever TODO: consider args
-            log.debug("Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
-            if (curTime - lastPogoRestart >= (120 * 60)):
-                restartPogo()
+            #
+            if args.restart_pogo > 0:
+                log.debug("Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
+                if (curTime - lastPogoRestart >= (args.restart_pogo * 60)):
+                    restartPogo()
 
             lastLat = curLat
             lastLng = curLng
@@ -339,11 +340,11 @@ def main_thread():
                     or (lastLat == 0.0 and lastLng == 0.0)):
                 log.info("Teleporting...")
                 telnGeo.setLocation(curLat, curLng, 0)
-                time.sleep(4)
+                time.sleep(args.post_teleport_delay)
             else:
                 log.info('Walking...')
                 telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
-                time.sleep(2)
+                time.sleep(args.post_walk_delay)
 
             #ok, we should be at the next gym, check for errors and stuff
             #TODO: improve errorhandling by checking results and trying again and again
@@ -399,12 +400,9 @@ def main_thread():
                     break;
 
                 vncWrapper.getScreenshot('screenshot.png')
-
-                #TODO: take screenshot of raidscreen?
-                #we should now see the raidscreen, let's take a screenshot of it
-                time.sleep(1)
+                time.sleep(args.post_screenshot_delay)
                 attempts += 1
-            log.info("Saving raid screenshot")
+            log.info("Checking raidcount and copying raidscreen if raids present")
             countOfRaids = pogoWindowManager.readAmountOfRaids('screenshot.png', 123)
             if countOfRaids > 0:
                 curTime = time.time()

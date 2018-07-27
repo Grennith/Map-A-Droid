@@ -73,7 +73,7 @@ def __lessCoordsMiddle(coordinates):
             break
     return np.array(less)
 
-def __lessCoords(coordinates):
+def __lessCoords(coordinates, gymDistance, maxAmountOfGymsToSumUpWithGym):
     less = []
     #log.debug("Summing up gyms...")
     while coordinates.size > 0:
@@ -82,11 +82,11 @@ def __lessCoords(coordinates):
         less.append(coord)
 
         coordinates = np.delete(coordinates, 0, 0)
-        for x in range(4):
+        for x in range(maxAmountOfGymsToSumUpWithGym - 1):
             if (coordinates.size == 0):
                 #we already cut down all the gyms...
                 return np.array(less)
-            shortestDistance = __getShortestDistanceOfPointLessMax(coord, coordinates, 700)
+            shortestDistance = __getShortestDistanceOfPointLessMax(coord, coordinates, gymDistance)
 
             if (shortestDistance.index == -1):
                 #no (more) gym found in range
@@ -111,16 +111,16 @@ def __getShortestDistanceOfPointLessMax(point, coordinates, maxDistance):
 
     return ShortestDistance(index, shortestDistance)
 
-def getJsonRoute(filePath):
+def getJsonRoute(filePath, gymDistance, maxAmountOfGymsToSumUpWithGym):
     csvCoordinates = np.loadtxt(filePath, delimiter=',')
     log.debug("Read %s coordinates from file" % str(len(csvCoordinates)))
     #log.debug("Read from file: %s" % str(csvCoordinates))
 
-    if (csvCoordinates.size > 1):
+    if (csvCoordinates.size > 1 and gymDistance and maxAmountOfGymsToSumUpWithGym):
         #TODO: consider randomizing coords and trying a couple times to get "best" result
         log.info("Found %s coordinates" % (csvCoordinates.size / 2))
         log.info("Calculating...")
-        lessCoordinates = __lessCoords(csvCoordinates)
+        lessCoordinates = __lessCoords(csvCoordinates, gymDistance, maxAmountOfGymsToSumUpWithGym)
         log.debug("Coords summed up: %s, that's just %s coords" % (str(lessCoordinates), str(len(lessCoordinates))))
         #TODO: use smallest enclosing ball instead of this shit or just make __lessCoords better
 
