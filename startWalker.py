@@ -336,7 +336,7 @@ def main_thread():
             distance = getDistanceOfTwoPointsInMeters(float(lastLat), float(lastLng), float(curLat), float(curLng))
             log.info('Moving %s meters to the next position' % distance)
             if (args.speed == 0 or
-                (args.max_distance and distance > args.max_distance)
+                (args.max_distance and args.max_distance > 0 and distance > args.max_distance)
                     or (lastLat == 0.0 and lastLng == 0.0)):
                 log.info("Teleporting...")
                 telnGeo.setLocation(curLat, curLng, 0)
