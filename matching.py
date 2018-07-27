@@ -58,10 +58,9 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, x1=90, x2=125,
 
         result = cv2.matchTemplate(resized, crop, cv2.TM_CCOEFF_NORMED)
         (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
-        #print maxVal
+        
         if found is None or maxVal > found[0]:
 	        found = (maxVal, maxLoc, r)
-
 
     if found[0] < value:
         return 0.0
