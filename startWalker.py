@@ -229,6 +229,7 @@ def restartPogo():
     successfulStop = telnMore.stopApp("com.nianticlabs.pokemongo")
     #TODO: errorhandling if it returned false, maybe try again next round?
     #TODO: check if pogo was closed...
+    log.debug("restartPogo: stop pogo resulted in %s" % str(successfulStop))
     if successfulStop:
         time.sleep(5)
         if telnMore.startApp("com.nianticlabs.pokemongo"):
@@ -364,6 +365,7 @@ def main_thread():
             while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123)):
                 if (attempts >= 15):
                     #weird count of failures... stop pogo, wait 5mins and try again, could be PTC login issue
+                    log.error("Failed to find the raidscreen 15 times in a row. Stopping pogo and taking a break of 6minutes")
                     telnMore.stopApp("com.nianticlabs.pokemongo")
                     time.sleep(360)
                     turnScreenOnAndStartPogo()
