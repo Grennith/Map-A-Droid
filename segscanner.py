@@ -147,7 +147,7 @@ class Scanner:
         cv2.imwrite(picName, monAsset)
 
         log.debug('detectRaidBoss: Scanning Raidboss')
-        monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(raidcount) +".jpg", False, 'mon-' + str(lvl))
+        monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(raidcount) +".jpg", False, 'mon-' + str(lvl), raidcount)
         log.debug('detectRaidBoss: Monhash: ' + str(monHash))
 
         if monHash is None:
@@ -170,7 +170,7 @@ class Scanner:
             return monHash, monAsset
 
         if monID:
-            self.imageHash(picName, monID, False, 'mon-' + str(lvl))
+            self.imageHash(picName, monID, False, 'mon-' + str(lvl), raidcount)
             os.remove(picName)
             return monID, monAsset
 
@@ -239,6 +239,7 @@ class Scanner:
         x2 = 80
         y1 = 100
         y2 = 160
+        foundMonCrops = False
 
 
         #if gymHash is none, we haven't seen the gym yet, otherwise, gymHash == gymId we are looking for
@@ -248,6 +249,7 @@ class Scanner:
                 data = json.load(f)
 
             if str(monId) in data:
+                foundMonCrops = True
                 crop = data[str(monId)]["Crop"]
                 log.debug('Found other Crops for Mon %s' % monId)
                 log.debug(str(crop))
@@ -256,7 +258,7 @@ class Scanner:
                 y1 = crop['Y1']
                 y2 = crop['Y2']
 
-        gymHash = self.imageHashExists(raidpic, True, 'gym', x1, x2, y1, y2)
+        gymHash = self.imageHashExists(raidpic, True, 'gym', raidcount, x1, x2, y1, y2)
 
         if gymHash is None:
             log.debug('start_detect[crop ' + str(raidcount) + ']: Detecting Gym')
@@ -276,10 +278,10 @@ class Scanner:
             return gymHash
 
         if gymId:
-            if monId:
+            if foundMonCrops:
                 log.debug('Dont hash Gym with spec. Crops')
             else:
-                self.imageHash(raidpic, gymId, True, 'gym', x1, x2, y1, y2)
+                self.imageHash(raidpic, gymId, True, 'gym', raidcount, x1, x2, y1, y2)
                 
             return gymId
         else:
@@ -386,7 +388,7 @@ class Scanner:
         log.debug("start_detect[crop %s]: determined raidlevel to be %s" % (str(raidNo), str(raidlevel)))
 
         log.debug('Creating Hash overall')
-        raidHash = self.imageHashExists(raidhashPic, False, 'raid')
+        raidHash = self.imageHashExists(raidhashPic, False, 'raid', raidNo)
         log.debug('detectRaidHash: ' + str(raidHash))
 
         if raidHash:
@@ -455,7 +457,7 @@ class Scanner:
             self.dbWrapper.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG')
             raidHashJson = self.encodeHashJson(gymId, raidlevel, False)
             log.debug('Adding Raidhash to Database')
-            self.imageHash(raidhashPic, raidHashJson, False, 'raid')
+            self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
             #guid, pkm, lvl, start, end, type
 
         else:
@@ -475,7 +477,7 @@ class Scanner:
 
             raidHashJson = self.encodeHashJson(gymId, raidlevel, monFound[0])
             log.debug('Adding Raidhash to Database')
-            self.imageHash(raidhashPic, raidHashJson, False, 'raid')
+            self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
 
         os.remove(raidhashPic)
         os.remove(filenameOfCrop)
@@ -514,7 +516,7 @@ class Scanner:
         return hashValue
             
 
-    def imageHashExists(self, image, zoom, type, x1=50, x2=80, y1=100, y2=160, hashSize=8):
+    def imageHashExists(self, image, zoom, type, raidNo, x1=50, x2=80, y1=100, y2=160, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -523,7 +525,7 @@ class Scanner:
         else:
             crop = image2
             
-        tempHash = self.tempPath + "/" + str(time.time()) + "_temphash.jpg"
+        tempHash = self.tempPath + "/" + str(time.time()) + "_" + str(raidNo) + "temphash.jpg"
         cv2.imwrite(tempHash, crop) 
         hashPic = Image.open(tempHash)
 
@@ -541,7 +543,7 @@ class Scanner:
         log.debug('Hash found: %s' % existHash)
         return existHash
 
-    def imageHash(self, image, id, zoom, type, x1=50, x2=80, y1=100, y2=160, hashSize=8):
+    def imageHash(self, image, id, zoom, type, raidNo, x1=50, x2=80, y1=100, y2=160, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -550,7 +552,7 @@ class Scanner:
         else:
             crop = image2
             
-        tempHash = self.tempPath + "/" + str(time.time()) + "_temphash.jpg"
+        tempHash = self.tempPath + "/" + str(time.time()) + "_" + str(raidNo) + "temphash.jpg"
         cv2.imwrite(tempHash, crop) 
         hashPic = Image.open(tempHash)
 

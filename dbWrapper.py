@@ -95,7 +95,7 @@ class DbWrapper:
                  ' ORDER BY hamming_distance ASC limit 1')
                  
         #query = (' SELECT id FROM trshash ' +
-                #''WHERE type = \'%s\' and hash = \'%s\''
+                #'WHERE type = \'%s\' and hash = \'%s\''
                 #% (str(type), str(hash)))
         log.debug(query)
 
