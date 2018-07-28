@@ -223,7 +223,7 @@ class Scanner:
                 lvl = lvlSplit[3]
 
 
-        #os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) + ".jpg")
+        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) + ".jpg")
 
         if lvl:
             log.debug("detectLevel: found level '%s'" % str(lvl))
@@ -531,6 +531,9 @@ class Scanner:
         #diff = resized[:, 1:] > resized[:, :-1]
         #imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
         imageHash = self.dhash(hashPic)
+        
+        os.remove(tempHash)
+        
         existHash = self.dbWrapper.checkForHash(str(imageHash), str(type))
         if not existHash:
             log.debug('Hash not found')
@@ -555,6 +558,8 @@ class Scanner:
         #diff = resized[:, 1:] > resized[:, :-1]
         #imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
         imageHash = self.dhash(hashPic)
+        
+        os.remove(tempHash)
 
         log.debug('Adding Hash to Database')
         log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
