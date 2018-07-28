@@ -10,6 +10,6 @@ scikit-image
 mysql-connector-python-rf
 twisted
 gpxdata
-tinydb
-json
+
+
 

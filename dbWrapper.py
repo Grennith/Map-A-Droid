@@ -86,9 +86,17 @@ class DbWrapper:
             log.error("Could not connect to the SQL database")
             return None
         cursor = connection.cursor()
-        query = (' SELECT id FROM trshash ' +
-                'WHERE type = \'%s\' and hash = \'%s\''
-                % (str(type), str(hash)))
+        
+        query = (' SELECT  id, BIT_COUNT( ' +
+                 ' CONV(hash, 16, 10) ^ CONV(\'' + str(hash) + '\', 16, 10) ' +
+                 ' ) as hamming_distance, type ' +
+                 ' FROM trshash ' +
+                 ' HAVING hamming_distance < 4 and type = \'' + str(type) + '\'' +
+                 ' ORDER BY hamming_distance ASC limit 1')
+                 
+        #query = (' SELECT id FROM trshash ' +
+                #''WHERE type = \'%s\' and hash = \'%s\''
+                #% (str(type), str(hash)))
         log.debug(query)
 
         cursor.execute(query)
