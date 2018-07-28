@@ -8,13 +8,13 @@ import logging
 log = logging.getLogger(__name__)
 
 def fort_image_matching(url_img_name, fort_img_name, zoom, value, x1=90, x2=125, y1=135, y2=200):
-    log.debug("fort_image_matching: Reading url_img_name '%s'" % str(url_img_name))
+    #log.debug("fort_image_matching: Reading url_img_name '%s'" % str(url_img_name))
     url_img = cv2.imread(url_img_name,3)
     if (url_img is None):
         log.error("fort_image_matching: '%s' appears to be corrupted" % str(url_img_name))
         return 0.0
 
-    log.debug("fort_image_matching: Reading fort_img_name '%s'" % str(fort_img_name))
+    #log.debug("fort_image_matching: Reading fort_img_name '%s'" % str(fort_img_name))
     fort_img = cv2.imread(fort_img_name,3)
     if (fort_img is None):
         log.error("fort_image_matching: '%s' appears to be corrupted" % str(fort_img_name))
@@ -58,6 +58,7 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, x1=90, x2=125,
 
         result = cv2.matchTemplate(resized, crop, cv2.TM_CCOEFF_NORMED)
         (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
+
         
         if found is None or maxVal > found[0]:
 	        found = (maxVal, maxLoc, r)

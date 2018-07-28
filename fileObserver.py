@@ -54,6 +54,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         #pathSplit = event.src_path.split("/")
         #filename = pathSplit[len(pathSplit) - 1]
         #print filename
+        time.sleep(0.5)
         raidcount = re.search('.*_(\d*)\.png', event.src_path)
         if raidcount is None:
             #we could not read the raidcount... stop

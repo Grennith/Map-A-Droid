@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import cv2
 import numpy as np
 from PIL import Image
@@ -16,6 +18,10 @@ from dbWrapper import *
 import json
 import hashlib
 import re
+
+import sys
+reload(sys)
+sys.setdefaultencoding('utf8')
 
 log = logging.getLogger(__name__)
 args = parseArgs()
@@ -96,7 +102,7 @@ class Scanner:
         bw = gray.point(lambda x: 0 if x<200 else 255, '1')
 
         
-        raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','').replace('.',':')
+        raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','').replace('.',':').replace('B','8').replace('A','4').replace('—','')
         log.debug('Raid-End-Text: ' + str(raidtimer))
 
         os.remove(emptyRaidTempPath)
@@ -146,7 +152,9 @@ class Scanner:
 
         if monHash is None:
             for file in glob.glob("mon_img/_mon_*_" + str(lvl) + ".png"):
+                
                 find_mon = mt.fort_image_matching(file, picName, False, 0.75)
+
                 if foundmon is None or find_mon > foundmon[0]:
                     foundmon = find_mon, file
 
@@ -199,17 +207,18 @@ class Scanner:
                     'mon_img/_raidlevel_1_.jpg']
 
         raidlevel = raidpic[230:260, 0:170]
-        raidlevel = cv2.resize(raidlevel, (0,0), fx=2, fy=2)
+        #raidlevel = cv2.resize(raidlevel, (0,0), fx=2, fy=2)
 
         cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", raidlevel)
 
         log.debug('Scanning Level')
         for file in lvlTypes:
-            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.7)
+            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.8)
+
             if foundlvl is None or find_lvl > foundlvl[0]:
     	    	foundlvl = find_lvl, file
 
-            if not foundlvl is None and foundlvl[0]>0.7:
+            if not foundlvl is None and foundlvl[0]>0.8:
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
 
@@ -226,10 +235,10 @@ class Scanner:
     def detectGym(self, raidpic, hash, raidcount, monId = None):
         foundgym = None
         gymId = None
-        x1 = 90
-        x2 = 125
-        y1 = 135
-        y2 = 200
+        x1 = 50
+        x2 = 80
+        y1 = 100
+        y2 = 160
 
 
         #if gymHash is none, we haven't seen the gym yet, otherwise, gymHash == gymId we are looking for
@@ -250,6 +259,7 @@ class Scanner:
         gymHash = self.imageHashExists(raidpic, True, 'gym', x1, x2, y1, y2)
 
         if gymHash is None:
+            log.debug('start_detect[crop ' + str(raidcount) + ']: Detecting Gym')
             for file in glob.glob("gym_img/*.jpg"):
                 find_gym = mt.fort_image_matching(raidpic, file, True, 0.7, x1, x2, y1, y2)
                 if foundgym is None or find_gym > foundgym[0]:
@@ -266,7 +276,11 @@ class Scanner:
             return gymHash
 
         if gymId:
-            self.imageHash(raidpic, gymId, True, 'gym', x1, x2, y1, y2)
+            if monId:
+                log.debug('Dont hash Gym with spec. Crops')
+            else:
+                self.imageHash(raidpic, gymId, True, 'gym', x1, x2, y1, y2)
+                
             return gymId
         else:
             #we could not find the gym...
@@ -294,6 +308,21 @@ class Scanner:
         hashJson = json.dumps({'gym': gym, 'lvl': lvl, 'mon': mon, 'lvl': lvl}, separators=(',',':'))
         log.debug(hashJson)
         return hashJson
+        
+    def cropImage(self, image):
+        gray=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+        edged = cv2.Canny(image, 10, 250)
+        (cnd, cnts, _) = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        idx = 0
+        for c in cnts:
+            log.debug(cv2.boundingRect(c))
+            x,y,w,h = cv2.boundingRect(c)
+            if x<20 and y<25:
+                idx+=1
+                new_img=image[y:y+h,x:x+w]
+                return new_img
+        
+        
 
     def resize(image, width = None, height = None, inter = cv2.INTER_AREA):
         dim = None
@@ -326,6 +355,7 @@ class Scanner:
         img = cv2.imread(filenameOfCrop)
 
         raidhash = img[0:175, 0:170]
+        raidhash = self.cropImage(raidhash)
         raidhashPic = self.tempPath + "/" + str(hash) + "_raidhash" + str(raidNo) +".jpg"
         cv2.imwrite(raidhashPic, raidhash)
 
@@ -408,7 +438,7 @@ class Scanner:
 
         else:
             #let's get the gym we're likely scanning the image of
-            gymId = self.detectGym(filenameOfCrop, hash, raidNo)
+            gymId = self.detectGym(raidhashPic, hash, raidNo)
             #gymId is either None for Gym not found or contains the gymId as String
 
         if gymId is None:
@@ -452,8 +482,39 @@ class Scanner:
 
         log.debug("start_detect[crop %s]: finished" % str(raidNo))
         return True
+        
+        
+    def dhash(self, image, hash_size = 8):
+                # Grayscale and shrink the image in one step.
+        image = image.convert('L').resize(
+            (hash_size + 1, hash_size),
+            Image.ANTIALIAS,
+        )
+        pixels = list(image.getdata())
+        # Compare adjacent pixels.
+        difference = []
+        for row in xrange(hash_size):
+            for col in xrange(hash_size):
+                pixel_left = image.getpixel((col, row))
+                pixel_right = image.getpixel((col + 1, row))
+                difference.append(pixel_left > pixel_right)
+        # Convert the binary array to a hexadecimal string.
+            decimal_value = 0
+            hex_string = []
+            for index, value in enumerate(difference):
+                if value:
+                    decimal_value += 2**(index % 8)
+                if (index % 8) == 7:
+                    hex_string.append(hex(decimal_value)[2:].rjust(2, '0'))
+                    decimal_value = 0
+                    
+        hashValue = ''.join(hex_string)
+        log.debug('Hash: ' + str(hashValue))
+        
+        return hashValue
+            
 
-    def imageHashExists(self, image, zoom, type, x1=90, x2=125, y1=135, y2=200, hashSize=8):
+    def imageHashExists(self, image, zoom, type, x1=50, x2=80, y1=100, y2=160, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -461,11 +522,18 @@ class Scanner:
             crop = image2[int(y1):int(y2),int(x1):int(x2)]
         else:
             crop = image2
+            
+        tempHash = self.tempPath + "/" + str(time.time()) + "_temphash.jpg"
+        cv2.imwrite(tempHash, crop) 
+        hashPic = Image.open(tempHash)
 
-        resized = cv2.resize(crop, (hashSize + 1, hashSize))
-        diff = resized[:, 1:] > resized[:, :-1]
-        imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        #imageHash = int(hashlib.md5(str(crop).encode('utf-8')).hexdigest(), 16)
+        #resized = cv2.resize(crop, (hashSize + 1, hashSize))
+        #diff = resized[:, 1:] > resized[:, :-1]
+        #imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
+        imageHash = self.dhash(hashPic)
+        
+        os.remove(tempHash)
+        
         existHash = self.dbWrapper.checkForHash(str(imageHash), str(type))
         if not existHash:
             log.debug('Hash not found')
@@ -473,7 +541,7 @@ class Scanner:
         log.debug('Hash found: %s' % existHash)
         return existHash
 
-    def imageHash(self, image, id, zoom, type, x1=90, x2=125, y1=135, y2=200, hashSize=8):
+    def imageHash(self, image, id, zoom, type, x1=50, x2=80, y1=100, y2=160, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -481,11 +549,17 @@ class Scanner:
             crop = image2[int(y1):int(y2),int(x1):int(x2)]
         else:
             crop = image2
+            
+        tempHash = self.tempPath + "/" + str(time.time()) + "_temphash.jpg"
+        cv2.imwrite(tempHash, crop) 
+        hashPic = Image.open(tempHash)
 
-        resized = cv2.resize(crop, (hashSize + 1, hashSize))
-        diff = resized[:, 1:] > resized[:, :-1]
-        imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
-        #imageHash = int(hashlib.md5(str(crop).encode('utf-8')).hexdigest(), 16)
+        #resized = cv2.resize(crop, (hashSize + 1, hashSize))
+        #diff = resized[:, 1:] > resized[:, :-1]
+        #imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
+        imageHash = self.dhash(hashPic)
+        
+        os.remove(tempHash)
 
         log.debug('Adding Hash to Database')
         log.debug({'type': str(type),'hash': str(imageHash), 'id': str(id)})
@@ -547,7 +621,10 @@ class Scanner:
         zero = datetime.datetime.now()
         unix_zero =  time.mktime(zero.timetuple())
         hour_min_divider = data.find(':')
-        log.debug(': Count: ' + str(hour_min_divider))
+        log.debug(':Count: ' + str(data.count(':')))
+        if data.count(':') < 2 :
+            log.error('Detect wrong Endtimer of Raid')
+            return False
         if hour_min_divider != -1:
             data = data.replace('~','').replace('-','').replace(' ','')
             hour_min = data.split(':')
