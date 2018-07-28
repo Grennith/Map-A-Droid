@@ -66,6 +66,18 @@ class ResolutionCalc:
     def __getHeightMiddle(self):
         return self.height / 2.0
 
+    def getHeight(self):
+        return height
+
+    def getWidth(self):
+        return width
+
+    def getFirstHorizontalPxPosition(self):
+        return int(round(self.resolutionConfiguration['crop']['lines']['firstCheckHorizontal'] * self.height))
+
+    def getSecondHorizontalPxPosition(self):
+        return int(round(self.resolutionConfiguration['crop']['lines']['secondCheckHorizontal'] * self.height))
+
     def getPostLoginOkDrivingBounds(self):
         return self.__getBounds('post_login_ok_driving')
 

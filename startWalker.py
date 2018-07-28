@@ -405,7 +405,7 @@ def main_thread():
                 time.sleep(args.post_screenshot_delay)
                 attempts += 1
             log.info("Checking raidcount and copying raidscreen if raids present")
-            countOfRaids = pogoWindowManager.readAmountOfRaids('screenshot.png', 123)
+            countOfRaids = pogoWindowManager.readAmountOfRaidsDirect('screenshot.png', 123)
             if countOfRaids > 0:
                 curTime = time.time()
                 copyfile('screenshot.png', args.raidscreen_path

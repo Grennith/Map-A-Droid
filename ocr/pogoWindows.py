@@ -35,6 +35,8 @@ class PogoWindows:
             os.makedirs(tempDirPath)
             log.info('PogoWindows: Temp directory created')
         self.tempDirPath = tempDirPath
+        self.width = width
+        self.height = height
 
     def __mostPresentColour(self, filename, maxColours):
         img = Image.open(filename)
@@ -99,6 +101,59 @@ class PogoWindows:
     def checkPostLoginOkButton(self, filename, hash):
         return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving')
             or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property'))
+
+    def readAmountOfRaidsDirect(self, filename, hash):
+        if not os.path.isfile(filename):
+            return None
+
+        log.debug("readAmountOfRaidsDirect: Cropping circle (orange)")
+        screenshotRead = cv2.imread(filename)
+        bounds = self.resolutionCalculator.getRaidcountBounds()
+        log.debug("readAmountOfRaidsDirect: bounds are %s" % str(bounds))
+        raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.png"
+        cv2.imwrite(tempPathColoured, raidCount)
+
+        raidCountColoured = Image.open(tempPathColoured)
+        width, height = raidCountColoured.size
+
+        #check for most present colours... if there's no orange, we can stop immediately
+        mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
+        if (mostPresentColour != (255, 120, 55)):
+            log.info("readAmountOfRaidsDirect: No raidcount found, assuming no raids nearby")
+            #cv2.imwrite(str(hash) + "_derp.png", raidCount)
+            return 0
+
+        tempPath = self.tempDirPath + "/" + str(hash) + "_raidintersect.png"
+        #at least one raid, let's start evaluating positions and pixels, yay
+        #first check for 2 raids, those are shifted.
+        #simply check intersection of firstCheckHorizontal with first vertical of One raid
+        #left, middle, right intersecting the checkHorizontal
+        #checkHorizontal is a line crossing the orange circle...
+        assumeTwoRaids = False
+        bounds = self.resolutionCalculator.getRaidBoundsTwo(1)
+        #calculate height of bounds in px
+        #TODO: move this all to res calc?
+        firstCheckHorizontal = self.resolutionCalculator.getFirstHorizontalPxPosition()
+        firstVertical = self.resolutionCalculator.getRaidBoundsSingle().left
+        areaToCheck = screenshotRead[firstCheckHorizontal - 3 : firstCheckHorizontal + 3,
+            firstVertical - 3 : firstVertical + 3]
+
+        countFound = 0
+        for row in areaToCheck.tolist():
+            for px in row:
+                #check the pixel colours...
+                if ((px[0] == 162 and px[1] == 193 and px[2] == 254)
+                    or (px[0] == 163 and px[1] == 194 and px[2] == 254)):
+                    countFound += 1
+        if countFound > 5:
+            #we found a 2 raid screenshot
+            log.error("Determined screenshot to have 2 raids. countFound: %s" % str(countFound))
+            return 2
+
+        log.error("Determined screenshot to have != 2 raids. countFound: %s" % str(countFound))
+        return 6 #TODO: start counting...
+
 
     def readAmountOfRaids(self, filename, hash):
         if not os.path.isfile(filename):
