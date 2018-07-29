@@ -55,18 +55,19 @@ class checkScreenshot(PatternMatchingEventHandler):
         #filename = pathSplit[len(pathSplit) - 1]
         #print filename
         time.sleep(0.5)
-        raidcount = re.search('.*_(\d*)\.png', event.src_path)
+        #groups: 1 -> timestamp, 2 -> latitude, 3 -> longitude, 4 -> raidcount
+        raidcount = re.search(r'raidscreen_(\d+\.\d*)_(\d+\.\d+)_(\d+\.\d+)_(\d+)\.png', event.src_path)
         if raidcount is None:
             #we could not read the raidcount... stop
             log.warning("Could not read raidcount in %s" % event.src_path)
             return
-        amountOfRaids = int(raidcount.group(1))
+        amountOfRaids = int(raidcount.group(4))
         log.debug("Read a raidcount of %s in new file" % str(amountOfRaids))
         raidPic = cv2.imread(event.src_path)
         #amountOfRaids = self.pogoWindowManager.getAmountOfRaids(event.src_path)
         if amountOfRaids is None or amountOfRaids == 0:
             return
-        log.debug(amountOfRaids)    
+        log.debug(amountOfRaids)
         processes = []
         bounds = []
 

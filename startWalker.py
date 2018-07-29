@@ -212,15 +212,16 @@ def printHi():
 def updateRaidQueue(dbWrapper):
     log.info("Updating raid queue")
     newQueue = dbWrapper.getNextRaidHatches(args.delay_after_hatch)
-    heapq.heapify(newQueue)
+    log.debug("New raid queue: %s" % str(newQueue))
     mergeRaidQueue(newQueue)
+    #heapq.heapify(newQueue)
 
 def mergeRaidQueue(newQueue):
     global nextRaidQueue
     merged = list(set(newQueue + nextRaidQueue))
     heapq.heapify(merged)
     nextRaidQueue = merged
-    log.info("Raidqueue: %s" % nextRaidQueue)
+    log.info("New raidqueue: %s" % nextRaidQueue)
 
 def restartPogo():
     global telnMore
@@ -409,7 +410,8 @@ def main_thread():
             if countOfRaids > 0:
                 curTime = time.time()
                 copyfile('screenshot.png', args.raidscreen_path
-                    + '/raidscreen_' + str(curTime) + "_" + str(countOfRaids) + '.png')
+                    + '/raidscreen_' + str(curTime) + "_" + str(curLat) + "_"
+                    + str(curLng) + "_" + str(countOfRaids) + '.png')
 
 
 def observer(scrPath, width, height):

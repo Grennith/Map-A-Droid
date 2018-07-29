@@ -46,12 +46,15 @@ class DbWrapper:
         cursor.execute(query)
 
         data = []
+        log.debug("Result of raidQ query: %s" % str(query))
         for (start, latitude, longitude) in cursor:
             if latitude is None or longitude is None:
+                log.warning("lat or lng is none")
                 continue
             timestamp = self.dbTimeStringToUnixTimestamp(str(start))
             data.append((timestamp + delayAfterHatch * 60, RaidLocation(latitude, longitude)))
 
+        log.debug("Latest Q: %s" % str(data))
         connection.commit()
         return data
 
@@ -86,14 +89,14 @@ class DbWrapper:
             log.error("Could not connect to the SQL database")
             return None
         cursor = connection.cursor()
-        
+
         query = (' SELECT  id, BIT_COUNT( ' +
                  ' CONV(hash, 16, 10) ^ CONV(\'' + str(hash) + '\', 16, 10) ' +
                  ' ) as hamming_distance, type ' +
                  ' FROM trshash ' +
                  ' HAVING hamming_distance < 4 and type = \'' + str(type) + '\'' +
                  ' ORDER BY hamming_distance ASC limit 1')
-                 
+
         #query = (' SELECT id FROM trshash ' +
                 #'WHERE type = \'%s\' and hash = \'%s\''
                 #% (str(type), str(hash)))

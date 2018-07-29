@@ -113,6 +113,7 @@
       },
       "lines" : {
         "firstCheckHorizontal" : 0.387,
+        "secondCheckHorizontal" : 0.611,
         "1" : {
           "horizontal" : {
             "first" : 0.367,

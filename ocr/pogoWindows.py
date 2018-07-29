@@ -102,6 +102,22 @@ class PogoWindows:
         return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving')
             or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property'))
 
+    #checks the given rows (list of np array of image cropped by bounds) for orange
+    def __checkListOfCropOrangeCircle(self, numpyCropList):
+        countFound = 0
+        for row in numpyCropList:
+            for px in row:
+                #check the pixel colours...
+                if ((px[0] == 162 and px[1] == 193 and px[2] == 254)
+                    or (px[0] == 163 and px[1] == 194 and px[2] == 254)):
+                    countFound += 1
+        if countFound > 3:
+            #we found a 2 raid screenshot
+            log.debug("__checkListOfCropOrangeCircle: given crop contains circle")
+            return True
+        else:
+            return False
+
     def readAmountOfRaidsDirect(self, filename, hash):
         if not os.path.isfile(filename):
             return None
@@ -130,30 +146,38 @@ class PogoWindows:
         #simply check intersection of firstCheckHorizontal with first vertical of One raid
         #left, middle, right intersecting the checkHorizontal
         #checkHorizontal is a line crossing the orange circle...
-        assumeTwoRaids = False
-        bounds = self.resolutionCalculator.getRaidBoundsTwo(1)
+
         #calculate height of bounds in px
         #TODO: move this all to res calc?
         firstCheckHorizontal = self.resolutionCalculator.getFirstHorizontalPxPosition()
-        firstVertical = self.resolutionCalculator.getRaidBoundsSingle().left
-        areaToCheck = screenshotRead[firstCheckHorizontal - 3 : firstCheckHorizontal + 3,
-            firstVertical - 3 : firstVertical + 3]
 
-        countFound = 0
-        for row in areaToCheck.tolist():
-            for px in row:
-                #check the pixel colours...
-                if ((px[0] == 162 and px[1] == 193 and px[2] == 254)
-                    or (px[0] == 163 and px[1] == 194 and px[2] == 254)):
-                    countFound += 1
-        if countFound > 5:
-            #we found a 2 raid screenshot
-            log.error("Determined screenshot to have 2 raids. countFound: %s" % str(countFound))
+        twoRaidVerticalCheck = self.resolutionCalculator.getRaidBoundsSingle().left
+        areaToCheck = screenshotRead[firstCheckHorizontal - 3 : firstCheckHorizontal + 3,
+            twoRaidVerticalCheck - 3 : twoRaidVerticalCheck + 3]
+
+        if self.__checkListOfCropOrangeCircle(areaToCheck.tolist()):
+            log.debug("Determined screenshot to have 2 raids.")
             return 2
 
-        log.error("Determined screenshot to have != 2 raids. countFound: %s" % str(countFound))
-        return 6 #TODO: start counting...
+        boundsOne = self.resolutionCalculator.getRaidBoundsTwo(1)
+        boundsTwo = self.resolutionCalculator.getRaidBoundsTwo(2)
+        verticalChecks = [boundsOne.left, boundsOne.right, boundsTwo.right]
+        secondCheckHorizontal = self.resolutionCalculator.getSecondHorizontalPxPosition()
 
+        countOfRaids = 0
+        for verticalCheck in verticalChecks:
+            #first row
+            posToCheck = screenshotRead[firstCheckHorizontal - 3 : firstCheckHorizontal + 3,
+                verticalCheck - 3 : verticalCheck + 3]
+            if self.__checkListOfCropOrangeCircle(posToCheck.tolist()):
+                countOfRaids += 1
+            #second row
+            posToCheckTwo = screenshotRead[secondCheckHorizontal - 3 : secondCheckHorizontal + 3,
+                verticalCheck - 3 : verticalCheck + 3]
+            if self.__checkListOfCropOrangeCircle(posToCheckTwo.tolist()):
+                countOfRaids += 1
+
+        return countOfRaids
 
     def readAmountOfRaids(self, filename, hash):
         if not os.path.isfile(filename):
