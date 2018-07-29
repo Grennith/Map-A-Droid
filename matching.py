@@ -27,10 +27,12 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, x1=90, x2=125,
             fort_img = cv2.resize(fort_img,None,fx=3, fy=3, interpolation = cv2.INTER_NEAREST)
         else:
             if height_f > width_f:
+                fort_img = fort_img
             
-                fort_img = fort_img[int((height_f/2)-(height_f/3)):int((height_f/2)+(height_f/3)), int(0):int(width_f)]
+                #fort_img = fort_img[int((height_f/2)-(height_f/3)):int((height_f/2)+(height_f/3)), int(0):int(width_f)]
             else:
-                fort_img = fort_img[int(0):int(height_f), int((width_f/2)-(width_f/3)):int((width_f/2)+(width_f/3))]
+                fort_img = fort_img
+                #fort_img = fort_img[int(0):int(height_f), int((width_f/2)-(width_f/3)):int((width_f/2)+(width_f/3))]
                 
             #cv2.imwrite('Gym_' + str(time.time()) + '.png', fort_img)
 

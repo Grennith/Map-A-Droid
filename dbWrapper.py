@@ -324,3 +324,41 @@ class DbWrapper:
         connection.commit()
 
         return True
+        
+    def getNearGyms(self, lat, lng):
+        try:
+            connection = mysql.connector.connect(host = self.host,
+                user = self.user, port = self.port, passwd = self.password,
+                db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return []
+        cursor = connection.cursor()
+        #query = (' SELECT start, latitude, longitude FROM raid LEFT JOIN gym ' +
+        #    'ON raid.gym_id = gym.gym_id WHERE raid.start >= \'%s\''
+        #    % str(datetime.datetime.now() - datetime.timedelta(hours = self.timezone)))
+
+        query = ('SELECT ' +
+            ' gym_id, ( ' +
+            ' 6371 * acos ( ' +
+            ' cos ( radians( \'' + str(lat) + '\' ) ) ' +
+            ' * cos( radians( latitude ) ) ' +
+            ' * cos( radians( longitude ) - radians( \'' + str(lng) + '\' ) ) ' +
+            ' + sin ( radians( \'' + str(lat) + '\' ) ) ' +
+            ' * sin( radians( latitude ) ) ' +
+            ' ) ' +
+            ' ) AS distance ' +
+            ' FROM gym ' +
+            ' HAVING distance < 2 ' +
+            ' ORDER BY distance')
+            
+        cursor.execute(query)
+
+        data = []
+        log.debug("Result of NearGyms query: %s" % str(query))
+        for (gym_id) in cursor:
+            data.append(gym_id)
+
+        log.debug("Closest Gyms: %s" % str(data))
+        connection.commit()
+        return data

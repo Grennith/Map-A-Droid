@@ -213,12 +213,12 @@ class Scanner:
 
         log.debug('Scanning Level')
         for file in lvlTypes:
-            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.8)
+            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidcount) +".jpg", False, 0.7)
 
             if foundlvl is None or find_lvl > foundlvl[0]:
     	    	foundlvl = find_lvl, file
 
-            if not foundlvl is None and foundlvl[0]>0.8:
+            if not foundlvl is None and foundlvl[0]>0.7:
                 lvlSplit = foundlvl[1].split('_')
                 lvl = lvlSplit[3]
 
@@ -232,7 +232,7 @@ class Scanner:
             log.info("detectLevel: could not find level")
             return None
 
-    def detectGym(self, raidpic, hash, raidcount, monId = None):
+    def detectGym(self, raidpic, hash, raidcount, captureLat, captureLng, monId = None):
         foundgym = None
         gymId = None
         x1 = 50
@@ -261,18 +261,23 @@ class Scanner:
         gymHash = self.imageHashExists(raidpic, True, 'gym', raidcount, x1, x2, y1, y2)
 
         if gymHash is None:
+            
+            log.debug('Searching closest gyms')
+            closestGymIds = self.dbWrapper.getNearGyms(captureLat, captureLng)
+            
             log.debug('start_detect[crop ' + str(raidcount) + ']: Detecting Gym')
-            for file in glob.glob("gym_img/*.jpg"):
-                find_gym = mt.fort_image_matching(raidpic, file, True, 0.7, x1, x2, y1, y2)
-                if foundgym is None or find_gym > foundgym[0]:
-    	        	foundgym = find_gym, file
+            for closegym in closestGymIds:
+                
+                for file in glob.glob("gym_img/*" + closegym[0] + "*.jpg"):
+                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.65, x1, x2, y1, y2)
+                    log.debug("Compare Gym-ID - " + str(closegym[0]) + " - Match: " + str(find_gym))
+                    if foundgym is None or find_gym > foundgym[0]:
+    	        	    foundgym = find_gym, file
 
-                if foundgym and foundgym[0]>=0.7:
-                    #okay, we very likely found our gym
-                    gymSplit = foundgym[1].split('_')
-                    gymId = gymSplit[2]
-                    #if we are looking by coords (TODO), we will likely get additional checks somewhere around here and before the for-loop
-
+                    if foundgym and foundgym[0]>=0.65:
+                        #okay, we very likely found our gym
+                        gymSplit = foundgym[1].split('_')
+                        gymId = gymSplit[2]
 
         else:
             return gymHash
@@ -288,9 +293,9 @@ class Scanner:
             #we could not find the gym...
             return None
 
-    def unknownfound(self, raidpic, type, zoom, raidcount):
+    def unknownfound(self, raidpic, type, zoom, raidcount, lat=0, lng=0):
         raidpic = cv2.imread(raidpic)
-        cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(time.time()) +".jpg", raidpic)
+        cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +".jpg", raidpic)
         return True
 
 
@@ -340,7 +345,7 @@ class Scanner:
         resized = cv2.resize(image, dim, interpolation = inter)
         return resized
 
-    def start_detect(self, filenameOfCrop, hash, raidNo):
+    def start_detect(self, filenameOfCrop, hash, raidNo, captureTime, captureLat, captureLng):
         log.debug("start_detect: Starting detection of crop" + str(raidNo))
         if not os.path.isfile(filenameOfCrop):
             log.error("start_detect: File does not exist: %s" % str(filenameOfCrop))
@@ -384,11 +389,9 @@ class Scanner:
             log.debug("start_detect[crop %s]: Crop does not show a valid time, stopping analysis" % str(raidNo))
             return False
 
-        raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
-        log.debug("start_detect[crop %s]: determined raidlevel to be %s" % (str(raidNo), str(raidlevel)))
-
         log.debug('Creating Hash overall')
-        raidHash = self.imageHashExists(raidhashPic, False, 'raid', raidNo)
+        #raidHash = self.imageHashExists(raidhashPic, False, 'raid', raidNo)
+        raidHash = False
         log.debug('detectRaidHash: ' + str(raidHash))
 
         if raidHash:
@@ -397,9 +400,9 @@ class Scanner:
             lvl = raidHash[1]
             mon = raidHash[2]
 
-            if lvl != raidlevel:
-                log.debug('Scanned Raidlevel is different to hash - taking scanned level')
-                lvl = raidlevel
+            #if lvl != raidlevel:
+            #    log.debug('Scanned Raidlevel is different to hash - taking scanned level')
+            #    lvl = raidlevel
 
             if not mon:
                 log.debug('Found Raidhash with an egg - fast submit')
@@ -413,6 +416,9 @@ class Scanner:
             os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
             return True
+
+        raidlevel = self.detectLevel(img, hash, raidNo) #we need the raid level to make the possible set of mons smaller
+        log.debug("start_detect[crop %s]: determined raidlevel to be %s" % (str(raidNo), str(raidlevel)))
 
         if raidlevel is None:
             log.error("start_detect[crop %s]: could not determine raidlevel. Filename of Crop: %s" % (str(raidNo), filenameOfCrop))
@@ -430,23 +436,23 @@ class Scanner:
             if not monFound[0]:
                 #we could not determine the mon... let's move the crop to unknown and stop analysing
                 log.error("start_detect[crop %s]: Could not determine mon in crop, aborting and moving crop to unknown" % str(raidNo))
-                self.unknownfound(filenameOfCrop, 'mon', False, raidNo)
+                self.unknownfound(filenameOfCrop, 'mon', False, raidNo, captureLat, captureLng)
                 log.warning("start_detect[crop %s]: could not determine mon, aborting analysis" % str(raidNo))
                 os.remove(raidhashPic)
                 os.remove(filenameOfCrop)
                 return True
             log.debug('Scanning Mon')
-            gymId = self.detectGym(raidhashPic, hash, raidNo, monFound[0])
+            gymId = self.detectGym(raidhashPic, hash, raidNo, captureLat, captureLng, monFound[0])
 
         else:
             #let's get the gym we're likely scanning the image of
-            gymId = self.detectGym(raidhashPic, hash, raidNo)
+            gymId = self.detectGym(raidhashPic, hash, raidNo, captureLat, captureLng)
             #gymId is either None for Gym not found or contains the gymId as String
 
         if gymId is None:
             #gym unknown...
             log.warning("start_detect[crop %s]: could not determine gym, aborting analysis" % str(raidNo))
-            self.unknownfound(filenameOfCrop, 'gym', False, raidNo)
+            self.unknownfound(filenameOfCrop, 'gym', False, raidNo, captureLat, captureLng)
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
@@ -464,7 +470,7 @@ class Scanner:
             log.debug('Checking for Endtime')
             if not self.dbWrapper.readRaidEndtime(str(gymId)):
                 log.debug('No Egg found')
-                raidend = self.detectRaidEndtimer(img, gymId, raidNo)
+                raidend = self.detectRaidEndtimer(img, hash, raidNo)
                 log.debug(raidend)
                 if raidend[1]:
                     log.debug(raidend[2])
