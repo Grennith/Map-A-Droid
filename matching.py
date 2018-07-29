@@ -3,21 +3,21 @@ import os
 import numpy as np
 import imutils
 import logging
-#import time
+import time
 
 log = logging.getLogger(__name__)
 
-def fort_image_matching(url_img_name, fort_img_name, zoom, value, x1=90, x2=125, y1=135, y2=200):
+def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, x1=90, x2=125, y1=135, y2=200):
     #log.debug("fort_image_matching: Reading url_img_name '%s'" % str(url_img_name))
     url_img = cv2.imread(url_img_name,3)
     if (url_img is None):
-        log.error("fort_image_matching: '%s' appears to be corrupted" % str(url_img_name))
+        log.error('[Crop: ' + str(raidNo) + ' (' + str(hash) +') ] ' + 'fort_image_matching: %s appears to be corrupted' % str(url_img_name))
         return 0.0
 
     #log.debug("fort_image_matching: Reading fort_img_name '%s'" % str(fort_img_name))
     fort_img = cv2.imread(fort_img_name,3)
     if (fort_img is None):
-        log.error("fort_image_matching: '%s' appears to be corrupted" % str(fort_img_name))
+        log.error('[Crop: ' + str(raidNo) + ' (' + str(hash) +') ] ' + 'fort_image_matching: %s appears to be corrupted' % str(fort_img_name))
         return 0.0
     height, width, channels = url_img.shape
     height_f, width_f, channels_f = fort_img.shape
@@ -34,7 +34,7 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, x1=90, x2=125,
                 fort_img = fort_img
                 #fort_img = fort_img[int(0):int(height_f), int((width_f/2)-(width_f/3)):int((width_f/2)+(width_f/3))]
                 
-            #cv2.imwrite('Gym_' + str(time.time()) + '.png', fort_img)
+            #cv2.imwrite('Gym_' + str(fort_img_name) + '.png', fort_img)
 
         url_img = cv2.resize(url_img,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
         crop = url_img[int(y1):int(y2),int(x1):int(x2)]
@@ -60,13 +60,14 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, x1=90, x2=125,
 
         result = cv2.matchTemplate(resized, crop, cv2.TM_CCOEFF_NORMED)
         (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(hash) +') ] ' + 'Filename: ' + str(url_img_name) + ' Matchvalue: ' + str(maxVal))
 
         
         if found is None or maxVal > found[0]:
 	        found = (maxVal, maxLoc, r)
 
-    if found[0] < value:
-        return 0.0
+    #if found[0] < value:
+    #    return 0.0
 
     return found[0]
 

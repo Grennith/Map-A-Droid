@@ -22,10 +22,10 @@ args = parseArgs()
 
 class RaidScan:
     @staticmethod
-    def process(filename, hash, raidno, captureTime, captureLat, captureLng):
+    def process(filename, hash, raidno, captureTime, captureLat, captureLng, src_path):
         args = parseArgs()
-        scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path, args.unknown_path, args.timezone)
-        checkcrop = scanner.start_detect(filename, hash, raidno, captureTime, captureLat, captureLng)
+        scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path, args.unknown_path, args.timezone, hash)
+        checkcrop = scanner.start_detect(filename, hash, raidno, captureTime, captureLat, captureLng, src_path)
         return checkcrop
 
 class checkScreenshot(PatternMatchingEventHandler):
@@ -36,7 +36,7 @@ class checkScreenshot(PatternMatchingEventHandler):
 
         #self.procPool = Pool(10)
 
-    def prepareAnalysis(self, raidNo, bounds, screenshot, captureTime, captureLat, captureLng):
+    def prepareAnalysis(self, raidNo, bounds, screenshot, captureTime, captureLat, captureLng, src_path):
         curTime = time.time()
         hash = str(curTime)
         raidCropFilepath = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) + ".jpg"
@@ -45,9 +45,9 @@ class checkScreenshot(PatternMatchingEventHandler):
         cv2.imwrite(raidCropFilepath, raidCrop)
         p = None
         if args.ocr_multitask:
-            p = multiprocessing.Process(target=RaidScan.process, name='OCR-crop-analysis-' + str(raidNo), args=(raidCropFilepath, hash, raidNo, captureTime, captureLat, captureLng))
+            p = multiprocessing.Process(target=RaidScan.process, name='OCR-crop-analysis-' + str(raidNo), args=(raidCropFilepath, hash, raidNo, captureTime, captureLat, captureLng, src_path))
         else:
-            p = Thread(target=RaidScan.process, name='OCR-processing', args=(raidCropFilepath, hash, raidNo, captureTime, captureLat, captureLng, ))
+            p = Thread(target=RaidScan.process, name='OCR-processing', args=(raidCropFilepath, hash, raidNo, captureTime, captureLat, captureLng, src_path))
         return p
 
     def process(self, event):
@@ -66,7 +66,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         captureLng = (raidcount.group(3))
         amountOfRaids = int(raidcount.group(4))
         
-        log.debug("Caputre time %s of new file" % str(captureTime))
+        log.debug("Capture time %s of new file" % str(captureTime))
         log.debug("Read a lat of %s in new file" % str(captureLat))
         log.debug("Read a lng of %s in new file" % str(captureLng))
         log.debug("Read a raidcount of %s in new file" % str(amountOfRaids))
@@ -82,7 +82,7 @@ class checkScreenshot(PatternMatchingEventHandler):
             #we got just one raid...
             boundsOfSingleRaid = self.resolutionCalculator.getRaidBoundsSingle()
             log.debug(boundsOfSingleRaid)
-            p = self.prepareAnalysis(1, boundsOfSingleRaid, raidPic, captureTime, captureLat, captureLng)
+            p = self.prepareAnalysis(1, boundsOfSingleRaid, raidPic, captureTime, captureLat, captureLng, event.src_path)
             processes.append(p)
             p.daemon = True
             p.start()
@@ -96,7 +96,7 @@ class checkScreenshot(PatternMatchingEventHandler):
                 bounds.append(self.resolutionCalculator.getRaidBounds(i + 1))
         log.debug(bounds)
         for i in range(len(bounds)):
-            p = self.prepareAnalysis(i + 1, bounds[i], raidPic, captureTime, captureLat, captureLng)
+            p = self.prepareAnalysis(i + 1, bounds[i], raidPic, captureTime, captureLat, captureLng, event.src_path)
             processes.append(p)
             p.daemon = True
             p.start()
