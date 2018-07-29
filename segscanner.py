@@ -436,7 +436,7 @@ class Scanner:
                 os.remove(filenameOfCrop)
                 return True
             log.debug('Scanning Mon')
-            gymId = self.detectGym(filenameOfCrop, hash, raidNo, monFound[0])
+            gymId = self.detectGym(raidhashPic, hash, raidNo, monFound[0])
 
         else:
             #let's get the gym we're likely scanning the image of
