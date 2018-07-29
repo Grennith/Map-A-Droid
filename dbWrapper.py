@@ -95,7 +95,7 @@ class DbWrapper:
                  ' ) as hamming_distance, type ' +
                  ' FROM trshash ' +
                  ' HAVING hamming_distance < 4 and type = \'' + str(type) + '\'' +
-                 ' ORDER BY hamming_distance ASC limit 1')
+                 ' ORDER BY hamming_distance ASC')
 
         #query = (' SELECT id FROM trshash ' +
                 #'WHERE type = \'%s\' and hash = \'%s\''
@@ -104,14 +104,25 @@ class DbWrapper:
 
         cursor.execute(query)
         id = None
-        for (id) in cursor:
-            if id is None:
-                return None
-            else:
-                log.debug("checkForHash: Found hash %s" % str(id[0]))
-                return id[0]
+        data = cursor.fetchall()
+        number_of_rows=cursor.rowcount
+        log.debug('Found Hashes in Database: %s' % str(number_of_rows))
+        if number_of_rows > 0:
+            log.debug(data)
+            log.debug('Returning found ID')
+            for row in data:
+                log.debug('ID: ' + str(row[0]))
+                return row[0]
+        else:
+            log.debug('No matching Hash found')
+            return None
 
     def insertHash(self, hash, type, id):
+        doubleCheck = self.checkForHash(hash, type)
+        if doubleCheck is not None:
+            log.debug('Already in DB - maybe two checks at the same time')
+            return True
+            
         try:
             connection = mysql.connector.connect(host = self.host,
             user = self.user, port = self.port, passwd = self.password,
