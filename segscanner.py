@@ -123,6 +123,7 @@ class Scanner:
                     return (raidEndFound, False, False)
 
             else:
+                log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: no raidendtimer detected')
                 return (raidEndFound, False, '0')
         else:
             return (raidEndFound, False, False)
@@ -152,13 +153,12 @@ class Scanner:
         if monHash is None:
             for file in glob.glob("mon_img/_mon_*_" + str(lvl) + ".png"):
                 
-                find_mon = mt.fort_image_matching(file, picName, False, 0.75, raidNo, hash)
+                find_mon = mt.fort_image_matching(file, picName, False, 0.70, raidNo, hash)
 
                 if foundmon is None or find_mon > foundmon[0]:
                     foundmon = find_mon, file
 
-                if foundmon: 
-                #and foundmon[0]>0.75:
+                if foundmon and foundmon[0]>0.70:
                     monSplit = foundmon[1].split('_')
                     monID = monSplit[3]
 
@@ -276,13 +276,12 @@ class Scanner:
             for closegym in closestGymIds:
                 
                 for file in glob.glob("gym_img/*" + closegym[0] + "*.jpg"):
-                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.65, raidNo, hash, x1, x2, y1, y2)
+                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.60, raidNo, hash, x1, x2, y1, y2)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Compare Gym-ID - ' + str(closegym[0]) + ' - Match: ' + str(find_gym))
                     if foundgym is None or find_gym > foundgym[0]:
     	        	    foundgym = find_gym, file
 
-                    if foundgym:
-                    #and foundgym[0]>=0.65:
+                    if foundgym and foundgym[0]>=0.60:
                         #okay, we very likely found our gym
                         gymSplit = foundgym[1].split('_')
                         gymId = gymSplit[2]
@@ -484,6 +483,9 @@ class Scanner:
                 if raidend[1]:
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
                     self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, raidend[2], 'MON', raidNo, True)
+                else:
+                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
+                    self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON', raidNo)
             else:
                 log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Egg found')
                 log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
@@ -549,12 +551,13 @@ class Scanner:
         
         os.remove(tempHash)
         
-        existHash = self.dbWrapper.checkForHash(str(imageHash), str(type), raidNo)
-        if not existHash[0]:
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash not found')
-            return None
-        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash found: %s' % existHash[1])
-        return existHash[1]
+        existHash = False
+        #self.dbWrapper.checkForHash(str(imageHash), str(type), raidNo)
+        #if not existHash[0]:
+            #log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash not found')
+        return None
+        #log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash found: %s' % existHash[1])
+        #return existHash[1]
 
     def imageHash(self, image, id, zoom, type, raidNo, x1=50, x2=80, y1=100, y2=160, hashSize=8):
         image2 = cv2.imread(image,3)
@@ -578,7 +581,7 @@ class Scanner:
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHash: Adding Hash to Database')
 
-        self.dbWrapper.insertHash(str(imageHash), str(type), str(id), raidNo)
+        #self.dbWrapper.insertHash(str(imageHash), str(type), str(id), raidNo)
 
     def checkHourMin(self, hour_min):
         hour_min[0] = unicode(hour_min[0].replace('O','0').replace('o','0').replace('A','4'))

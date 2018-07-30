@@ -95,7 +95,7 @@ class DbWrapper:
                  ' CONV(hash, 16, 10) ^ CONV(\'' + str(imghash) + '\', 16, 10) ' +
                  ' ) as hamming_distance, type ' +
                  ' FROM trshash ' +
-                 ' HAVING hamming_distance < 4 and type = \'' + str(type) + '\'' +
+                 ' HAVING hamming_distance < 1 and type = \'' + str(type) + '\'' +
                  ' ORDER BY hamming_distance ASC')
 
         #query = (' SELECT id FROM trshash ' +
@@ -118,7 +118,7 @@ class DbWrapper:
 
     def insertHash(self, imghash, type, id, raidNo):
         doubleCheck = self.checkForHash(imghash, type, raidNo)
-        if doubleCheck is not None:
+        if doubleCheck[0]:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'insertHash: Already in DB - maybe two checks at the same time')
             return True
             

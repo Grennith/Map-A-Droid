@@ -1,0 +1,183 @@
+2018-07-30 09:49:08,305 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Starting detection of crop
+2018-07-30 09:49:08,306 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Original Filename: screenshots/raidscreen_1532936947.73_48.74046_11.200038_1.png
+2018-07-30 09:49:08,306 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Original Lat: 48.74046
+2018-07-30 09:49:08,307 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Original Lng: 11.200038
+2018-07-30 09:49:08,307 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Starting analysis of ID 1532936948.3
+2018-07-30 09:49:08,315 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectRaidTime: Reading Raidtimer
+2018-07-30 09:49:08,488 [    OCR-processing][    segscanner][    INFO] [Crop: 1 (1532936948.3) ] detectRaidTime: found raidtimer 10:36
+2018-07-30 09:49:08,489 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1532936948.3 (1532936948.3) ] getHatchTime: Found EU Time
+2018-07-30 09:49:08,489 [    OCR-processing][    segscanner][    INFO] [Crop: 1 (1532936948.3) ] detectRaidTime: Hatchtime 1532939760
+2018-07-30 09:49:08,489 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectRaidTime: Start: 1532932560 End: 1532935260
+2018-07-30 09:49:08,489 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Got raidtime (True, True, 1532932560, 1532935260)
+2018-07-30 09:49:08,489 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Creating Hash overall
+2018-07-30 09:49:08,490 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: detectRaidHash: False
+2018-07-30 09:49:08,490 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] Scanning Level
+2018-07-30 09:49:08,493 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: mon_img/_raidlevel_5_.jpg Matchvalue: 0.183344870806
+2018-07-30 09:49:08,496 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: mon_img/_raidlevel_4_.jpg Matchvalue: 0.668324530125
+2018-07-30 09:49:08,499 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: mon_img/_raidlevel_3_.jpg Matchvalue: 0.329170972109
+2018-07-30 09:49:08,502 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: mon_img/_raidlevel_2_.jpg Matchvalue: 0.985299348831
+2018-07-30 09:49:08,505 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: mon_img/_raidlevel_1_.jpg Matchvalue: 0.333677172661
+2018-07-30 09:49:08,505 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectLevel: found level 2
+2018-07-30 09:49:08,506 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Determined raidlevel to be 2
+2018-07-30 09:49:08,506 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Found the crop to contain an egg
+2018-07-30 09:49:08,506 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Scanning Gym
+2018-07-30 09:49:08,506 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Got Mon-ID for Gym-Detection 1
+2018-07-30 09:49:08,508 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] ImageHash: Generated Image Hash: 9c1c815822d31c3c
+2018-07-30 09:49:08,508 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] checkForHash: Checking for hash in db
+2018-07-30 09:49:08,768 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] checkForHash: Found Hashes in Database: 0
+2018-07-30 09:49:08,768 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] checkForHash: No matching Hash found
+2018-07-30 09:49:08,769 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] imageHashExists: Hash not found
+2018-07-30 09:49:08,769 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: No Gym-Hash: found - searching
+2018-07-30 09:49:08,769 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Searching closest gyms
+2018-07-30 09:49:09,009 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] getNearGyms: Result of NearGyms query: SELECT  gym_id, (  6371 * acos (  cos ( radians( '48.74046' ) )  * cos( radians( latitude ) )  * cos( radians( longitude ) - radians( '11.200038' ) )  + sin ( radians( '48.74046' ) )  * sin( radians( latitude ) )  )  ) AS distance  FROM gym  HAVING distance <= 1  ORDER BY distance
+2018-07-30 09:49:09,010 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] getNearGyms: Closest Gyms: [(u'b4488868d0834f8dbef3422801443e28.16', 0.0), (u'e0409d26816a442497084cedb8945a5f.16', 0.5340702959933725), (u'aae7a8303f3f41e19c9b615a4779ec9d.16', 0.6251701947171594), (u'522f84f1d2d84a019c36c32a53eb95c2.16', 0.7692486815318681), (u'8e52d036a91f490ea779082cd830692a.16', 0.8505830053672893), (u'ba989cb84e714971bab648946b2e44d7.16', 0.9943318499382936)]
+2018-07-30 09:49:09,038 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Detecting Gym
+2018-07-30 09:49:09,063 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.639276742935
+2018-07-30 09:49:09,080 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.668481826782
+2018-07-30 09:49:09,095 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.659841418266
+2018-07-30 09:49:09,109 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.650224030018
+2018-07-30 09:49:09,124 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.636964261532
+2018-07-30 09:49:09,137 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.634707629681
+2018-07-30 09:49:09,153 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.621906459332
+2018-07-30 09:49:09,164 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.59123468399
+2018-07-30 09:49:09,174 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.589948415756
+2018-07-30 09:49:09,183 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.619441628456
+2018-07-30 09:49:09,191 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.640848875046
+2018-07-30 09:49:09,198 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.644731342793
+2018-07-30 09:49:09,203 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.633985519409
+2018-07-30 09:49:09,208 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.614341795444
+2018-07-30 09:49:09,212 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.627688705921
+2018-07-30 09:49:09,216 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.619109034538
+2018-07-30 09:49:09,219 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.618515491486
+2018-07-30 09:49:09,223 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.631909072399
+2018-07-30 09:49:09,225 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.606426656246
+2018-07-30 09:49:09,227 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.588773608208
+2018-07-30 09:49:09,228 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Compare Gym-ID - b4488868d0834f8dbef3422801443e28.16 - Match: 0.668481826782
+2018-07-30 09:49:09,254 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.681950926781
+2018-07-30 09:49:09,271 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.682162165642
+2018-07-30 09:49:09,289 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.678627133369
+2018-07-30 09:49:09,306 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.680429458618
+2018-07-30 09:49:09,322 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.683605134487
+2018-07-30 09:49:09,338 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.682899475098
+2018-07-30 09:49:09,354 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.669345974922
+2018-07-30 09:49:09,365 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.663112521172
+2018-07-30 09:49:09,374 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.664725184441
+2018-07-30 09:49:09,380 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.656462669373
+2018-07-30 09:49:09,387 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.649425923824
+2018-07-30 09:49:09,392 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.635464251041
+2018-07-30 09:49:09,396 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.64253205061
+2018-07-30 09:49:09,400 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.6111728549
+2018-07-30 09:49:09,404 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.573785245419
+2018-07-30 09:49:09,406 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.56298071146
+2018-07-30 09:49:09,409 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.501596033573
+2018-07-30 09:49:09,411 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.35747769475
+2018-07-30 09:49:09,413 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.378451257944
+2018-07-30 09:49:09,414 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.322252333164
+2018-07-30 09:49:09,415 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Compare Gym-ID - e0409d26816a442497084cedb8945a5f.16 - Match: 0.683605134487
+2018-07-30 09:49:09,436 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.767038047314
+2018-07-30 09:49:09,451 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.771630585194
+2018-07-30 09:49:09,465 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.770796835423
+2018-07-30 09:49:09,479 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.767042398453
+2018-07-30 09:49:09,492 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.76217508316
+2018-07-30 09:49:09,505 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.757762849331
+2018-07-30 09:49:09,518 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.752815127373
+2018-07-30 09:49:09,529 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.747486710548
+2018-07-30 09:49:09,536 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.7403678298
+2018-07-30 09:49:09,541 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.745254278183
+2018-07-30 09:49:09,547 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.757799625397
+2018-07-30 09:49:09,552 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.764832794666
+2018-07-30 09:49:09,556 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.755469560623
+2018-07-30 09:49:09,560 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.736537575722
+2018-07-30 09:49:09,563 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.741597354412
+2018-07-30 09:49:09,566 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.744536936283
+2018-07-30 09:49:09,568 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.762428104877
+2018-07-30 09:49:09,570 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.731323540211
+2018-07-30 09:49:09,572 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.705812036991
+2018-07-30 09:49:09,574 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.642278909683
+2018-07-30 09:49:09,574 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Compare Gym-ID - aae7a8303f3f41e19c9b615a4779ec9d.16 - Match: 0.771630585194
+2018-07-30 09:49:09,590 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.694620788097
+2018-07-30 09:49:09,603 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.681666731834
+2018-07-30 09:49:09,613 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.664014399052
+2018-07-30 09:49:09,621 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.646247327328
+2018-07-30 09:49:09,628 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.638067662716
+2018-07-30 09:49:09,636 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.636233389378
+2018-07-30 09:49:09,644 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.636586308479
+2018-07-30 09:49:09,653 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.635039687157
+2018-07-30 09:49:09,659 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.631433427334
+2018-07-30 09:49:09,664 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.632330954075
+2018-07-30 09:49:09,670 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.641881167889
+2018-07-30 09:49:09,675 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.645791351795
+2018-07-30 09:49:09,679 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.650069355965
+2018-07-30 09:49:09,682 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.641228377819
+2018-07-30 09:49:09,685 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.63613909483
+2018-07-30 09:49:09,688 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.637096822262
+2018-07-30 09:49:09,690 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.622080385685
+2018-07-30 09:49:09,692 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.516904234886
+2018-07-30 09:49:09,693 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.428643375635
+2018-07-30 09:49:09,695 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Compare Gym-ID - 522f84f1d2d84a019c36c32a53eb95c2.16 - Match: 0.694620788097
+2018-07-30 09:49:09,721 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.750659108162
+2018-07-30 09:49:09,738 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.759845435619
+2018-07-30 09:49:09,755 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.768853843212
+2018-07-30 09:49:09,772 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.777631819248
+2018-07-30 09:49:09,789 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.781302809715
+2018-07-30 09:49:09,805 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.777864634991
+2018-07-30 09:49:09,821 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.76864695549
+2018-07-30 09:49:09,836 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.760915338993
+2018-07-30 09:49:09,843 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.747998118401
+2018-07-30 09:49:09,850 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.732180953026
+2018-07-30 09:49:09,857 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.725349962711
+2018-07-30 09:49:09,862 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.708391547203
+2018-07-30 09:49:09,866 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.683571815491
+2018-07-30 09:49:09,871 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.674142479897
+2018-07-30 09:49:09,874 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.66790497303
+2018-07-30 09:49:09,877 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.692958176136
+2018-07-30 09:49:09,880 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.698590278625
+2018-07-30 09:49:09,882 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.705428063869
+2018-07-30 09:49:09,884 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.705241262913
+2018-07-30 09:49:09,885 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.66830021143
+2018-07-30 09:49:09,886 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Compare Gym-ID - 8e52d036a91f490ea779082cd830692a.16 - Match: 0.781302809715
+2018-07-30 09:49:09,908 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.716784358025
+2018-07-30 09:49:09,923 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.726379156113
+2018-07-30 09:49:09,937 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.725050091743
+2018-07-30 09:49:09,952 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.722774982452
+2018-07-30 09:49:09,965 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.719399511814
+2018-07-30 09:49:09,978 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.716986179352
+2018-07-30 09:49:09,991 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.715094864368
+2018-07-30 09:49:10,000 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.713929712772
+2018-07-30 09:49:10,007 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.715220034122
+2018-07-30 09:49:10,013 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.715853631496
+2018-07-30 09:49:10,019 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.713093817234
+2018-07-30 09:49:10,024 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.715198874474
+2018-07-30 09:49:10,028 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.716321468353
+2018-07-30 09:49:10,031 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.711921393871
+2018-07-30 09:49:10,034 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.695583105087
+2018-07-30 09:49:10,037 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.658048033714
+2018-07-30 09:49:10,040 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.650834619999
+2018-07-30 09:49:10,042 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.638794779778
+2018-07-30 09:49:10,044 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.590028882027
+2018-07-30 09:49:10,045 [    OCR-processing][      matching][   DEBUG] [Crop: 1 (1532936948.3) ] Filename: temp/1532936948.3_raidhash1.jpg Matchvalue: 0.592305779457
+2018-07-30 09:49:10,046 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Compare Gym-ID - ba989cb84e714971bab648946b2e44d7.16 - Match: 0.726379156113
+2018-07-30 09:49:10,046 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] detectGym: Found Gym - Gym-ID: 8e52d036a91f490ea779082cd830692a.16
+2018-07-30 09:49:10,049 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] ImageHash: Generated Image Hash: 9c1c815822d31c3c
+2018-07-30 09:49:10,049 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] imageHash: Adding Hash to Database
+2018-07-30 09:49:10,049 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] checkForHash: Checking for hash in db
+2018-07-30 09:49:10,304 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] checkForHash: Found Hashes in Database: 0
+2018-07-30 09:49:10,304 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] checkForHash: No matching Hash found
+2018-07-30 09:49:10,305 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] insertHash: Already in DB - maybe two checks at the same time
+2018-07-30 09:49:10,305 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Found egg level 2 starting at 1532932560 and ending at 1532935260. GymID: 8e52d036a91f490ea779082cd830692a.16
+2018-07-30 09:49:10,305 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] submitRaid: Submitting raid
+2018-07-30 09:49:10,305 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] raidExist: Check DB for existing entry
+2018-07-30 09:49:10,467 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] raidExist: Check for EGG
+2018-07-30 09:49:10,561 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] raidExist: Found Rows: 1
+2018-07-30 09:49:10,561 [    OCR-processing][     dbWrapper][    INFO] [Crop: 1 (1532936948.3) ] raidExist: Egg already submitted - ignore new entry
+2018-07-30 09:49:10,561 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] Refresh Gym Times
+2018-07-30 09:49:10,862 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] submitRaid: EGG already submitted - ignoring
+2018-07-30 09:49:10,862 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] Encoding Raid Hash Json
+2018-07-30 09:49:10,862 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Adding Raidhash to Database
+2018-07-30 09:49:10,866 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] ImageHash: Generated Image Hash: 4f17374323237f3f
+2018-07-30 09:49:10,866 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] imageHash: Adding Hash to Database
+2018-07-30 09:49:10,867 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] checkForHash: Checking for hash in db
+2018-07-30 09:49:11,118 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] checkForHash: Found Hashes in Database: 0
+2018-07-30 09:49:11,118 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] checkForHash: No matching Hash found
+2018-07-30 09:49:11,119 [    OCR-processing][     dbWrapper][   DEBUG] [Crop: 1 (1532936948.3) ] insertHash: Already in DB - maybe two checks at the same time
+2018-07-30 09:49:11,119 [    OCR-processing][    segscanner][   DEBUG] [Crop: 1 (1532936948.3) ] start_detect: Finished

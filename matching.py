@@ -66,8 +66,8 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
         if found is None or maxVal > found[0]:
 	        found = (maxVal, maxLoc, r)
 
-    #if found[0] < value:
-    #    return 0.0
+    if found[0] < value:
+        return 0.0
 
     return found[0]
 
