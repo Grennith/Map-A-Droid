@@ -353,3 +353,24 @@ class DbWrapper:
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getNearGyms: Closest Gyms: %s' % str(data))
         connection.commit()
         return data
+        
+    def setScannedLocation(self, lat, lng):
+
+        now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            connection = mysql.connector.connect(host = self.host,
+            user = self.user, port = self.port, passwd = self.password,
+            db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+
+        cursor = connection.cursor()
+        query = (' insert into scannedlocation (cellid, latitude, longitude, last_modified, done, band1, band2, band3, band4, band5, midpoint, width) values ' +
+                 '(' + str(time.time()) + ', ' + lat + ', ' + lng + ', \'' + now + '\', 1, -1, -1, -1, -1, -1, -1, -1)')
+        cursor.execute(query)
+
+        connection.commit()
+
+        return True
+    

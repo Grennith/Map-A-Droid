@@ -405,6 +405,10 @@ def main_thread():
                 vncWrapper.getScreenshot('screenshot.png')
                 time.sleep(args.post_screenshot_delay)
                 attempts += 1
+                
+            log.info('Set new scannedlocation in Database')
+            dbWrapper.setScannedLocation(str(curLat), str(curLng))
+                
             log.info("Checking raidcount and copying raidscreen if raids present")
             countOfRaids = pogoWindowManager.readAmountOfRaidsDirect('screenshot.png', 123)
             if countOfRaids > 0:
