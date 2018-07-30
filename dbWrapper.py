@@ -316,7 +316,7 @@ class DbWrapper:
 
         return True
         
-    def getNearGyms(self, lat, lng, hash):
+    def getNearGyms(self, lat, lng, hash, raidNo):
         try:
             connection = mysql.connector.connect(host = self.host,
                 user = self.user, port = self.port, passwd = self.password,
