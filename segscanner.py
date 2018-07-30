@@ -462,8 +462,8 @@ class Scanner:
             #gym unknown...
             log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine gym, aborting analysis')
             self.unknownfound(filenameOfCrop, 'gym', False, raidNo, hash, captureLat, captureLng)
-            #os.remove(filenameOfCrop)
-            #os.remove(raidhashPic)
+            os.remove(filenameOfCrop)
+            os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
             return True #return true since a raid is present, we just couldn't find the correct gym
 
@@ -478,7 +478,7 @@ class Scanner:
         else:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Checking for Endtime')
             if not self.dbWrapper.readRaidEndtime(str(gymId), raidNo):
-                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: No Egg found')
+                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: No existing Egg found')
                 raidend = self.detectRaidEndtimer(img, hash, raidNo)
                 if raidend[1]:
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
@@ -487,7 +487,6 @@ class Scanner:
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
                     self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON', raidNo)
             else:
-                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Egg found')
                 log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
                 self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON', raidNo)
 
