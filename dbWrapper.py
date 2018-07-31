@@ -263,8 +263,8 @@ class DbWrapper:
                 ' WHERE STR_TO_DATE(raid.start,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\'')
             log.debug(query)
             cursor.execute(query)
-            data = cursor.fetchall()
-            number_of_rows=cursor.rowcount
+            result=cursor.fetchone()
+            number_of_rows=result[0]
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'raidExist: Found Rows: %s' % str(number_of_rows))
             rows_affected=cursor.rowcount
 
@@ -340,7 +340,7 @@ class DbWrapper:
             ' ) ' +
             ' ) AS distance ' +
             ' FROM gym ' +
-            ' HAVING distance <= 1 ' +
+            ' HAVING distance <= 1.7 ' +
             ' ORDER BY distance')
             
         cursor.execute(query)

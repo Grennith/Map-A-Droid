@@ -60,6 +60,7 @@ class Scanner:
     def detectRaidTime(self, raidpic, hash, raidNo):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Reading Raidtimer')
         raidtimer = raidpic[200:230, 30:150]
+        raidtimer = cv2.resize(raidtimer, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC) 
         emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_emptyraid.png"
         cv2.imwrite(emptyRaidTempPath, raidtimer)
         rt = Image.open(emptyRaidTempPath)
@@ -276,12 +277,12 @@ class Scanner:
             for closegym in closestGymIds:
                 
                 for file in glob.glob("gym_img/*" + closegym[0] + "*.jpg"):
-                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.60, raidNo, hash, x1, x2, y1, y2)
+                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.75, raidNo, hash, x1, x2, y1, y2)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Compare Gym-ID - ' + str(closegym[0]) + ' - Match: ' + str(find_gym))
                     if foundgym is None or find_gym > foundgym[0]:
     	        	    foundgym = find_gym, file
 
-                    if foundgym and foundgym[0]>=0.60:
+                    if foundgym and foundgym[0]>=0.75:
                         #okay, we very likely found our gym
                         gymSplit = foundgym[1].split('_')
                         gymId = gymSplit[2]
@@ -455,7 +456,7 @@ class Scanner:
 
         else:
             #let's get the gym we're likely scanning the image of
-            gymId = self.detectGym(raidhashPic, hash, raidNo, captureLat, captureLng, raidNo)
+            gymId = self.detectGym(raidhashPic, hash, raidNo, captureLat, captureLng)
             #gymId is either None for Gym not found or contains the gymId as String
 
         if gymId is None:
@@ -472,7 +473,7 @@ class Scanner:
             self.dbWrapper.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG', raidNo)
             raidHashJson = self.encodeHashJson(gymId, raidlevel, False, raidNo)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Adding Raidhash to Database')
-            self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
+            #self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
             #guid, pkm, lvl, start, end, type
 
         else:
@@ -534,12 +535,13 @@ class Scanner:
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
-            image2 = cv2.resize(image2,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
-            crop = image2[int(y1):int(y2),int(x1):int(x2)]
+            
+            #image2 = cv2.resize(image2,None,fx=2, fy=2, interpolation = cv2.INTER_LINEAR)
+            crop = image2[int(y1/2):int(y2/2),int(x1/2):int(x2/2)]
         else:
             crop = image2
             
-        tempHash = self.tempPath + "/" + str(time.time()) + "_" + str(raidNo) + "temphash.jpg"
+        tempHash = self.tempPath + "/" + str(time.time()) + "_" + str(raidNo) + "temphash_check.jpg"
         cv2.imwrite(tempHash, crop) 
         hashPic = Image.open(tempHash)
 
@@ -547,13 +549,21 @@ class Scanner:
         #diff = resized[:, 1:] > resized[:, :-1]
         #imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
         imageHash = self.dhash(hashPic, raidNo)
-        
+
         os.remove(tempHash)
         
-        existHash = False
-        #self.dbWrapper.checkForHash(str(imageHash), str(type), raidNo)
-        #if not existHash[0]:
+        existHash = self.dbWrapper.checkForHash(str(imageHash), str(type), raidNo)
+        if not existHash[0]:
             #log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash not found')
+            tempHash2 = self.tempPath + "/" + str(type) + "_" + str(imageHash) + "_" + str(raidNo) + "_temphash_check.jpg"
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' +  'imageHashExists: ' + str(tempHash2))
+            cv2.imwrite(tempHash2, crop)
+        else:
+            
+            tempHash2 = self.tempPath + "/" + str(type) + "_" + str(existHash[1]) + "_" + str(imageHash) + "_" + str(raidNo) + "_temphash_check.jpg"
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' +  'imageHashExists: ' + str(tempHash2))
+            cv2.imwrite(tempHash2, crop)
+            
         return None
         #log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash found: %s' % existHash[1])
         #return existHash[1]
@@ -562,13 +572,16 @@ class Scanner:
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
-            image2 = cv2.resize(image2,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
-            crop = image2[int(y1):int(y2),int(x1):int(x2)]
+            #imagehash = image2[int(y1):int(y2),int(x1):int(x2)]
+            #image2 = cv2.resize(image2,None,fx=2, fy=2, interpolation = cv2.INTER_LINEAR)
+            crop = image2[int(y1/2):int(y2/2),int(x1/2):int(x2/2)]
         else:
             crop = image2
             
-        tempHash = self.tempPath + "/" + str(time.time()) + "_" + str(raidNo) + "temphash.jpg"
-        cv2.imwrite(tempHash, crop) 
+        tempHash = self.tempPath + "/" + str(time.time()) + "_" + str(raidNo) + "temphash_new.jpg"
+        
+        cv2.imwrite(tempHash, crop)
+        
         hashPic = Image.open(tempHash)
 
         #resized = cv2.resize(crop, (hashSize + 1, hashSize))
@@ -576,11 +589,16 @@ class Scanner:
         #imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
         imageHash = self.dhash(hashPic, raidNo)
         
+        tempHash2 = self.tempPath + "/" + str(type) + "_" + str(id) + "_" + str(imageHash) + "_" + str(raidNo) + "_temphash_new.jpg"
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' +  'imageHash: ' + str(tempHash2))
+        cv2.imwrite(tempHash2, crop)
+        
+        
         os.remove(tempHash)
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHash: Adding Hash to Database')
 
-        #self.dbWrapper.insertHash(str(imageHash), str(type), str(id), raidNo)
+        self.dbWrapper.insertHash(str(imageHash), str(type), str(id), raidNo)
 
     def checkHourMin(self, hour_min):
         hour_min[0] = unicode(hour_min[0].replace('O','0').replace('o','0').replace('A','4'))
