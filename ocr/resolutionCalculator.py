@@ -107,6 +107,15 @@ class ResolutionCalc:
     def getNearbyClick(self):
         return self.__getClick('nearby')
 
+    def getWeatherWarningFirstClick(self):
+        return self.__getClick('weather_warning')
+
+    def getWeatherWarningSecondClick(self):
+        return self.__getClick('weather_window')
+
+    def getWeatherWarningBounds(self):
+        return self.__getBounds('weather_warning')
+
     def getNearbyRaidTabBounds(self):
         return self.__getBounds('nearby_raid_tab')
 

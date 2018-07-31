@@ -24,6 +24,24 @@
         "bottom" : 0.609
       }
     },
+    "weather_warning" : {
+      "click" : {
+        "x" : 0.5,
+        "y" : 0.855
+      },
+      "bounds" : {
+        "left" : 0.2,
+        "right" : 0.8,
+        "top" : 0.84,
+        "bottom" : 0.87
+      }
+    },
+    "weather_window" : {
+      "click" : {
+        "x" : 0.5,
+        "y" : 0.953
+      }
+    },
     "postLoginNewsMessage" : {
       "bounds" : {
         "left" : 0.305,

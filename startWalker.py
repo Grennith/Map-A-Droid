@@ -1,6 +1,6 @@
 import time
 from datetime import datetime
-from threading import Thread, Event
+from threading import Thread, Event, Lock
 import logging
 from colorlog import ColoredFormatter
 from walkerArgs import parseArgs
@@ -80,9 +80,18 @@ log.addHandler(stdout_hdlr)
 log.addHandler(stderr_hdlr)
 
 telnMore = None
+pogoWindowManager = None
+vncWrapper =  None
+runWarningThreadEvent = Event()
+windowLock = Lock()
+lastScreenshotTaken = None
 if not args.only_ocr:
     print("Starting Telnet MORE Client")
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
+    log.info("Starting pogo window manager")
+    pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password, args.screen_width, args.screen_height, args.temp_path)
+    log.info("Starting VNC client")
+    vncWrapper = VncWrapper(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
 
 
 
@@ -112,6 +121,10 @@ def main():
         t = Thread(target=main_thread, name='main')
         t.daemon = True
         t.start()
+        log.info('Starting speedweatherWarning Thread....')
+        w = Thread(target=checkSpeedWeatherWarningThread, name='speedWeatherCheck')
+        w.daemon = True
+        w.start()
 
     if not args.only_scan:
         #if args.ocr_multitask:
@@ -252,19 +265,92 @@ def turnScreenOnAndStartPogo():
         telnMore.startApp("com.nianticlabs.pokemongo")
         time.sleep(args.post_pogo_start_delay)
 
+def reopenRaidTab():
+    global pogoWindowManager
+    log.info("reopenRaidTab: Attempting to retrieve screenshot before checking raidtab")
+    if (not vncWrapper.getScreenshot('screenshot.png')):
+        log.error("reopenRaidTab: Failed retrieving screenshot before checking for closebutton")
+        return
+    if pogoWindowManager.isOtherCloseButtonPresent('screenshot.png', 123):
+        vncWrapper.rightClickVnc()
+        log.debug("reopenRaidTab: Closebutton was present, checking raidscreen...")
+        vncWrapper.getScreenshot('screenshot.png')
+        pogoWindowManager.checkNearby('screenshot.png', 123)
+        #pogoWindowManager.checkRaidscreen('screenshot.png', 123)
+
+#supposed to be running mostly in the post walk/teleport delays...
+def checkSpeedWeatherWarningThread():
+    global pogoWindowManager
+    global sleep
+    global runWarningThreadEvent
+    global windowLock
+    global lastScreenshotTaken
+    while(True):
+        while sleep or not runWarningThreadEvent.isSet():
+            time.sleep(1)
+        log.debug("checkSpeedWeatherWarningThread: acquiring lock")
+        windowLock.acquire()
+
+        log.info("checkSpeedWeatherWarning: Attempting to retrieve screenshot before checking speedweather")
+        if (not vncWrapper.getScreenshot('screenshot.png')):
+            log.error("checkSpeedWeatherWarning: Failed retrieving screenshot before checking for closebutton")
+            return
+        lastScreenshotTaken = time.time()
+        attempts = 0
+        while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123) and
+            not sleep and not runWarningThreadEvent.isSet()):
+            if (attempts >= 5):
+                #weird count of failures... stop pogo, wait 5mins and try again, could be PTC login issue
+                log.error("checkSpeedWeatherWarning: Failed to find the raidscreen 5 times in a row. Aborting check for speedWeather and let main do its job")
+                break;
+            #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
+            found = pogoWindowManager.checkCloseExceptNearbyButton('screenshot.png', 123)
+            if not found and pogoWindowManager.checkSpeedwarning('screenshot.png', 123):
+                log.info("checkSpeedWeatherWarning: Found speed warning")
+                found = True
+            if not found and pogoWindowManager.checkWeatherWarning('screenshot.png', 123):
+                log.info("checkSpeedWeatherWarning: Found weather warning")
+                found = True
+            if not found and pogoWindowManager.checkGameQuitPopup('screenshot.png', 123):
+                log.info("checkSpeedWeatherWarning: Found game quit popup")
+                found = True
+
+            log.info("checkSpeedWeatherWarning: Previous checks found popups: %s" % str(not found))
+            if not found:
+                log.info("checkSpeedWeatherWarning: Previous checks found nothing. Checking nearby open")
+                pogoWindowManager.checkNearby('screenshot.png', 123)
+            try:
+                log.info("checkSpeedWeatherWarning: Attempting to retrieve screenshot checking windows")
+                vncWrapper.getScreenshot('screenshot.png')
+            except:
+                log.error("checkSpeedWeatherWarning: Failed getting screenshot while checking windows")
+                #failcount += 1
+                #TODO: consider proper errorhandling?
+                #even restart entire thing? VNC dead means we won't be using the device
+                #maybe send email? :D
+                break;
+
+            vncWrapper.getScreenshot('screenshot.png')
+            lastScreenshotTaken = time.time()
+            time.sleep(args.post_screenshot_delay)
+            attempts += 1
+        log.debug("checkSpeedWeatherWarningThread: releasing lock")
+        windowLock.release()
+        time.sleep(1)
+
 def main_thread():
     global nextRaidQueue
     global lastPogoRestart
     global telnMore
+    global pogoWindowManager
     global sleep
-    log.info("Starting VNC client")
-    vncWrapper = VncWrapper(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
+    global runWarningThreadEvent
+    global windowLock
+    global vncWrapper
     log.info("Starting TelnetGeo Client")
     telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
     #log.info("Starting Telnet MORE Client")
     #telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
-    log.info("Starting pogo window manager")
-    pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password, args.screen_width, args.screen_height, args.temp_path)
     log.info("Starting dbWrapper")
     dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
     updateRaidQueue(dbWrapper)
@@ -311,6 +397,8 @@ def main_thread():
                 if (curTime - lastPogoRestart >= (args.restart_pogo * 60)):
                     restartPogo()
 
+            #let's check for speed and weather warnings while we're walking/teleporting...
+            runWarningThreadEvent.set()
             lastLat = curLat
             lastLng = curLng
             log.debug("Checking for raidqueue priority. Current time: %s, Current queue: %s" % (str(time.time()), str(nextRaidQueue)))
@@ -352,16 +440,21 @@ def main_thread():
             #TODO: improve errorhandling by checking results and trying again and again
             #not using continue to always take a new screenshot...
             #time.sleep(5)
-
+            log.debug("Main: Clearing event, acquiring lock")
+            runWarningThreadEvent.clear()
+            windowLock.acquire()
+            log.debug("Main: Lock acquired")
             log.info("Attempting to retrieve screenshot before checking windows")
-            if (not vncWrapper.getScreenshot('screenshot.png')):
-                log.error("Failed retrieving screenshot before checking windows")
-                break
-                #failcount += 1
-                #TODO: consider proper errorhandling?
-                #even restart entire thing? VNC dead means we won't be using the device
-                #maybe send email? :D
-                #break;
+            #check if last screenshot is way too old to be of use...
+            if time.time() - lastScreenshotTaken > 1:
+                if (not vncWrapper.getScreenshot('screenshot.png')):
+                    log.error("Failed retrieving screenshot before checking windows")
+                    break
+                    #failcount += 1
+                    #TODO: consider proper errorhandling?
+                    #even restart entire thing? VNC dead means we won't be using the device
+                    #maybe send email? :D
+                    #break;
             attempts = 0
             while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123)):
                 if (attempts >= 15):
@@ -376,6 +469,9 @@ def main_thread():
                 found =  pogoWindowManager.checkPostLoginOkButton('screenshot.png', 123)
                 if not found and pogoWindowManager.checkCloseExceptNearbyButton('screenshot.png', 123):
                     log.info("Found close button (X) on a window other than nearby")
+                    found = True
+                if not found and pogoWindowManager.checkWeatherWarning('screenshot.png', 123):
+                    log.info("checkSpeedWeatherWarning: Found weather warning")
                     found = True
                 if not found and pogoWindowManager.checkSpeedwarning('screenshot.png', 123):
                     log.info("Found speed warning")
@@ -405,10 +501,18 @@ def main_thread():
                 vncWrapper.getScreenshot('screenshot.png')
                 time.sleep(args.post_screenshot_delay)
                 attempts += 1
-                
+
+
+            #well... we are on the raidtab, but we want to reopen it every now and then, so screw it
+            curTime = time.time()
+            #update the raid queue every 5mins...
+            if math.fmod(i, 30) == 0:
+                log.warning("Closing and opening raidtab every 30 locations scanned... Doing so")
+                reopenRaidTab()
+
             log.info('Set new scannedlocation in Database')
             dbWrapper.setScannedLocation(str(curLat), str(curLng))
-                
+
             log.info("Checking raidcount and copying raidscreen if raids present")
             countOfRaids = pogoWindowManager.readAmountOfRaidsDirect('screenshot.png', 123)
             if countOfRaids > 0:
@@ -416,6 +520,8 @@ def main_thread():
                 copyfile('screenshot.png', args.raidscreen_path
                     + '/raidscreen_' + str(curTime) + "_" + str(curLat) + "_"
                     + str(curLng) + "_" + str(countOfRaids) + '.png')
+            log.debug("Main: Releasing lock")
+            windowLock.release()
 
 
 def observer(scrPath, width, height):
