@@ -154,12 +154,12 @@ class Scanner:
         if monHash is None:
             for file in glob.glob("mon_img/_mon_*_" + str(lvl) + ".png"):
                 
-                find_mon = mt.fort_image_matching(file, picName, False, 0.70, raidNo, hash)
+                find_mon = mt.fort_image_matching(file, picName, False, 0.60, raidNo, hash)
 
                 if foundmon is None or find_mon > foundmon[0]:
                     foundmon = find_mon, file
 
-                if foundmon and foundmon[0]>0.70:
+                if foundmon and foundmon[0]>0.60:
                     monSplit = foundmon[1].split('_')
                     monID = monSplit[3]
 
@@ -291,7 +291,7 @@ class Scanner:
         mostColor = self.mostPresentColour(raidpic, x1, x2, y1, y2, hash, raidNo)
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Most Color in Raidpic ' + str(mostColor))
         
-        if (mostColor == (255, 255, 255) or mostColor == (228, 219, 176)):
+        if mostColor == (255, 255, 255) or (mostColor >= (228, 219, 174) and mostColor <= (228, 220, 176)):
             log.error('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detect White or Default Raidpic! Error - nothing to do')
             return None
 
@@ -307,24 +307,25 @@ class Scanner:
             for closegym in closestGymIds:
                 
                 for file in glob.glob("gym_img/*" + closegym[0] + "*.jpg"):
-                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.65, raidNo, hash, x1, x2, y1, y2)
+                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.70, raidNo, hash, x1, x2, y1, y2)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Compare Gym-ID - ' + str(closegym[0]) + ' - Match: ' + str(find_gym))
                     if foundgym is None or find_gym > foundgym[0]:
     	        	    foundgym = find_gym, file
 
-                    if foundgym and foundgym[0]>=0.65:
+                    if foundgym and foundgym[0]>=0.70:
                         #okay, we very likely found our gym
                         gymSplit = foundgym[1].split('_')
                         gymId = gymSplit[2]
 
         else:
+            self.imageHash(raidpic, gymId, True, 'gym', raidNo, x1, x2, y1, y2)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detected Gym-ID: ' + str(gymHash))
             return gymHash
 
         if gymId:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Found Gym - Gym-ID: '+ str(gymId))
             if foundMonCrops:
-                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Dont hash Gym with spec. Crops')
+                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Dont hash Gym with spec. Mon Crops')
             else:
                 self.imageHash(raidpic, gymId, True, 'gym', raidNo, x1, x2, y1, y2)
                 
@@ -501,7 +502,9 @@ class Scanner:
         if gymId is None:
             #gym unknown...
             log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine gym, aborting analysis')
-            self.unknownfound(filenameOfCrop, 'gym', False, raidNo, hash, captureLat, captureLng)
+            raidhash = self.cropImage(raidhash)
+            self.unknownfound(filenameOfCrop, 'gym_crop', False, raidNo, hash, captureLat, captureLng)
+            self.unknownfound(raidhashPic, 'gym', False, raidNo, hash, captureLat, captureLng)
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
@@ -593,9 +596,9 @@ class Scanner:
         
         existHash = self.dbWrapper.checkForHash(str(imageHash), str(type), raidNo)
 
-        return None
-        #log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash found: %s' % existHash[1])
-        #return existHash[1]
+        #return None
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash found: %s' % existHash[1])
+        return existHash[1]
 
     def imageHash(self, image, id, zoom, type, raidNo, x1=50, x2=80, y1=100, y2=160, hashSize=8):
         image2 = cv2.imread(image,3)

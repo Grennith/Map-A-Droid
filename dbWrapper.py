@@ -74,6 +74,7 @@ class DbWrapper:
             ' hash VARCHAR(255) NOT NULL, ' +
             ' type VARCHAR(10) NOT NULL, ' +
             ' id VARCHAR(255) NOT NULL, ' +
+            ' count INT(10) NOT NULL DEFAULT 1, ' +
             ' PRIMARY KEY (hashid))' )
         log.debug(query)
         cursor.execute(query)
@@ -91,12 +92,17 @@ class DbWrapper:
             return None
         cursor = connection.cursor()
 
-        query = (' SELECT  id, BIT_COUNT( ' +
-                 ' CONV(hash, 16, 10) ^ CONV(\'' + str(imghash) + '\', 16, 10) ' +
-                 ' ) as hamming_distance, type ' +
+        #query = (' SELECT  id, BIT_COUNT( ' +
+        #         ' CONV(hash, 16, 10) ^ CONV(\'' + str(imghash) + '\', 16, 10) ' +
+        #         ' ) as hamming_distance, type ' +
+        #         ' FROM trshash ' +
+        #         ' HAVING hamming_distance < 2 and type = \'' + str(type) + '\'' +
+        #         ' ORDER BY hamming_distance ASC')
+                 
+        query = (' SELECT  id, type ' +
                  ' FROM trshash ' +
-                 ' HAVING hamming_distance < 1 and type = \'' + str(type) + '\'' +
-                 ' ORDER BY hamming_distance ASC')
+                 ' where hash = \'' + str(imghash) + '\' and type = \'' + str(type) + '\'')       
+            
 
         #query = (' SELECT id FROM trshash ' +
                 #'WHERE type = \'%s\' and hash = \'%s\''
@@ -119,9 +125,7 @@ class DbWrapper:
     def insertHash(self, imghash, type, id, raidNo):
         doubleCheck = self.checkForHash(imghash, type, raidNo)
         if doubleCheck[0]:
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'insertHash: Already in DB - maybe two checks at the same time')
-            return True
-            
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'insertHash: Already in DB - update Counter')
         try:
             connection = mysql.connector.connect(host = self.host,
             user = self.user, port = self.port, passwd = self.password,
@@ -130,10 +134,17 @@ class DbWrapper:
            log.error("Could not connect to the SQL database")
            return False
         cursor = connection.cursor()
-        query = (' INSERT INTO trshash ' +
-              ' ( hash, type, id ) VALUES ' +
-              ' (\'%s\', \'%s\', \'%s\')'
-              % (str(imghash), str(type), str(id)))
+        if not doubleCheck[0]:
+            query = (' INSERT INTO trshash ' +
+                  ' ( hash, type, id ) VALUES ' +
+                  ' (\'%s\', \'%s\', \'%s\')'
+                  % (str(imghash), str(type), str(id)))
+        else:
+            query = (' UPDATE trshash ' +
+                  ' set count=count+1 '
+                  ' where hash=\'%s\''
+                  % (str(imghash)))
+                  
         cursor.execute(query)
         connection.commit()
         return True
