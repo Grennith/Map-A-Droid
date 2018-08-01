@@ -27,24 +27,24 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
         if width_f < 180:
             tempFile = str(hash) + "_resize_" + str(raidNo) +".jpg"   
             img_temp = Image.open(fort_img_name)
-            wsize = int((float(img_temp.size[0]))*2.5)
-            hsize = int((float(img_temp.size[1]))*2.5)
+            wsize = int((float(img_temp.size[0]))*3)
+            hsize = int((float(img_temp.size[1]))*3)
             img_temp = img_temp.resize((wsize,hsize), Image.ANTIALIAS)
             img_temp.save(tempFile)
             fort_img = cv2.imread(tempFile,3)
             os.remove(tempFile)
         else:
             if height_f > width_f:            
-                fort_img = fort_img[int((height_f/2)-(height_f/3)):int((height_f/2)+(height_f/3)), int(0):int(width_f)]
+                fort_img = fort_img[int((height_f/2)-(height_f/4)):int((height_f/2)+(height_f/4)), int(0):int(width_f)]
             else:
-                fort_img = fort_img[int(0):int(height_f), int((width_f/2)-(width_f/3)):int((width_f/2)+(width_f/3))]
+                fort_img = fort_img[int(0):int(height_f), int((width_f/2)-(width_f/4)):int((width_f/2)+(width_f/4))]
             #fort_img = fort_img
             #cv2.imwrite('Gym_' + str(fort_img_name) + '.png', fort_img)
             
         tempFile = str(hash) + "_resize_" + str(raidNo) +".jpg"   
         img_temp = Image.open(url_img_name)
-        wsize = int((float(img_temp.size[0]))*1.5)
-        hsize = int((float(img_temp.size[1]))*1.5)
+        wsize = int((float(img_temp.size[0]))*2)
+        hsize = int((float(img_temp.size[1]))*2)
         img_temp = img_temp.resize((wsize,hsize), Image.ANTIALIAS)
         img_temp.save(tempFile)
         
@@ -57,8 +57,8 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
     else:
         tempFile = str(hash) + "_resize_" + str(raidNo) +".jpg"   
         img_temp = Image.open(fort_img_name)
-        wsize = int((float(img_temp.size[0]))*1.5)
-        hsize = int((float(img_temp.size[1]))*1.5)
+        wsize = int((float(img_temp.size[0]))*2)
+        hsize = int((float(img_temp.size[1]))*2)
         img_temp = img_temp.resize((wsize,hsize), Image.ANTIALIAS)
         img_temp.save(tempFile)
         fort_img = cv2.imread(tempFile,3)
