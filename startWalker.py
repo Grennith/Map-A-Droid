@@ -483,7 +483,7 @@ def main_thread():
                     log.info("Found game quit popup")
                     found = True
 
-                log.info("Previous checks found popups: %s" % str(not found))
+                log.info("Previous checks found popups: %s" % str(found))
                 if not found:
                     log.info("Previous checks found nothing. Checking nearby open")
                     pogoWindowManager.checkNearby('screenshot.png', 123)

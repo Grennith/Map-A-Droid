@@ -71,7 +71,16 @@ class PogoWindows:
         width, height = col.size
 
         #check for the colour of the button that says "show all"
-        if (self.__mostPresentColour(tempPathColoured, width * height) != (144, 217, 152)):
+        mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
+        log.debug('checkSpeedwarning: most present colour is %s' % str(mostPresentColour))
+        #just gonna check the most occuring colours on that button...
+        if (mostPresentColour != (144, 217, 152)
+            and mostPresentColour != (146, 217, 152)
+            and mostPresentColour != (152, 218, 151)
+            and mostPresentColour != (153, 218, 151)
+            and mostPresentColour != (151, 218, 151)
+            and mostPresentColour != (77, 209, 163)
+            and mostPresentColour != (255, 255, 255)):
             return False
 
         gray = col.convert('L')
