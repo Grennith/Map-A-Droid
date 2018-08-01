@@ -167,12 +167,12 @@ class Scanner:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidBoss: Found mon in mon_img: ' + str(monID))
 
         else:
-            #os.remove(picName)
+            os.remove(picName)
             return monHash, monAsset
 
         if monID:
             self.imageHash(picName, monID, False, 'mon-' + str(lvl), raidNo)
-            #os.remove(picName)
+            os.remove(picName)
             return monID, monAsset
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'No Mon found!')
@@ -236,6 +236,29 @@ class Scanner:
         else:
             log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectLevel: could not find level')
             return None
+            
+    def mostPresentColour(self, raidpic, x1, x2, y1, y2, hash, raidNo):
+        raidpic = cv2.imread(raidpic,3)
+        raidpic = cv2.resize(raidpic,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
+        tempfile = self.tempPath + "/" + str(hash) + "_raidpic_" + str(raidNo) + "_temphash_check.jpg"
+        crop = raidpic[int(y1):int(y2),int(x1):int(x2)]
+        cv2.imwrite(tempfile, crop)
+        
+        img = Image.open(tempfile)
+        width, height = img.size
+        
+        colors = img.getcolors(width*height) #put a higher value if there are many colors in your image
+        max_occurence, most_present = 0, 0
+        try:
+            for c in colors:
+                if c[0] > max_occurence:
+                    (max_occurence, most_present) = c
+                    
+            os.remove(tempfile)
+            return most_present
+        except TypeError:
+            os.remove(tempfile)
+            return None
 
     def detectGym(self, raidpic, hash, raidNo, captureLat, captureLng, monId = None):
         foundgym = None
@@ -264,6 +287,13 @@ class Scanner:
                 x2 = crop['X2']
                 y1 = crop['Y1']
                 y2 = crop['Y2']
+                
+        mostColor = self.mostPresentColour(raidpic, x1, x2, y1, y2, hash, raidNo)
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Most Color in Raidpic ' + str(mostColor))
+        
+        if (mostColor == (255, 255, 255) or mostColor == (228, 219, 176)):
+            log.error('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detect White or Default Raidpic! Error - nothing to do')
+            return None
 
         gymHash = self.imageHashExists(raidpic, True, 'gym', raidNo, x1, x2, y1, y2)
         
@@ -277,12 +307,12 @@ class Scanner:
             for closegym in closestGymIds:
                 
                 for file in glob.glob("gym_img/*" + closegym[0] + "*.jpg"):
-                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.75, raidNo, hash, x1, x2, y1, y2)
+                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.65, raidNo, hash, x1, x2, y1, y2)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Compare Gym-ID - ' + str(closegym[0]) + ' - Match: ' + str(find_gym))
                     if foundgym is None or find_gym > foundgym[0]:
     	        	    foundgym = find_gym, file
 
-                    if foundgym and foundgym[0]>=0.75:
+                    if foundgym and foundgym[0]>=0.65:
                         #okay, we very likely found our gym
                         gymSplit = foundgym[1].split('_')
                         gymId = gymSplit[2]
@@ -326,17 +356,19 @@ class Scanner:
         
     def cropImage(self, image):
         gray=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
-        edged = cv2.Canny(image, 10, 250)
-        (cnd, cnts, _) = cv2.findContours(edged.copy(), cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        idx = 0
-        for c in cnts:
-            x,y,w,h = cv2.boundingRect(c)
-            if x<20 and y<25:
-                idx+=1
-                new_img=image[y:y+h,x:x+w]
-                return new_img
-        
-        
+        output = image.copy()
+        image_cols, image_rows, _ = image.shape
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,1,image_cols / 8,param1=100,param2=15,minRadius=71,maxRadius=71)
+        if circles is not None:
+        	circles = np.round(circles[0, :]).astype("int")
+        	for (x, y, r) in circles:
+                        log.debug(x)
+                        log.debug(y)
+                        log.debug(r)
+                        new_crop = output[y-r-1:y+r+1, x-r-1:x+r+1]
+                        return new_crop
+        return False
+
 
     def resize(image, width = None, height = None, inter = cv2.INTER_AREA):
         dim = None
@@ -365,14 +397,21 @@ class Scanner:
         eggfound = False
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Starting analysis of ID %s' % str(hash))
+        
+        img_temp = Image.open(filenameOfCrop)
+        hpercent = (270/float(img_temp.size[1]))
+        wsize = int((float(img_temp.size[0])*float(hpercent)))
+        img_temp = img_temp.resize((wsize,270), Image.ANTIALIAS)
+        img_temp.save(filenameOfCrop)
 
-        img = cv2.imread(filenameOfCrop)
-        img = imutils.resize(img, height=270)
-        cv2.imwrite(filenameOfCrop, img)
+        #img = cv2.imread(filenameOfCrop)
+        #img = imutils.resize(img, height=270)
+        #cv2.imwrite(filenameOfCrop, img)
         img = cv2.imread(filenameOfCrop)
 
         raidhash = img[0:175, 0:170]
         raidhash = self.cropImage(raidhash)
+            
         raidhashPic = self.tempPath + "/" + str(hash) + "_raidhash" + str(raidNo) +".jpg"
         cv2.imwrite(raidhashPic, raidhash)
 
@@ -553,17 +592,7 @@ class Scanner:
         os.remove(tempHash)
         
         existHash = self.dbWrapper.checkForHash(str(imageHash), str(type), raidNo)
-        if not existHash[0]:
-            #log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash not found')
-            tempHash2 = self.tempPath + "/" + str(type) + "_" + str(imageHash) + "_" + str(raidNo) + "_temphash_check.jpg"
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' +  'imageHashExists: ' + str(tempHash2))
-            cv2.imwrite(tempHash2, crop)
-        else:
-            
-            tempHash2 = self.tempPath + "/" + str(type) + "_" + str(existHash[1]) + "_" + str(imageHash) + "_" + str(raidNo) + "_temphash_check.jpg"
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' +  'imageHashExists: ' + str(tempHash2))
-            cv2.imwrite(tempHash2, crop)
-            
+
         return None
         #log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash found: %s' % existHash[1])
         #return existHash[1]
@@ -589,10 +618,7 @@ class Scanner:
         #imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
         imageHash = self.dhash(hashPic, raidNo)
         
-        tempHash2 = self.tempPath + "/" + str(type) + "_" + str(id) + "_" + str(imageHash) + "_" + str(raidNo) + "_temphash_new.jpg"
-        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' +  'imageHash: ' + str(tempHash2))
-        cv2.imwrite(tempHash2, crop)
-        
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' +  'imageHash: ' + str(imageHash))
         
         os.remove(tempHash)
 

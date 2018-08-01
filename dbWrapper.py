@@ -198,8 +198,8 @@ class DbWrapper:
         else:
             log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s' % (pkm, lvl, today1, gym))
             if not MonWithNoEgg:
-                query = " UPDATE raid SET pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s) WHERE gym_id = %s "
-                data = (pkm, "999", "1", "1",  now_timezone, gym)
+                query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s) WHERE gym_id = %s "
+                data = (lvl, pkm, "999", "1", "1",  now_timezone, gym)
             else:
                 query = (' INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, ' +
                     'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +

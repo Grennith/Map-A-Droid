@@ -54,7 +54,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         #pathSplit = event.src_path.split("/")
         #filename = pathSplit[len(pathSplit) - 1]
         #print filename
-        time.sleep(0.5)
+        time.sleep(2)
         #groups: 1 -> timestamp, 2 -> latitude, 3 -> longitude, 4 -> raidcount
         raidcount = re.search(r'raidscreen_(\d+\.\d*)_(\d+\.\d+)_(\d+\.\d+)_(\d+)\.png', event.src_path)
         if raidcount is None:

@@ -57,7 +57,7 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
 
         result = cv2.matchTemplate(resized, crop, cv2.TM_CCOEFF_NORMED)
         (_, maxVal, _, maxLoc) = cv2.minMaxLoc(result)
-        log.debug('[Crop: ' + str(raidNo) + ' (' + str(hash) +') ] ' + 'Filename: ' + str(url_img_name) + ' Matchvalue: ' + str(maxVal))
+        #log.debug('[Crop: ' + str(raidNo) + ' (' + str(hash) +') ] ' + 'Filename: ' + str(url_img_name) + ' Matchvalue: ' + str(maxVal))
 
         
         if found is None or maxVal > found[0]:
