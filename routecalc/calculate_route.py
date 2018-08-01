@@ -108,7 +108,7 @@ def __getLessWithRelations(relations, maxAmountOfGymsToSumUpWithGym):
     if relations is None or len(relations) == 0:
         log.error("__getMaxSetInGivenSet: relations none or empty")
         return [] #TODO: return useful data...
-
+    
     #log.debug("__getLessWithRelations: Relations: %s" % str(relations))
     coordsToReturn = []
     while len(relations) > 0:
@@ -118,7 +118,7 @@ def __getLessWithRelations(relations, maxAmountOfGymsToSumUpWithGym):
         mostWestRelations = []
         for relation in relations:
             if relation[0].lat < mostWest[0].lat:
-                mostWest = relation[0]
+                mostWest = relation
                 mostWestRelations = []
             elif relation[0].lat == mostWest[0].lat:
                 mostWestRelations.append(relation)
