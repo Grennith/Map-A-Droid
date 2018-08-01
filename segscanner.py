@@ -337,6 +337,7 @@ class Scanner:
     def unknownfound(self, raidpic, type, zoom, raidNo, hash, lat=0, lng=0):
         raidpic = cv2.imread(raidpic)
         cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +".jpg", raidpic)
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'unknownfound: Write unknown file: ' + str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +".jpg")
         return True
 
 
