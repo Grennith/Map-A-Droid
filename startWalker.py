@@ -299,7 +299,7 @@ def checkSpeedWeatherWarningThread():
         attempts = 0
         while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123) and
             not sleep and not runWarningThreadEvent.isSet()):
-            if (attempts >= 5):
+            if (attempts >= 3):
                 #weird count of failures... stop pogo, wait 5mins and try again, could be PTC login issue
                 log.error("checkSpeedWeatherWarning: Failed to find the raidscreen 5 times in a row. Aborting check for speedWeather and let main do its job")
                 break;

@@ -75,8 +75,8 @@ def parseArgs():
             help=('The speed to walk from gym to gym in kmph. speed=0 means teleportation. Default: 50'))
     parser.add_argument('-m', '--max_distance', required=False, type=int,
             help=('The maximum distance [meters] to be walked. Anything with a longer distance to will be teleported to. 0 or commented -> never teleport'))
-    parser.add_argument('-gd', '--gym_distance', required=False, type=float, default=700.0,
-            help=('The maximum distance [meters] to sum up gyms around a given gym. Default: 700.0'))
+    parser.add_argument('-gd', '--gym_distance', required=False, type=float, default=490.0,
+            help=('The maximum distance [meters] to sum up gyms around a given gym. Default: 490.0'))
     parser.add_argument('-mcg', '--max_count_gym_sum_up_around_gym', required=False, type=int, default=5,
             help=('The maximum distance [meters] to sum up gyms around a given gym. Default: 5'))
     parser.add_argument('-ptd', '--post_teleport_delay', required=False, type=float, default=4.0,
