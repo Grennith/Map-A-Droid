@@ -8,7 +8,7 @@ from PIL import Image
 
 log = logging.getLogger(__name__)
 
-def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, x1=90, x2=125, y1=135, y2=200):
+def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, x1=50, x2=80, y1=100, y2=160):
     #log.debug("fort_image_matching: Reading url_img_name '%s'" % str(url_img_name))
     url_img = cv2.imread(url_img_name,3)
     if (url_img is None):
