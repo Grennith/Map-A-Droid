@@ -94,7 +94,7 @@ class PogoWindows:
 
         log.debug("checkPostLoginOkButton: Checking for post-login OK button found: %s" % text)
         #if 'O. K.' in text:
-        if re.match(r'.*[o|O|0].*[k|K].*', text):
+        if re.match(r'.*[o|O|0][.|\n]*[k|K].*', text):
             log.debug('checkPostLoginOkButton: Found post login OK button - closing ...')
             pos = None
             if type == 'post_login_ok_driving':
@@ -186,7 +186,10 @@ class PogoWindows:
             if self.__checkListOfCropOrangeCircle(posToCheckTwo.tolist()):
                 countOfRaids += 1
 
-        return countOfRaids
+        if countOfRaids == 0:
+            return -1 #raidcounter present but no raidcounts below, definitely a bug
+        else:
+            return countOfRaids
 
     def readAmountOfRaids(self, filename, hash):
         if not os.path.isfile(filename):

@@ -401,11 +401,13 @@ def main_thread():
             runWarningThreadEvent.set()
             lastLat = curLat
             lastLng = curLng
+            egghatchLocation = False
             log.debug("Checking for raidqueue priority. Current time: %s, Current queue: %s" % (str(time.time()), str(nextRaidQueue)))
             #determine whether we move to the next gym or to the top of our priority queue
             if (len(nextRaidQueue) > 0 and nextRaidQueue[0][0] < time.time()):
                 #the topmost item in the queue lays in the past...
                 log.info('An egg has hatched, get there asap. Location: %s' % str(nextRaidQueue[0]))
+                egghatchLocation = True
                 nextStop = heapq.heappop(nextRaidQueue)[1] #gets the location tuple
                 curLat = nextStop.latitude
                 curLng = nextStop.longitude
@@ -506,7 +508,8 @@ def main_thread():
             #well... we are on the raidtab, but we want to reopen it every now and then, so screw it
             curTime = time.time()
             #update the raid queue every 5mins...
-            if math.fmod(i, 30) == 0:
+            log.debug("i = %s, i mod 30 = %s" % (str(i), str(math.fmod(i, 30))))
+            if not egghatchLocation and math.fmod(i, 30) == 0:
                 log.warning("Closing and opening raidtab every 30 locations scanned... Doing so")
                 reopenRaidTab()
 
@@ -515,6 +518,15 @@ def main_thread():
 
             log.info("Checking raidcount and copying raidscreen if raids present")
             countOfRaids = pogoWindowManager.readAmountOfRaidsDirect('screenshot.png', 123)
+
+            if countOfRaids == -1:
+                #reopen raidtab and take screenshot...
+                log.info("Count present but no raid shown, reopening raidTab")
+                reopenRaidTab()
+                vncWrapper.getScreenshot('screenshot.png')
+                countOfRaids = pogoWindowManager.readAmountOfRaidsDirect('screenshot.png', 123)
+
+            log.debug("countOfRaids: %s" % str(countOfRaids))
             if countOfRaids > 0:
                 curTime = time.time()
                 copyfile('screenshot.png', args.raidscreen_path
