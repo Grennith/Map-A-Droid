@@ -291,6 +291,12 @@ def checkSpeedWeatherWarningThread():
         log.debug("checkSpeedWeatherWarningThread: acquiring lock")
         windowLock.acquire()
 
+        log.debug("Checking if pogo is running...")
+        if not telnMore.isPogoTopmost():
+            log.warning("Starting Pogo")
+            telnMore.startApp("com.nianticlabs.pokemongo")
+            time.sleep(args.post_pogo_start_delay)
+
         log.info("checkSpeedWeatherWarning: Attempting to retrieve screenshot before checking speedweather")
         if (not vncWrapper.getScreenshot('screenshot.png')):
             log.error("checkSpeedWeatherWarning: Failed retrieving screenshot before checking for closebutton")
