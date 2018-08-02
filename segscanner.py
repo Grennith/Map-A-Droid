@@ -264,7 +264,7 @@ class Scanner:
         foundgym = None
         gymId = None
         x1 = 50
-        x2 = 100
+        x2 = 80
         y1 = 100
         y2 = 160
         foundMonCrops = False
@@ -573,7 +573,7 @@ class Scanner:
         return hashValue
             
 
-    def imageHashExists(self, image, zoom, type, raidNo, x1=50, x2=100, y1=100, y2=160, hashSize=8):
+    def imageHashExists(self, image, zoom, type, raidNo, x1=50, x2=80, y1=100, y2=160, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
@@ -600,7 +600,7 @@ class Scanner:
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash found: %s' % existHash[1])
         return existHash[1]
 
-    def imageHash(self, image, id, zoom, type, raidNo, x1=50, x2=100, y1=100, y2=160, hashSize=8):
+    def imageHash(self, image, id, zoom, type, raidNo, x1=50, x2=80, y1=100, y2=160, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
