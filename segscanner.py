@@ -263,10 +263,10 @@ class Scanner:
     def detectGym(self, raidpic, hash, raidNo, captureLat, captureLng, monId = None):
         foundgym = None
         gymId = None
-        x1 = 50
-        x2 = 100
-        y1 = 100
-        y2 = 160
+        x1 = 25
+        x2 = 50
+        y1 = 50
+        y2 = 80
         foundMonCrops = False
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Scanning Gym')
@@ -408,9 +408,6 @@ class Scanner:
         img_temp = img_temp.resize((wsize,270), Image.ANTIALIAS)
         img_temp.save(filenameOfCrop)
 
-        #img = cv2.imread(filenameOfCrop)
-        #img = imutils.resize(img, height=270)
-        #cv2.imwrite(filenameOfCrop, img)
         img = cv2.imread(filenameOfCrop)
 
         raidhash = img[0:175, 0:170]
@@ -575,52 +572,37 @@ class Scanner:
         return hashValue
 
 
-    def imageHashExists(self, image, zoom, type, raidNo, x1=50, x2=100, y1=100, y2=160, hashSize=8):
+    def imageHashExists(self, image, zoom, type, raidNo, x1=25, x2=50, y1=50, y2=80, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
-
-            #image2 = cv2.resize(image2,None,fx=2, fy=2, interpolation = cv2.INTER_LINEAR)
-            crop = image2[int(y1/2):int(y2/2),int(x1/2):int(x2/2)]
+            crop = image2[int(y1):int(y2),int(x1):int(x2)]
         else:
             crop = image2
 
         tempHash = self.tempPath + "/" + str(time.time()) + "_" + str(raidNo) + "temphash_check.jpg"
         cv2.imwrite(tempHash, crop)
         hashPic = Image.open(tempHash)
-
-        #resized = cv2.resize(crop, (hashSize + 1, hashSize))
-        #diff = resized[:, 1:] > resized[:, :-1]
-        #imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
         imageHash = self.dhash(hashPic, raidNo)
 
         os.remove(tempHash)
 
         existHash = self.dbWrapper.checkForHash(str(imageHash), str(type), raidNo)
 
-        #return None
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHashExists: Hash found: %s' % existHash[1])
         return existHash[1]
 
-    def imageHash(self, image, id, zoom, type, raidNo, x1=50, x2=100, y1=100, y2=160, hashSize=8):
+    def imageHash(self, image, id, zoom, type, raidNo, x1=25, x2=50, y1=50, y2=80, hashSize=8):
         image2 = cv2.imread(image,3)
         image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
         if zoom:
-            #imagehash = image2[int(y1):int(y2),int(x1):int(x2)]
-            #image2 = cv2.resize(image2,None,fx=2, fy=2, interpolation = cv2.INTER_LINEAR)
-            crop = image2[int(y1/2):int(y2/2),int(x1/2):int(x2/2)]
+            crop = image2[int(y1):int(y2),int(x1):int(x2)]
         else:
             crop = image2
 
         tempHash = self.tempPath + "/" + str(time.time()) + "_" + str(raidNo) + "temphash_new.jpg"
-
         cv2.imwrite(tempHash, crop)
-
         hashPic = Image.open(tempHash)
-
-        #resized = cv2.resize(crop, (hashSize + 1, hashSize))
-        #diff = resized[:, 1:] > resized[:, :-1]
-        #imageHash = sum([2 ** i for (i, v) in enumerate(diff.flatten()) if v])
         imageHash = self.dhash(hashPic, raidNo)
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' +  'imageHash: ' + str(imageHash))

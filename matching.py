@@ -8,7 +8,7 @@ from PIL import Image
 
 log = logging.getLogger(__name__)
 
-def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, x1=50, x2=100, y1=100, y2=160):
+def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, x1=25, x2=50, y1=50, y2=80):
     #log.debug("fort_image_matching: Reading url_img_name '%s'" % str(url_img_name))
     url_img = cv2.imread(url_img_name,3)
     if (url_img is None):
@@ -41,14 +41,14 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
             #fort_img = fort_img
             #cv2.imwrite('Gym_' + str(fort_img_name) + '.png', fort_img)
 
-        tempFile = str(hash) + "_resize_" + str(raidNo) +".jpg"
-        img_temp = Image.open(url_img_name)
-        wsize = int((float(img_temp.size[0]))*2)
-        hsize = int((float(img_temp.size[1]))*2)
-        img_temp = img_temp.resize((wsize,hsize), Image.ANTIALIAS)
-        img_temp.save(tempFile)
+        #tempFile = str(hash) + "_resize_" + str(raidNo) +".jpg"
+        #img_temp = Image.open(url_img_name)
+        #wsize = int((float(img_temp.size[0]))*2)
+        #hsize = int((float(img_temp.size[1]))*2)
+        #img_temp = img_temp.resize((wsize,hsize), Image.ANTIALIAS)
+        #img_temp.save(tempFile)
 
-        url_img = cv2.imread(tempFile,3)
+        #url_img = cv2.imread(tempFile,3)
         #url_img = cv2.resize(url_img,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
         crop = url_img[int(y1):int(y2),int(x1):int(x2)]
         #crop = cv2.resize(url_img,None,fx=2, fy=2, interpolation = cv2.INTER_NEAREST)
@@ -71,7 +71,7 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
     (tH, tW) = crop.shape[:2]
 
     found = None
-    for scale in np.linspace(0.2, 1.0, 20)[::-1]:
+    for scale in np.linspace(0.2, 0.5, 20)[::-1]:
 
         resized = imutils.resize(fort_img, width = int(fort_img.shape[1] * scale))
         r = fort_img.shape[1] / float(resized.shape[1])
