@@ -275,7 +275,7 @@ def reopenRaidTab():
         vncWrapper.rightClickVnc()
         log.debug("reopenRaidTab: Closebutton was present, checking raidscreen...")
         vncWrapper.getScreenshot('screenshot.png')
-        pogoWindowManager.checkNearby('screenshot.png', 123)
+        pogoWindowManager.checkRaidscreen('screenshot.png', 123)
         #pogoWindowManager.checkRaidscreen('screenshot.png', 123)
 
 #supposed to be running mostly in the post walk/teleport delays...
@@ -300,6 +300,7 @@ def checkSpeedWeatherWarningThread():
         log.info("checkSpeedWeatherWarning: Attempting to retrieve screenshot before checking speedweather")
         if (not vncWrapper.getScreenshot('screenshot.png')):
             log.error("checkSpeedWeatherWarning: Failed retrieving screenshot before checking for closebutton")
+            windowLock.release()
             return
         lastScreenshotTaken = time.time()
         attempts = 0
@@ -353,6 +354,7 @@ def main_thread():
     global runWarningThreadEvent
     global windowLock
     global vncWrapper
+    global lastScreenshotTaken
     log.info("Starting TelnetGeo Client")
     telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
     #log.info("Starting Telnet MORE Client")
@@ -454,7 +456,7 @@ def main_thread():
             log.debug("Main: Lock acquired")
             log.info("Attempting to retrieve screenshot before checking windows")
             #check if last screenshot is way too old to be of use...
-            if time.time() - lastScreenshotTaken > 1:
+            if not lastScreenshotTaken or time.time() - lastScreenshotTaken > 1:
                 if (not vncWrapper.getScreenshot('screenshot.png')):
                     log.error("Failed retrieving screenshot before checking windows")
                     break

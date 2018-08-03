@@ -75,6 +75,7 @@ class PogoWindows:
         log.debug('checkSpeedwarning: most present colour is %s' % str(mostPresentColour))
         #just gonna check the most occuring colours on that button...
         if (mostPresentColour != (144, 217, 152)
+            and mostPresentColour != (145, 217, 152)
             and mostPresentColour != (146, 217, 152)
             and mostPresentColour != (152, 218, 151)
             and mostPresentColour != (153, 218, 151)
@@ -436,6 +437,7 @@ class PogoWindows:
         #just gonna check the most occuring colours on that button...
         if (mostPresentColour != (144, 217, 152)
             and mostPresentColour != (146, 217, 152)
+            and mostPresentColour != (145, 217, 152)
             and mostPresentColour != (152, 218, 151)
             and mostPresentColour != (153, 218, 151)
             and mostPresentColour != (151, 218, 151)
