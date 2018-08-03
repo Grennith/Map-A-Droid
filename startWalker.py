@@ -306,7 +306,6 @@ def checkSpeedWeatherWarningThread():
             log.error("checkSpeedWeatherWarning: Failed retrieving screenshot before checking for closebutton")
             windowLock.release()
             return
-        lastScreenshotTaken = time.time()
         attempts = 0
         while (not pogoWindowManager.checkRaidscreen('screenshot.png', 123) and
             not sleep and not runWarningThreadEvent.isSet()):
