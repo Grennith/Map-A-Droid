@@ -73,7 +73,7 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
     (tH, tW) = crop.shape[:2]
 
     found = None
-    for scale in np.linspace(0.2, npValue, 20)[::-1]:
+    for scale in np.linspace(0.2, npValue, 10)[::-1]:
 
         resized = imutils.resize(fort_img, width = int(fort_img.shape[1] * scale))
         r = fort_img.shape[1] / float(resized.shape[1])
