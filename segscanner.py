@@ -291,7 +291,7 @@ class Scanner:
         mostColor = self.mostPresentColour(raidpic, x1, x2, y1, y2, hash, raidNo)
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Most Color in Raidpic ' + str(mostColor))
 
-        if (mostColor >= (228, 219, 174) and mostColor <= (228, 220, 176)) or mostColor == (254, 254, 254):
+        if (mostColor >= (228, 219, 174) and mostColor <= (228, 220, 176)):
             log.error('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detect White or Default Raidpic! Error - nothing to do')
             return None
 
