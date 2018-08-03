@@ -368,7 +368,7 @@ class DbWrapper:
         
     def setScannedLocation(self, lat, lng, captureTime):
 
-        now = (captureTime - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
+        now = (datetime.datetime.fromtimestamp(float(captureTime)) - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
         try:
             connection = mysql.connector.connect(host = self.host,
             user = self.user, port = self.port, passwd = self.password,
