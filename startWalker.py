@@ -535,9 +535,7 @@ def main_thread():
 
             if countOfRaids == -1:
                 #reopen raidtab and take screenshot...
-                log.info("Count present but no raid shown, reopening raidTab")
-                copyfile('screenshot.png', 'errorRaidTab' + str(curTime) + "_" + str(curLat) + "_"
-                    + str(curLng) + "_" + str(countOfRaids) + '.png')
+                log.warning("Count present but no raid shown, reopening raidTab")
                 reopenRaidTab()
                 vncWrapper.getScreenshot('screenshot.png')
                 countOfRaids = pogoWindowManager.readAmountOfRaidsDirect('screenshot.png', 123)
