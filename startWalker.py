@@ -274,9 +274,13 @@ def reopenRaidTab():
     if pogoWindowManager.isOtherCloseButtonPresent('screenshot.png', 123):
         vncWrapper.rightClickVnc()
         log.debug("reopenRaidTab: Closebutton was present, checking raidscreen...")
-        vncWrapper.getScreenshot('screenshot.png')
-        pogoWindowManager.checkRaidscreen('screenshot.png', 123)
+        time.sleep(0.4)
+        #vncWrapper.getScreenshot('screenshot.png')
         #pogoWindowManager.checkRaidscreen('screenshot.png', 123)
+        vncWrapper.getScreenshot('screenshot.png')
+        pogoWindowManager.checkNearby('screenshot.png', 123)
+        time.sleep(1)
+
 
 #supposed to be running mostly in the post walk/teleport delays...
 def checkSpeedWeatherWarningThread():
@@ -530,6 +534,8 @@ def main_thread():
             if countOfRaids == -1:
                 #reopen raidtab and take screenshot...
                 log.info("Count present but no raid shown, reopening raidTab")
+                copyfile('screenshot.png', 'errorRaidTab' + str(curTime) + "_" + str(curLat) + "_"
+                    + str(curLng) + "_" + str(countOfRaids) + '.png')
                 reopenRaidTab()
                 vncWrapper.getScreenshot('screenshot.png')
                 countOfRaids = pogoWindowManager.readAmountOfRaidsDirect('screenshot.png', 123)

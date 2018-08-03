@@ -323,6 +323,7 @@ class PogoWindows:
             log.info('Raidscreen not running...')
             posNearby = self.resolutionCalculator.getNearbyClick()
             self.vncWrapper.clickVnc(posNearby.x, posNearby.y)
+            time.sleep(1)
             posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
             self.vncWrapper.clickVnc(posRaids.x, posRaids.y)
             return False
