@@ -168,11 +168,12 @@ class DbWrapper:
         connection.commit()
         return True
 
-    def submitRaid(self, gym, pkm, lvl, start, end, type, raidNo, MonWithNoEgg=False):
+    def submitRaid(self, gym, pkm, lvl, start, end, type, raidNo, captureTime, MonWithNoEgg=False):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: Submitting raid')
         zero = datetime.datetime.now()
         zero =  time.mktime(zero.timetuple())
-        now_timezone = datetime.datetime.now()
+        log.error(float(captureTime))
+        now_timezone = datetime.datetime.fromtimestamp(float(captureTime))
         now_timezone =  time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
         now = datetime.datetime.now()
         date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
@@ -224,7 +225,7 @@ class DbWrapper:
 
         connection.commit()
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: Submit finished')
-        self.refreshTimes(gym, raidNo)
+        self.refreshTimes(gym, raidNo, captureTime)
 
         return True
 
@@ -303,10 +304,10 @@ class DbWrapper:
             log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'raidExist: Mon is new - submitting')
             return False
 
-    def refreshTimes(self, gym, raidNo):
+    def refreshTimes(self, gym, raidNo, captureTime):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'Refresh Gym Times')
-        now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
-        now_timezone = datetime.datetime.now()
+        now = (datetime.datetime.fromtimestamp(float(captureTime)) - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
+        now_timezone = datetime.datetime.fromtimestamp(float(captureTime))
         now_timezone =  time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
         try:
             connection = mysql.connector.connect(host = self.host,
@@ -365,9 +366,9 @@ class DbWrapper:
         connection.commit()
         return data
         
-    def setScannedLocation(self, lat, lng):
+    def setScannedLocation(self, lat, lng, captureTime):
 
-        now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
+        now = (captureTime - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
         try:
             connection = mysql.connector.connect(host = self.host,
             user = self.user, port = self.port, passwd = self.password,

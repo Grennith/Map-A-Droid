@@ -527,7 +527,7 @@ def main_thread():
                 reopenRaidTab()
 
             log.info('Set new scannedlocation in Database')
-            dbWrapper.setScannedLocation(str(curLat), str(curLng))
+            dbWrapper.setScannedLocation(str(curLat), str(curLng), time.time())
 
             log.info("Checking raidcount and copying raidscreen if raids present")
             countOfRaids = pogoWindowManager.readAmountOfRaidsDirect('screenshot.png', 123)
