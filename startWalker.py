@@ -463,6 +463,7 @@ def main_thread():
             if not lastScreenshotTaken or time.time() - lastScreenshotTaken > 1:
                 if (not vncWrapper.getScreenshot('screenshot.png')):
                     log.error("Failed retrieving screenshot before checking windows")
+                    windowLock.release()
                     break
                     #failcount += 1
                     #TODO: consider proper errorhandling?
@@ -510,6 +511,7 @@ def main_thread():
                     #TODO: consider proper errorhandling?
                     #even restart entire thing? VNC dead means we won't be using the device
                     #maybe send email? :D
+                    windowLock.release()
                     break;
 
                 vncWrapper.getScreenshot('screenshot.png')
