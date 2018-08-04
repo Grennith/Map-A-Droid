@@ -172,7 +172,6 @@ class DbWrapper:
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: Submitting raid')
         zero = datetime.datetime.now()
         zero =  time.mktime(zero.timetuple())
-        log.error(float(captureTime))
         now_timezone = datetime.datetime.fromtimestamp(float(captureTime))
         now_timezone =  time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
         now = datetime.datetime.now()
