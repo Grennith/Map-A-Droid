@@ -146,7 +146,8 @@ class PogoWindows:
         #check for most present colours... if there's no orange, we can stop immediately
         mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
         log.debug('readAmountOfRaidsDirect: most present colour is %s' % str(mostPresentColour))
-        if (mostPresentColour != (255, 120, 55)):
+        if (mostPresentColour != (255, 120, 55)
+            and mostPresentColour != (255, 123, 49)):
             log.info("readAmountOfRaidsDirect: No raidcount found, assuming no raids nearby")
             #cv2.imwrite(str(hash) + "_derp.png", raidCount)
             return 0
@@ -210,6 +211,7 @@ class PogoWindows:
 
         #check for most present colours... if there's no orange, we can stop immediately
         mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
+        log.debug('readAmountOfRaidsDirect: most present colour is %s' % str(mostPresentColour))
         if (mostPresentColour != (255, 120, 55)
             and mostPresentColour != (255, 123, 49)):
             log.info("readAmountOfRaids: No raidcount found, assuming no raids nearby")
