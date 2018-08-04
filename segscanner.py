@@ -96,6 +96,7 @@ class Scanner:
     def detectRaidEndtimer(self, raidpic, hash, raidNo):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Reading Raidtimer')
         raidtimer = raidpic[178:200, 45:130]
+        raidtimer = cv2.resize(raidtimer, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
         emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_endraid.png"
         cv2.imwrite(emptyRaidTempPath, raidtimer)
         rt = Image.open(emptyRaidTempPath)
@@ -516,7 +517,7 @@ class Scanner:
             self.dbWrapper.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG', raidNo, captureTime)
             raidHashJson = self.encodeHashJson(gymId, raidlevel, False, raidNo)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Adding Raidhash to Database')
-            self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
+            #self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
 
         else:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Checking for Endtime')
@@ -535,7 +536,7 @@ class Scanner:
 
             raidHashJson = self.encodeHashJson(gymId, raidlevel, monFound[0], raidNo)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Adding Raidhash to Database')
-            self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
+            #self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
 
         os.remove(raidhashPic)
         os.remove(filenameOfCrop)
