@@ -1,5 +1,6 @@
 *.zip
 *.pyc
+
 config.ini
 hash/*
 gym_img/*
@@ -9,6 +10,7 @@ unknown/*
 screenshot.png
 *.log
 hashing.json
+gym_info.json
 .DS_Store
 
 mon_img/_mon*
