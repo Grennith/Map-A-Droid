@@ -180,7 +180,7 @@ class DbWrapper:
         today1 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
 
         if self.raidExist(gym, type, raidNo):
-            self.refreshTimes(gym, raidNo)
+            self.refreshTimes(gym, raidNo, captureTime)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: %s already submitted - ignoring' % str(type))
             return True
 
