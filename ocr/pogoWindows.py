@@ -127,6 +127,38 @@ class PogoWindows:
             return True
         else:
             return False
+            
+    def readCirclesOfRaids(self, filename, hash):
+        log.debug("readCirclesOfRaids: Reading circles")
+        log.debug(time.time())
+        screenshotRead = cv2.imread(filename)
+        height, width, _ = screenshotRead.shape
+        gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        # detect circles in the image
+        
+        radMin = int((width / 4.7 - 2) / 2)
+        radMax = int((width / 4.7 + 2) / 2)
+        log.debug("readCirclesOfRaids: Detect radius of circles: Min " + str(radMin) + " Max " + str(radMax))
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,1,width / 8,param1=100,param2=15,minRadius=radMin,maxRadius=radMax)
+        circle = 0
+        # ensure at least some circles were found
+        if circles is not None:
+            # convert the (x, y) coordinates and radius of the circles to integers
+            circles = np.round(circles[0, :]).astype("int")
+            # loop over the (x, y) coordinates and radius of the circles
+            for (x, y, r) in circles:
+                circle += 1
+            
+            log.debug("readCirclesOfRaids: Determined screenshot to have " + str(circle) + " raids.")
+            log.debug(time.time())
+            if circle > 6:
+                circle = 6
+            return circle  
+        else:
+            log.debug("readCirclesOfRaids: Determined screenshot to have 0 Raids")
+            return -1 
+            
+            
 
     def readAmountOfRaidsDirect(self, filename, hash):
         if not os.path.isfile(filename):
@@ -137,6 +169,7 @@ class PogoWindows:
         bounds = self.resolutionCalculator.getRaidcountBounds()
         log.debug("readAmountOfRaidsDirect: bounds are %s" % str(bounds))
         raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
+        raidCount = cv2.resize(raidCount, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
         tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.png"
         cv2.imwrite(tempPathColoured, raidCount)
 
@@ -203,6 +236,7 @@ class PogoWindows:
         bounds = self.resolutionCalculator.getRaidcountBounds()
         log.debug("readAmountOfRaids: bounds are %s" % str(bounds))
         raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
+        raidCount = cv2.resize(raidCount, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
         tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.png"
         cv2.imwrite(tempPathColoured, raidCount)
 

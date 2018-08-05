@@ -530,14 +530,14 @@ def main_thread():
             dbWrapper.setScannedLocation(str(curLat), str(curLng), str(curTime))
 
             log.info("Checking raidcount and copying raidscreen if raids present")
-            countOfRaids = pogoWindowManager.readAmountOfRaidsDirect('screenshot.png', 123)
+            countOfRaids = pogoWindowManager.readCirclesOfRaids('screenshot.png', 123)
 
             if countOfRaids == -1:
                 #reopen raidtab and take screenshot...
                 log.warning("Count present but no raid shown, reopening raidTab")
                 reopenRaidTab()
                 vncWrapper.getScreenshot('screenshot.png')
-                countOfRaids = pogoWindowManager.readAmountOfRaidsDirect('screenshot.png', 123)
+                countOfRaids = pogoWindowManager.readCirclesOfRaids('screenshot.png', 123)
 
             log.debug("countOfRaids: %s" % str(countOfRaids))
             if countOfRaids > 0:
