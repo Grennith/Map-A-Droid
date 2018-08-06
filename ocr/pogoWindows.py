@@ -130,7 +130,6 @@ class PogoWindows:
             
     def readCirclesOfRaids(self, filename, hash):
         log.debug("readCirclesOfRaids: Reading circles")
-        log.debug(time.time())
         screenshotRead = cv2.imread(filename)
         height, width, _ = screenshotRead.shape
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
@@ -150,7 +149,6 @@ class PogoWindows:
                 circle += 1
             
             log.debug("readCirclesOfRaids: Determined screenshot to have " + str(circle) + " raids.")
-            log.debug(time.time())
             if circle > 6:
                 circle = 6
             return circle  
@@ -158,7 +156,25 @@ class PogoWindows:
             log.debug("readCirclesOfRaids: Determined screenshot to have 0 Raids")
             return -1 
             
-            
+    def __checkRaidLine(self, filename, hash):
+        log.debug("checkRaidLine: Reading lines")
+        screenshotRead = cv2.imread(filename)
+        gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
+        height, width, _ = screenshotRead.shape
+        edges = cv2.Canny(gray,100,200,apertureSize = 3)
+        maxLineLength = width / 3.30
+        log.debug("checkRaidLine: MaxLineLength:" + str(maxLineLength))
+        minLineLength = width / 3.30 - 10
+        log.debug("checkRaidLine: MinLineLength:" + str(minLineLength))
+        maxLineGap = 10
+        lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
+        for line in lines:
+            for x1,y1,x2,y2 in line:
+                if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and x1 > width/2:
+                    log.debug("checkRaidLine: Raid-tab is active - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
+                    return True
+        log.debug("checkRaidLine: Raid-tab is not active")
+        return False        
 
     def readAmountOfRaidsDirect(self, filename, hash):
         if not os.path.isfile(filename):
@@ -346,10 +362,14 @@ class PogoWindows:
         log.debug("checkRaidscreen: Checking if RAID is present (nearby tab)")
         if self.__checkRaidTabOnScreen(filename, hash):
             #RAID Tab visible
-            pos = self.resolutionCalculator.getNearbyRaidTabClick()
-            self.vncWrapper.clickVnc(pos.x, pos.y)
-            #self.vncWrapper.clickVnc(500, 370) #TODO: adaptive to resolution
             log.debug('checkRaidscreen: RAID-tab found')
+            if not self.__checkRaidLine(filename, hash):
+                #RAID Tab not active
+                log.debug('checkRaidscreen: RAID-tab not activated')
+                pos = self.resolutionCalculator.getNearbyRaidTabClick()
+                self.vncWrapper.clickVnc(pos.x, pos.y)
+                log.debug('checkRaidscreen: RAID-tab clicked')
+                return True
             return True
         else:
             log.warning('checkRaidscreen: Could not locate RAID-tab')
