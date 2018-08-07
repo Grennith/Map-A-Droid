@@ -130,6 +130,9 @@ class PogoWindows:
             
     def readCirclesOfRaids(self, filename, hash):
         log.debug("readCirclesOfRaids: Reading circles")
+        if not self.readAmountOfRaidsCircle(filename, hash):
+            return 0
+            
         screenshotRead = cv2.imread(filename)
         height, width, _ = screenshotRead.shape
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
@@ -153,7 +156,7 @@ class PogoWindows:
                 circle = 6
             return circle  
         else:
-            log.debug("readCirclesOfRaids: Determined screenshot to have 0 Raids")
+            log.debug("readCirclesOfRaids: Determined screenshot to have 0 Raids - Bug")
             return -1 
             
     def __checkRaidLine(self, filename, hash):
@@ -174,7 +177,33 @@ class PogoWindows:
                     log.debug("checkRaidLine: Raid-tab is active - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
                     return True
         log.debug("checkRaidLine: Raid-tab is not active")
-        return False        
+        return False  
+        
+    def readAmountOfRaidsCircle(self, filename, hash):
+        if not os.path.isfile(filename):
+            return None
+
+        log.debug("readAmountOfRaidsCircle: Cropping circle (orange)")
+        screenshotRead = cv2.imread(filename)
+        bounds = self.resolutionCalculator.getRaidcountBounds()
+        log.debug("readAmountOfRaidsDirect: bounds are %s" % str(bounds))
+        raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
+        raidCount = cv2.resize(raidCount, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.png"
+        cv2.imwrite(tempPathColoured, raidCount)
+
+        raidCountColoured = Image.open(tempPathColoured)
+        width, height = raidCountColoured.size
+
+        #check for most present colours... if there's no orange, we can stop immediately
+        mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
+        log.debug('readAmountOfRaidsCircle: most present colour is %s' % str(mostPresentColour))
+        if (mostPresentColour != (255, 120, 55)
+            and mostPresentColour != (255, 123, 49)):
+            log.info("readAmountOfRaidsCircle: No raidcount found, assuming no raids nearby")
+            #cv2.imwrite(str(hash) + "_derp.png", raidCount)
+            return False
+        return True   
 
     def readAmountOfRaidsDirect(self, filename, hash):
         if not os.path.isfile(filename):
