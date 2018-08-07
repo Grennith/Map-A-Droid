@@ -114,6 +114,9 @@ def parseArgs():
 
     parser.add_argument('-rscrpath', '--raidscreen_path', default='screenshots',
             help=('Folder for processed Raidscreens. Default: screenshots'))
+            
+    parser.add_argument('-clnupa', '--cleanup_age', default='1440',
+            help=('Delete Screenshots older than X minutes. Default: 1440'))
 
     parser.add_argument('-unkpath', '--unknown_path', default='unknown',
             help=('Folder for unknows Gyms or Mons. Default: unknown'))
