@@ -50,6 +50,21 @@ class TelnetClient:
         #TODO: handle socketError
         return self.__sock.recv(1024)
 
+    def getScreenshot(self):
+        self.__sock.send("screen capture\r\n")
+        start = time.time()
+        chars = self.__sock.recv(4096)
+        countOfChars = int(chars)
+        #print(countOfChars)
+        img_data = ""
+        while len(img_data) < countOfChars:
+            img_data += self.__sock.recv(4096)
+
+        fh = open("screenshot.jpg", "wb")
+        fh.write(img_data.decode('base64'))
+        fh.close()
+        #print time.time() - start
+
     def __sendCommandRecursive(self, command, again):
         log.debug("__sendCommandRecursive: Waiting for result of %s" % str(command))
         x = self.__sendCommandWithoutChecks(command)

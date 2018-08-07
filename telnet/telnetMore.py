@@ -22,6 +22,15 @@ class TelnetMore:
     def turnScreenOn(self):
         return self.telnetClient.sendCommand("more screen on\r\n")[0]
 
+    def click(self, x, y):
+        return self.telnetClient.sendCommand("screen click %s %s\r\n" % (str(x), str(y)))[0]
+
+    def captureScreenshot(self):
+        self.telnetClient.getScreenshot()
+
+    def backButton(self):
+        return self.telnetClient.sendCommand("screen back\r\n")[0]
+
     def isScreenOn(self):
         state = self.telnetClient.sendCommand("more state screen\r\n")[1]
         return "on" in state
