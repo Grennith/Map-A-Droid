@@ -54,57 +54,11 @@ class PogoWindows:
         if not os.path.isfile(filename):
             return False
         log.debug('checkPostLoginOkButton: Checking for post-login ok button of type %s...' % type)
-        col = cv2.imread(filename)
-        bounds = None
-        if type == 'post_login_ok_driving':
-            bounds = self.resolutionCalculator.getPostLoginOkDrivingBounds()
-            buttonExists = self.__lookForButton(filename, ratio)
-        else:
-            bounds = self.resolutionCalculator.getPostLoginOkPrivatePropertyBounds()
-            
-        buttonExists = self.__lookForButton(filename, 2.20)
 
-        #okFont = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        #log.debug('checkPostLoginOkButton: bounds of okFont: %s' % str(bounds))
-
-        #tempPathColoured = self.tempDirPath + "/" + str(hash) + "_login.jpg"
-        #cv2.imwrite(tempPathColoured, okFont)
-
-        #col = Image.open(tempPathColoured)
-        #width, height = col.size
-
-        #check for the colour of the button that says "show all"
-        #mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
-        #log.debug('checkPostLoginOkButton: most present colour is %s' % str(mostPresentColour))
-        #just gonna check the most occuring colours on that button...
-        #if (mostPresentColour != (144, 217, 152)
-        #    and mostPresentColour != (145, 217, 152)
-        #    and mostPresentColour != (146, 217, 152)
-        #    and mostPresentColour != (152, 218, 151)
-        #    and mostPresentColour != (153, 218, 151)
-        #    and mostPresentColour != (151, 218, 151)
-        #    and mostPresentColour != (77, 209, 163)
-        #    and mostPresentColour != (255, 255, 255)
-        #    and mostPresentColour != (136, 216, 153)
-        #    and mostPresentColour != (136, 215, 153)):
-        #    return False
-        
-        if not buttonExists:
-            log.debug('checkPostLoginOkButton: No Button found')
+        if not self.__lookForButton(filename, 2.20):
+            log.debug('checkPostLoginOkButton: Could not find OK button')
             return False
-
-        gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.jpg")
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.jpg"),config='--oem 3 --psm 7')
-
-        #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_login.jpg")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.jpg")
-
-        log.debug("checkPostLoginOkButton: Checking for post-login OK button found: %s" % text)
-        #if 'O. K.' in text:
-        if re.match(r'.*[oO0][.\n\s]*[kK].*', text):
+        else:
             log.debug('checkPostLoginOkButton: Found post login OK button - closing ...')
             pos = None
             if type == 'post_login_ok_driving':
@@ -113,43 +67,23 @@ class PogoWindows:
                 pos = self.resolutionCalculator.getPostLoginOkPrivatePropertyClick()
             self.screenWrapper.click(pos.x, pos.y)
             return True
-        else:
-            log.debug('checkPostLoginOkButton: Could not find OK button')
-            return False
 
     def checkPostLoginOkButton(self, filename, hash):
+        log.debug('checkPostLoginOkButton: Starting check')
         return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving')
             or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property'))
-
-    #checks the given rows (list of np array of image cropped by bounds) for orange
-    def __checkListOfCropOrangeCircle(self, numpyCropList):
-        countFound = 0
-        for row in numpyCropList:
-            for px in row:
-                #check the pixel colours...
-                if ((px[0] == 162 and px[1] == 193 and px[2] == 254)
-                    or (px[0] == 163 and px[1] == 194 and px[2] == 254)):
-                    countFound += 1
-        if countFound > 3:
-            #we found a 2 raid screenshot
-            log.debug("__checkListOfCropOrangeCircle: given crop contains circle")
-            return True
-        else:
-            return False
-
-    def readCirclesOfRaids(self, filename, hash):
-        log.debug("readCirclesOfRaids: Reading circles")
-        if not self.readAmountOfRaidsCircle(filename, hash):
-            return 0
+            
+    def __readCircleCount(self,filename,hash,ratio):
+        log.debug("__readCircleCount: Reading circles")
 
         screenshotRead = cv2.imread(filename)
         height, width, _ = screenshotRead.shape
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
 
-        radMin = int((width / 4.7 - 2) / 2)
-        radMax = int((width / 4.7 + 2) / 2)
-        log.debug("readCirclesOfRaids: Detect radius of circles: Min " + str(radMin) + " Max " + str(radMax))
+        radMin = int((width / ratio - 2) / 2)
+        radMax = int((width / ratio + 2) / 2)
+        log.debug("__readCircleCount: Detect radius of circle: Min " + str(radMin) + " Max " + str(radMax))
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,1,width / 8,param1=100,param2=15,minRadius=radMin,maxRadius=radMax)
         circle = 0
         # ensure at least some circles were found
@@ -160,13 +94,31 @@ class PogoWindows:
             for (x, y, r) in circles:
                 circle += 1
 
-            log.debug("readCirclesOfRaids: Determined screenshot to have " + str(circle) + " raids.")
-            if circle > 6:
-                circle = 6
+            log.debug("__readCircleCount: Determined screenshot to have " + str(circle) + " Circle.")
             return circle
         else:
-            log.debug("readCirclesOfRaids: Determined screenshot to have 0 Raids - Bug")
+            log.debug("__readCircleCount: Determined screenshot to have 0 Circle")
             return -1
+        
+    
+
+    def readRaidCircles(self, filename, hash):
+        log.debug("readCircles: Reading circles")
+        if not self.readAmountOfRaidsCircle(filename, hash):
+            return 0
+            
+        circle = self.__readCircleCount(filename, hash, 4.7)
+        
+        if circle > 6:
+            circle = 6
+        
+        if circle > 0:
+            log.debug("readCircles: Determined screenshot to have " + str(circle) + " Circle.")
+            return circle
+        
+        log.debug("readCircles: Determined screenshot to have 0 Circle")    
+        return -1
+
 
     def __lookForButton(self, filename, ratio):
         log.debug("lookForButton: Reading lines")
@@ -174,9 +126,9 @@ class PogoWindows:
         gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
-        maxLineLength = width / ratio
+        maxLineLength = width / ratio + 10
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 10
+        minLineLength = width / ratio - 30
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
         maxLineGap = 10
         lineCount = 0
@@ -185,9 +137,9 @@ class PogoWindows:
             for x1,y1,x2,y2 in line:
                 if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and y1 > height/2:
                     lineCount += 1
-                    log.debug("lookForButton: Found Button line Nr. " + str(lineCount) + "- Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
+                    log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
         
-        if lineCount == 2:
+        if lineCount >= 1:
             log.debug("lookForButton: Button found")
             return True
                        
@@ -217,182 +169,31 @@ class PogoWindows:
     def readAmountOfRaidsCircle(self, filename, hash):
         if not os.path.isfile(filename):
             return None
+            
+        log.debug("readAmountOfRaidsCircle: Cropping circle")
 
-        log.debug("readAmountOfRaidsCircle: Cropping circle (orange)")
-        screenshotRead = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getRaidcountBounds()
-        log.debug("readAmountOfRaidsDirect: bounds are %s" % str(bounds))
-        raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
-        raidCount = cv2.resize(raidCount, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.jpg"
-        cv2.imwrite(tempPathColoured, raidCount)
-
-        raidCountColoured = Image.open(tempPathColoured)
-        width, height = raidCountColoured.size
-
-        #check for most present colours... if there's no orange, we can stop immediately
-        mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
-        log.debug('readAmountOfRaidsCircle: most present colour is %s' % str(mostPresentColour))
-        if (mostPresentColour != (255, 120, 55)
-            and mostPresentColour != (255, 123, 49)):
-            log.info("readAmountOfRaidsCircle: No raidcount found, assuming no raids nearby")
-            #cv2.imwrite(str(hash) + "_derp.jpg", raidCount)
-            return False
-        return True
-
-    def readAmountOfRaidsDirect(self, filename, hash):
-        if not os.path.isfile(filename):
-            return None
-
-        log.debug("readAmountOfRaidsDirect: Cropping circle (orange)")
-        screenshotRead = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getRaidcountBounds()
-        log.debug("readAmountOfRaidsDirect: bounds are %s" % str(bounds))
-        raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
-        raidCount = cv2.resize(raidCount, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.jpg"
-        cv2.imwrite(tempPathColoured, raidCount)
-
-        raidCountColoured = Image.open(tempPathColoured)
-        width, height = raidCountColoured.size
-
-        #check for most present colours... if there's no orange, we can stop immediately
-        mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
-        log.debug('readAmountOfRaidsDirect: most present colour is %s' % str(mostPresentColour))
-        if (mostPresentColour != (255, 120, 55)
-            and mostPresentColour != (255, 123, 49)):
-            log.info("readAmountOfRaidsDirect: No raidcount found, assuming no raids nearby")
-            #cv2.imwrite(str(hash) + "_derp.jpg", raidCount)
-            return 0
-
-        tempPath = self.tempDirPath + "/" + str(hash) + "_raidintersect.jpg"
-        #at least one raid, let's start evaluating positions and pixels, yay
-        #first check for 2 raids, those are shifted.
-        #simply check intersection of firstCheckHorizontal with first vertical of One raid
-        #left, middle, right intersecting the checkHorizontal
-        #checkHorizontal is a line crossing the orange circle...
-
-        #calculate height of bounds in px
-        #TODO: move this all to res calc?
-        firstCheckHorizontal = self.resolutionCalculator.getFirstHorizontalPxPosition()
-
-        twoRaidVerticalCheck = self.resolutionCalculator.getRaidBoundsSingle().left
-        areaToCheck = screenshotRead[firstCheckHorizontal - 3 : firstCheckHorizontal + 3,
-            twoRaidVerticalCheck - 3 : twoRaidVerticalCheck + 3]
-
-        if self.__checkListOfCropOrangeCircle(areaToCheck.tolist()):
-            log.debug("Determined screenshot to have 2 raids.")
-            return 2
-
-        boundsOne = self.resolutionCalculator.getRaidBoundsTwo(1)
-        boundsTwo = self.resolutionCalculator.getRaidBoundsTwo(2)
-        verticalChecks = [boundsOne.left, boundsOne.right, boundsTwo.right]
-        secondCheckHorizontal = self.resolutionCalculator.getSecondHorizontalPxPosition()
-
-        countOfRaids = 0
-        for verticalCheck in verticalChecks:
-            #first row
-            posToCheck = screenshotRead[firstCheckHorizontal - 3 : firstCheckHorizontal + 3,
-                verticalCheck - 3 : verticalCheck + 3]
-            if self.__checkListOfCropOrangeCircle(posToCheck.tolist()):
-                countOfRaids += 1
-            #second row
-            posToCheckTwo = screenshotRead[secondCheckHorizontal - 3 : secondCheckHorizontal + 3,
-                verticalCheck - 3 : verticalCheck + 3]
-            if self.__checkListOfCropOrangeCircle(posToCheckTwo.tolist()):
-                countOfRaids += 1
-
-        if countOfRaids == 0:
-            return -1 #raidcounter present but no raidcounts below, definitely a bug
+        if self.__readCircleCount(filename, hash, 18.95) > 0:
+            log.info("readAmountOfRaidsCircle: Raidcircle found, assuming raids nearby")
+            return True
         else:
-            return countOfRaids
-
-    def readAmountOfRaids(self, filename, hash):
-        if not os.path.isfile(filename):
-            return None
-
-        log.debug("readAmountOfRaids: Cropping the number inside the circle showing raidcount")
-        screenshotRead = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getRaidcountBounds()
-        log.debug("readAmountOfRaids: bounds are %s" % str(bounds))
-        raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
-        raidCount = cv2.resize(raidCount, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.jpg"
-        cv2.imwrite(tempPathColoured, raidCount)
-
-        raidCountColoured = Image.open(tempPathColoured)
-        width, height = raidCountColoured.size
-
-        #check for most present colours... if there's no orange, we can stop immediately
-        mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
-        log.debug('readAmountOfRaidsDirect: most present colour is %s' % str(mostPresentColour))
-        if (mostPresentColour != (255, 120, 55)
-            and mostPresentColour != (255, 123, 49)):
-            log.info("readAmountOfRaids: No raidcount found, assuming no raids nearby")
-            #cv2.imwrite(str(hash) + "_derp.jpg", raidCount)
-            return 0
-
-        tempPathBw = self.tempDirPath + "/" + str(hash) + "_raidcount_bw.jpg"
-        gray = raidCountColoured.convert('L')
-        bw = gray.point(lambda x: 0 if x<200 else 255, '1')
-        bw.save(tempPathBw)
-        text = image_to_string(Image.open(tempPathBw),config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','').replace('.','').replace(',','').replace('‘','')
-
-        count = None
-        try:
-            count = int(text)
-        except ValueError:
-            #Handle exception when tesseract read bullshit...
-            log.info("readAmountOfRaids: could not read a number... " +
-                "Text read: %s. Fallback to 6" % text)
-            return 6 #we do read 1 and 2 pretty good... 3 gives us trouble, just assume 6 to be good to go
-
-        log.debug("readAmountOfRaids: read raidcount of %s" % str(count))
-
-        return count
+            log.info("readAmountOfRaidsCircle: No raidcircle found, assuming no raids nearby")
+            return False
 
 
     def checkPostLoginNewsMessage(self, filename, hash):
         if not os.path.isfile(filename):
             return False
+            
 
         log.debug('checkPostLoginNewsMessage: Checking for small news popup ...')
-        col = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getPostLoginNewsMessageBounds()
-        log.debug('checkPostLoginNewsMessage: bounds are %s' % str(bounds))
-        raidtimer = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_message.jpg"
-        cv2.imwrite(tempPathColoured, raidtimer)
-
-
-        col = Image.open(tempPathColoured)
-        width, height = col.size
-
-        #check for the colour of the button that says "show all"
-        if (self.__mostPresentColour(tempPathColoured, width * height) != (241, 255, 237)):
-            return False
-
-
-        gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg")
-
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg"),config='--psm 7')
-
-        #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_message.jpg")
-
-        log.debug("checkPostLoginNewsMessage: found the following text: %s " % text)
-        if len(text) > 1:
-            log.debug('checkPostLoginNewsMessage: found popup - closing ...')
-            self.screenWrapper.backButton()
-            #os.remove(filename)
-            return True
-        else:
+        
+        if not self.__lookForButton(filename, 3.01):
             log.debug('checkPostLoginNewsMessage: no popup found')
             return False
-
+        else:
+            log.debug('checkPostLoginNewsMessage: found popup - closing ...')
+            self.screenWrapper.backButton()
+            return True
 
     def __checkRaidTabOnScreen(self, filename, hash):
         if not os.path.isfile(filename):
@@ -432,6 +233,7 @@ class PogoWindows:
                 log.debug('checkRaidscreen: RAID-tab not activated')
                 pos = self.resolutionCalculator.getNearbyRaidTabClick()
                 self.screenWrapper.click(pos.x, pos.y)
+                time.sleep(1)
                 log.debug('checkRaidscreen: RAID-tab clicked')
                 return True
             return True
@@ -456,134 +258,43 @@ class PogoWindows:
     def checkGameQuitPopup(self, filename, hash):
         if not os.path.isfile(filename):
             return False
-
-        log.debug('checkGameQuitPopup: Checking for quit-game popup ...')
-        col = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getQuitGamePopupBounds()
-        quitGameCrop = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = 'temp/' + str(hash) + '_quitbutton.jpg'
-        cv2.imwrite(tempPath, quitGameCrop)
-
-        col = Image.open(tempPath)
-        width, height = col.size
-
-        mostPresentColour = self.__mostPresentColour(tempPath, width * height)
-        log.debug('checkGameQuitPopup: most present colour is %s' % str(mostPresentColour))
-        #just gonna check the most occuring colours on that button...
-        if (mostPresentColour != (255, 255, 255)):
+        
+        log.debug('checkGameQuitPopup: Checking for quit-game popup ...')    
+        
+        if not self.__lookForButton(filename, 2.20):
+            log.debug('checkGameQuitPopup: Could not find quit popup')
             return False
-
-        gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.jpg")
-
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.jpg"),config='-c tessedit_char_whitelist=X -psm 7')
-
-        #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.jpg")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_quitbutton.jpg")
-
-        log.debug("checkGameQuitPopup: Found text: %s " % text)
-        if len(text) > 1:
+        else:
             log.info('checkGameQuitPopup: Found quit popup - aborting quit ...')
             self.screenWrapper.backButton()
             return True
-        else:
-            log.debug('checkGameQuitPopup: Could not find quit popup')
-            return False
 
     def checkSpeedwarning(self, filename, hash):
         if not os.path.isfile(filename):
             return False
 
         log.debug('checkSpeedwarning: Checking for speed-warning ...')
-        col = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getSpeedwarningBounds()
-        log.debug('checkSpeedwarning: got bounds %s' % str(bounds))
-        cropOfSpeedwarning = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = self.tempDirPath + "/" + str(hash) + "_speedmessage.jpg"
-        cv2.imwrite(tempPath, cropOfSpeedwarning)
-
-        col = Image.open(tempPath)
-        width, height = col.size
-
-        mostPresentColour = self.__mostPresentColour(tempPath, width * height)
-        log.debug('checkSpeedwarning: most present colour is %s' % str(mostPresentColour))
-        #just gonna check the most occuring colours on that button...
-        if (mostPresentColour != (144, 217, 152)
-            and mostPresentColour != (146, 217, 152)
-            and mostPresentColour != (152, 218, 151)
-            and mostPresentColour != (153, 218, 151)
-            and mostPresentColour != (151, 218, 151)
-            and mostPresentColour != (77, 209, 163)
-            and mostPresentColour != (255, 255, 255)
-            and mostPresentColour != (123, 214, 155)
-            and mostPresentColour != (123, 215, 155)):
+        
+        if not self.__lookForButton(filename, 1.60):
+            log.debug('checkSpeedwarning: No speedmessage found')
             return False
-
-        gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.jpg")
-
-        passengerString = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.jpg"),config='-psm 7')
-
-        #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.jpg")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_speedmessage.jpg")
-
-        log.debug("checkSpeedwarning: Found text: %s " % passengerString)
-        if len(passengerString) > 4:
+        else:
             log.debug('checkSpeedwarning: Found Speedmessage - closing ...')
             posPassenger = self.resolutionCalculator.getSpeedwarningClick()
             log.debug("checkSpeedwarning: Clicking %s" % str(posPassenger))
             self.screenWrapper.click(posPassenger.x, posPassenger.y)
             return True
-        else:
-            log.debug('checkSpeedwarning: No speedmessage found')
-            return False
 
     def checkWeatherWarning(self, filename, hash):
         if not os.path.isfile(filename):
             return False
 
-        log.debug('checkWeatherwarning: Checking for weather-warning ...')
-        col = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getWeatherWarningBounds()
-        log.debug('checkWeatherwarning: got bounds %s' % str(bounds))
-        cropOfWeatherwarning = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = self.tempDirPath + "/" + str(hash) + "_weatherwarning.jpg"
-        cv2.imwrite(tempPath, cropOfWeatherwarning)
-
-        col = Image.open(tempPath)
-        width, height = col.size
-
-        mostPresentColour = self.__mostPresentColour(tempPath, width * height)
-        log.debug('checkWeatherwarning: most present colour is %s' % str(mostPresentColour))
-        #just gonna check the most occuring colours on that button...
-        if (mostPresentColour != (144, 217, 152)
-            and mostPresentColour != (146, 217, 152)
-            and mostPresentColour != (145, 217, 152)
-            and mostPresentColour != (152, 218, 151)
-            and mostPresentColour != (153, 218, 151)
-            and mostPresentColour != (151, 218, 151)
-            and mostPresentColour != (77, 209, 163)
-            and mostPresentColour != (255, 255, 255)
-            and mostPresentColour != (228, 255, 222)
-            and mostPresentColour != (84, 210, 162)):
+        log.debug('checkWeatherwarning: Checking for weatherwarning ...')
+        
+        if not self.__lookForButton(filename, 1.05):
+            log.debug('checkWeatherwarning: No weatherwarning found')
             return False
-
-        gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_weatherwarning_bw.jpg")
-
-        passengerString = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_weatherwarning_bw.jpg"),config='-psm 7')
-
-        #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_weatherwarning_bw.jpg")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_weatherwarning.jpg")
-
-        log.debug("checkWeatherwarning: Found text: %s " % passengerString)
-        if len(passengerString) > 4:
+        else:
             log.debug('checkWeatherwarning: Found weather warning - closing ...')
             posPassenger = self.resolutionCalculator.getWeatherWarningFirstClick()
             log.debug("checkWeatherwarning: Clicking %s" % str(posPassenger))
@@ -594,10 +305,6 @@ class PogoWindows:
             log.debug("checkWeatherwarning: Clicking %s" % str(posPassenger))
             self.screenWrapper.click(posPassenger.x, posPassenger.y)
             return True
-        else:
-            log.debug('checkWeatherwarning: No weatherwarning found')
-            return False
-
 
     def __checkClosePresent(self, filename, hash, windowsToCheck):
         if not os.path.isfile(filename):

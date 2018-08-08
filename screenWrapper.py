@@ -14,7 +14,8 @@ class ScreenWrapper:
             return
         else:
             #go for VNC. TODO: extend with combination of VNC and RGC
-            self.vncWrapper = VncWrapper(str(vncIp,), vncScreen, vncPort, vncPassword)
+            print(str(vncIp), vncScreen, vncPort, vncPassword)
+            self.vncWrapper = VncWrapper(str(vncIp), vncScreen, vncPort, vncPassword)
 
     def getScreenshot(self, path):
         if self.method == 0:

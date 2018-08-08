@@ -88,7 +88,8 @@ if not args.only_ocr:
     print("Starting Telnet MORE Client")
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
     log.info("Starting ScreenWrapper")
-    screenWrapper = ScreenWrapper(args.screen_method, telnMore, str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password)
+    screenWrapper = ScreenWrapper(args.screen_method, telnMore, str(args.vnc_ip), args.vnc_port, args.vnc_password, args.vncscreen)
+
     log.info("Starting pogo window manager")
     pogoWindowManager = PogoWindows(screenWrapper, args.screen_width, args.screen_height, args.temp_path)
 
@@ -530,14 +531,14 @@ def main_thread():
             dbWrapper.setScannedLocation(str(curLat), str(curLng), str(curTime))
 
             log.info("Checking raidcount and copying raidscreen if raids present")
-            countOfRaids = pogoWindowManager.readCirclesOfRaids('screenshot.png', 123)
+            countOfRaids = pogoWindowManager.readRaidCircles('screenshot.png', 123)
 
             if countOfRaids == -1:
                 #reopen raidtab and take screenshot...
                 log.warning("Count present but no raid shown, reopening raidTab")
                 reopenRaidTab()
                 screenWrapper.getScreenshot('screenshot.png')
-                countOfRaids = pogoWindowManager.readCirclesOfRaids('screenshot.png', 123)
+                countOfRaids = pogoWindowManager.readRaidCircles('screenshot.png', 123)
 
             log.debug("countOfRaids: %s" % str(countOfRaids))
             if countOfRaids > 0:
