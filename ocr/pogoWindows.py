@@ -11,7 +11,7 @@ from resolutionCalculator import *
 import os.path
 import sys
 sys.path.insert(0, '../')
-from vnc.vncWrapper import VncWrapper
+from screenWrapper import ScreenWrapper
 import collections
 import re
 import time
@@ -28,8 +28,8 @@ log = logging.getLogger(__name__)
 
 
 class PogoWindows:
-    def __init__(self, vncIp, vncScreen, vncPort, vncPassword, width, height, tempDirPath):
-        self.vncWrapper = VncWrapper(str(vncIp), vncScreen, vncPort, vncPassword)
+    def __init__(self, screenWrapper, width, height, tempDirPath):
+        self.screenWrapper = screenWrapper
         self.resolutionCalculator = ResolutionCalc(width, height)
         if not os.path.exists(tempDirPath):
             os.makedirs(tempDirPath)
@@ -64,7 +64,7 @@ class PogoWindows:
         okFont = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
         log.debug('checkPostLoginOkButton: bounds of okFont: %s' % str(bounds))
 
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_login.png"
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_login.jpg"
         cv2.imwrite(tempPathColoured, okFont)
 
         col = Image.open(tempPathColoured)
@@ -72,7 +72,7 @@ class PogoWindows:
 
         #check for the colour of the button that says "show all"
         mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
-        log.debug('checkSpeedwarning: most present colour is %s' % str(mostPresentColour))
+        log.debug('checkPostLoginOkButton: most present colour is %s' % str(mostPresentColour))
         #just gonna check the most occuring colours on that button...
         if (mostPresentColour != (144, 217, 152)
             and mostPresentColour != (145, 217, 152)
@@ -81,17 +81,19 @@ class PogoWindows:
             and mostPresentColour != (153, 218, 151)
             and mostPresentColour != (151, 218, 151)
             and mostPresentColour != (77, 209, 163)
-            and mostPresentColour != (255, 255, 255)):
+            and mostPresentColour != (255, 255, 255)
+            and mostPresentColour != (136, 216, 153)
+            and mostPresentColour != (136, 215, 153)):
             return False
 
         gray = col.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.png")
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.png"),config='--oem 3 --psm 7')
+        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.jpg")
+        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.jpg"),config='--oem 3 --psm 7')
 
         #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_login.png")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.png")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_login.jpg")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.jpg")
 
         log.debug("checkPostLoginOkButton: Checking for post-login OK button found: %s" % text)
         #if 'O. K.' in text:
@@ -102,7 +104,7 @@ class PogoWindows:
                 pos = self.resolutionCalculator.getPostLoginOkDrivingClick()
             else:
                 pos = self.resolutionCalculator.getPostLoginOkPrivatePropertyClick()
-            self.vncWrapper.clickVnc(pos.x, pos.y)
+            self.screenWrapper.click(pos.x, pos.y)
             return True
         else:
             log.debug('checkPostLoginOkButton: Could not find OK button')
@@ -127,17 +129,17 @@ class PogoWindows:
             return True
         else:
             return False
-            
+
     def readCirclesOfRaids(self, filename, hash):
         log.debug("readCirclesOfRaids: Reading circles")
         if not self.readAmountOfRaidsCircle(filename, hash):
             return 0
-            
+
         screenshotRead = cv2.imread(filename)
         height, width, _ = screenshotRead.shape
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
-        
+
         radMin = int((width / 4.7 - 2) / 2)
         radMax = int((width / 4.7 + 2) / 2)
         log.debug("readCirclesOfRaids: Detect radius of circles: Min " + str(radMin) + " Max " + str(radMax))
@@ -150,15 +152,15 @@ class PogoWindows:
             # loop over the (x, y) coordinates and radius of the circles
             for (x, y, r) in circles:
                 circle += 1
-            
+
             log.debug("readCirclesOfRaids: Determined screenshot to have " + str(circle) + " raids.")
             if circle > 6:
                 circle = 6
-            return circle  
+            return circle
         else:
             log.debug("readCirclesOfRaids: Determined screenshot to have 0 Raids - Bug")
-            return -1 
-            
+            return -1
+
     def __checkRaidLine(self, filename, hash):
         log.debug("checkRaidLine: Reading lines")
         screenshotRead = cv2.imread(filename)
@@ -177,8 +179,8 @@ class PogoWindows:
                     log.debug("checkRaidLine: Raid-tab is active - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
                     return True
         log.debug("checkRaidLine: Raid-tab is not active")
-        return False  
-        
+        return False
+
     def readAmountOfRaidsCircle(self, filename, hash):
         if not os.path.isfile(filename):
             return None
@@ -189,7 +191,7 @@ class PogoWindows:
         log.debug("readAmountOfRaidsDirect: bounds are %s" % str(bounds))
         raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
         raidCount = cv2.resize(raidCount, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.png"
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.jpg"
         cv2.imwrite(tempPathColoured, raidCount)
 
         raidCountColoured = Image.open(tempPathColoured)
@@ -201,9 +203,9 @@ class PogoWindows:
         if (mostPresentColour != (255, 120, 55)
             and mostPresentColour != (255, 123, 49)):
             log.info("readAmountOfRaidsCircle: No raidcount found, assuming no raids nearby")
-            #cv2.imwrite(str(hash) + "_derp.png", raidCount)
+            #cv2.imwrite(str(hash) + "_derp.jpg", raidCount)
             return False
-        return True   
+        return True
 
     def readAmountOfRaidsDirect(self, filename, hash):
         if not os.path.isfile(filename):
@@ -215,7 +217,7 @@ class PogoWindows:
         log.debug("readAmountOfRaidsDirect: bounds are %s" % str(bounds))
         raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
         raidCount = cv2.resize(raidCount, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.png"
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.jpg"
         cv2.imwrite(tempPathColoured, raidCount)
 
         raidCountColoured = Image.open(tempPathColoured)
@@ -227,10 +229,10 @@ class PogoWindows:
         if (mostPresentColour != (255, 120, 55)
             and mostPresentColour != (255, 123, 49)):
             log.info("readAmountOfRaidsDirect: No raidcount found, assuming no raids nearby")
-            #cv2.imwrite(str(hash) + "_derp.png", raidCount)
+            #cv2.imwrite(str(hash) + "_derp.jpg", raidCount)
             return 0
 
-        tempPath = self.tempDirPath + "/" + str(hash) + "_raidintersect.png"
+        tempPath = self.tempDirPath + "/" + str(hash) + "_raidintersect.jpg"
         #at least one raid, let's start evaluating positions and pixels, yay
         #first check for 2 raids, those are shifted.
         #simply check intersection of firstCheckHorizontal with first vertical of One raid
@@ -282,7 +284,7 @@ class PogoWindows:
         log.debug("readAmountOfRaids: bounds are %s" % str(bounds))
         raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
         raidCount = cv2.resize(raidCount, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.png"
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.jpg"
         cv2.imwrite(tempPathColoured, raidCount)
 
         raidCountColoured = Image.open(tempPathColoured)
@@ -294,10 +296,10 @@ class PogoWindows:
         if (mostPresentColour != (255, 120, 55)
             and mostPresentColour != (255, 123, 49)):
             log.info("readAmountOfRaids: No raidcount found, assuming no raids nearby")
-            #cv2.imwrite(str(hash) + "_derp.png", raidCount)
+            #cv2.imwrite(str(hash) + "_derp.jpg", raidCount)
             return 0
 
-        tempPathBw = self.tempDirPath + "/" + str(hash) + "_raidcount_bw.png"
+        tempPathBw = self.tempDirPath + "/" + str(hash) + "_raidcount_bw.jpg"
         gray = raidCountColoured.convert('L')
         bw = gray.point(lambda x: 0 if x<200 else 255, '1')
         bw.save(tempPathBw)
@@ -326,7 +328,7 @@ class PogoWindows:
         bounds = self.resolutionCalculator.getPostLoginNewsMessageBounds()
         log.debug('checkPostLoginNewsMessage: bounds are %s' % str(bounds))
         raidtimer = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_message.png"
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_message.jpg"
         cv2.imwrite(tempPathColoured, raidtimer)
 
 
@@ -340,18 +342,18 @@ class PogoWindows:
 
         gray = col.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png")
+        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg")
 
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png"),config='--psm 7')
+        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg"),config='--psm 7')
 
         #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_message.png")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_message.jpg")
 
         log.debug("checkPostLoginNewsMessage: found the following text: %s " % text)
         if len(text) > 1:
             log.debug('checkPostLoginNewsMessage: found popup - closing ...')
-            self.vncWrapper.rightClickVnc()
+            self.screenWrapper.backButton()
             #os.remove(filename)
             return True
         else:
@@ -368,17 +370,17 @@ class PogoWindows:
         bounds = self.resolutionCalculator.getNearbyRaidTabBounds()
         log.debug("__checkRaidTabOnScreen: Bounds %s" % str(bounds))
         raidtimer = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_message.png", raidtimer)
-        col = Image.open(self.tempDirPath + "/" + str(hash) + "_message.png")
+        cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_message.jpg", raidtimer)
+        col = Image.open(self.tempDirPath + "/" + str(hash) + "_message.jpg")
         gray = col.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png")
+        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg")
 
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png"), config='-c tessedit_char_whitelist=RAID -psm 7')
+        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg"), config='-c tessedit_char_whitelist=RAID -psm 7')
         log.debug("__checkRaidTabOnScreen: Check for raidtab present resulted in text: %s" % text)
 
-        os.remove('temp/' + str(hash) + '_cropped_message_bw.png')
-        os.remove('temp/' + str(hash) + '_message.png')
+        os.remove('temp/' + str(hash) + '_cropped_message_bw.jpg')
+        os.remove('temp/' + str(hash) + '_message.jpg')
         if 'RAID' in text:
             log.debug("__checkRaidTabOnScreen: Found raidtab")
             return True
@@ -396,7 +398,7 @@ class PogoWindows:
                 #RAID Tab not active
                 log.debug('checkRaidscreen: RAID-tab not activated')
                 pos = self.resolutionCalculator.getNearbyRaidTabClick()
-                self.vncWrapper.clickVnc(pos.x, pos.y)
+                self.screenWrapper.click(pos.x, pos.y)
                 log.debug('checkRaidscreen: RAID-tab clicked')
                 return True
             return True
@@ -409,10 +411,10 @@ class PogoWindows:
             #RAID Tab not visible => not on Nearby screen
             log.info('Raidscreen not running...')
             posNearby = self.resolutionCalculator.getNearbyClick()
-            self.vncWrapper.clickVnc(posNearby.x, posNearby.y)
+            self.screenWrapper.click(posNearby.x, posNearby.y)
             time.sleep(1)
             posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
-            self.vncWrapper.clickVnc(posRaids.x, posRaids.y)
+            self.screenWrapper.click(posRaids.x, posRaids.y)
             return False
         else:
             log.info('Nearby already open')
@@ -426,7 +428,7 @@ class PogoWindows:
         col = cv2.imread(filename)
         bounds = self.resolutionCalculator.getQuitGamePopupBounds()
         quitGameCrop = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = 'temp/' + str(hash) + '_quitbutton.png'
+        tempPath = 'temp/' + str(hash) + '_quitbutton.jpg'
         cv2.imwrite(tempPath, quitGameCrop)
 
         col = Image.open(tempPath)
@@ -440,18 +442,18 @@ class PogoWindows:
 
         gray = col.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.png")
+        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.jpg")
 
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.png"),config='-c tessedit_char_whitelist=X -psm 7')
+        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.jpg"),config='-c tessedit_char_whitelist=X -psm 7')
 
         #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.png")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_quitbutton.png")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.jpg")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_quitbutton.jpg")
 
         log.debug("checkGameQuitPopup: Found text: %s " % text)
         if len(text) > 1:
             log.info('checkGameQuitPopup: Found quit popup - aborting quit ...')
-            self.vncWrapper.rightClickVnc()
+            self.screenWrapper.backButton()
             return True
         else:
             log.debug('checkGameQuitPopup: Could not find quit popup')
@@ -466,7 +468,7 @@ class PogoWindows:
         bounds = self.resolutionCalculator.getSpeedwarningBounds()
         log.debug('checkSpeedwarning: got bounds %s' % str(bounds))
         cropOfSpeedwarning = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = self.tempDirPath + "/" + str(hash) + "_speedmessage.png"
+        tempPath = self.tempDirPath + "/" + str(hash) + "_speedmessage.jpg"
         cv2.imwrite(tempPath, cropOfSpeedwarning)
 
         col = Image.open(tempPath)
@@ -481,25 +483,27 @@ class PogoWindows:
             and mostPresentColour != (153, 218, 151)
             and mostPresentColour != (151, 218, 151)
             and mostPresentColour != (77, 209, 163)
-            and mostPresentColour != (255, 255, 255)):
+            and mostPresentColour != (255, 255, 255)
+            and mostPresentColour != (123, 214, 155)
+            and mostPresentColour != (123, 215, 155)):
             return False
 
         gray = col.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.png")
+        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.jpg")
 
-        passengerString = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.png"),config='-psm 7')
+        passengerString = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.jpg"),config='-psm 7')
 
         #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.png")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_speedmessage.png")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.jpg")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_speedmessage.jpg")
 
         log.debug("checkSpeedwarning: Found text: %s " % passengerString)
         if len(passengerString) > 4:
             log.debug('checkSpeedwarning: Found Speedmessage - closing ...')
             posPassenger = self.resolutionCalculator.getSpeedwarningClick()
             log.debug("checkSpeedwarning: Clicking %s" % str(posPassenger))
-            self.vncWrapper.clickVnc(posPassenger.x, posPassenger.y)
+            self.screenWrapper.click(posPassenger.x, posPassenger.y)
             return True
         else:
             log.debug('checkSpeedwarning: No speedmessage found')
@@ -514,7 +518,7 @@ class PogoWindows:
         bounds = self.resolutionCalculator.getWeatherWarningBounds()
         log.debug('checkWeatherwarning: got bounds %s' % str(bounds))
         cropOfWeatherwarning = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = self.tempDirPath + "/" + str(hash) + "_weatherwarning.png"
+        tempPath = self.tempDirPath + "/" + str(hash) + "_weatherwarning.jpg"
         cv2.imwrite(tempPath, cropOfWeatherwarning)
 
         col = Image.open(tempPath)
@@ -531,30 +535,31 @@ class PogoWindows:
             and mostPresentColour != (151, 218, 151)
             and mostPresentColour != (77, 209, 163)
             and mostPresentColour != (255, 255, 255)
-            and mostPresentColour != (228, 255, 222)):
+            and mostPresentColour != (228, 255, 222)
+            and mostPresentColour != (84, 210, 162)):
             return False
 
         gray = col.convert('L')
         bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_weatherwarning_bw.png")
+        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_weatherwarning_bw.jpg")
 
-        passengerString = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_weatherwarning_bw.png"),config='-psm 7')
+        passengerString = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_weatherwarning_bw.jpg"),config='-psm 7')
 
         #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_weatherwarning_bw.png")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_weatherwarning.png")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_weatherwarning_bw.jpg")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_weatherwarning.jpg")
 
         log.debug("checkWeatherwarning: Found text: %s " % passengerString)
         if len(passengerString) > 4:
             log.debug('checkWeatherwarning: Found weather warning - closing ...')
             posPassenger = self.resolutionCalculator.getWeatherWarningFirstClick()
             log.debug("checkWeatherwarning: Clicking %s" % str(posPassenger))
-            self.vncWrapper.clickVnc(posPassenger.x, posPassenger.y)
+            self.screenWrapper.click(posPassenger.x, posPassenger.y)
             time.sleep(1)
             log.debug('checkWeatherwarning: Also closing the weather info ...')
             posPassenger = self.resolutionCalculator.getWeatherWarningSecondClick()
             log.debug("checkWeatherwarning: Clicking %s" % str(posPassenger))
-            self.vncWrapper.clickVnc(posPassenger.x, posPassenger.y)
+            self.screenWrapper.click(posPassenger.x, posPassenger.y)
             return True
         else:
             log.debug('checkWeatherwarning: No weatherwarning found')
@@ -576,7 +581,7 @@ class PogoWindows:
 
         log.debug('__checkClosePresent: checking bounds %s' % str(bounds))
         closeButton = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = self.tempDirPath + "/" + str(hash) + "_xbutton.png"
+        tempPath = self.tempDirPath + "/" + str(hash) + "_xbutton.jpg"
         log.debug("TempPath: %s" % tempPath)
         cv2.imwrite(tempPath, closeButton)
 
@@ -585,7 +590,7 @@ class PogoWindows:
 
         mostPresentColour = self.__mostPresentColour(tempPath, width * height)
 
-        os.remove(self.tempDirPath + "/" + str(hash) + "_xbutton.png")
+        os.remove(self.tempDirPath + "/" + str(hash) + "_xbutton.jpg")
         return ((mostPresentColour == (28, 135, 150))
             or (mostPresentColour == (236, 252, 235)))
 
@@ -610,7 +615,7 @@ class PogoWindows:
         if (self.isOtherCloseButtonPresent(filename, hash)):
             #X button found and not on nearby (we checked that earlier)
             log.debug("Found close button (X). Closing the window")
-            self.vncWrapper.rightClickVnc()
+            self.screenWrapper.backButton()
             return True
         else:
             log.debug("Could not find close button (X).")

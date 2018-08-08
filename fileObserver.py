@@ -65,7 +65,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         captureLat = (raidcount.group(2))
         captureLng = (raidcount.group(3))
         amountOfRaids = int(raidcount.group(4))
-        
+
         log.debug("Capture time %s of new file" % str(captureTime))
         log.debug("Read a lat of %s in new file" % str(captureLat))
         log.debug("Read a lng of %s in new file" % str(captureLng))

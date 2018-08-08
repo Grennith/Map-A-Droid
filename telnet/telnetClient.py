@@ -50,19 +50,22 @@ class TelnetClient:
         #TODO: handle socketError
         return self.__sock.recv(1024)
 
-    def getScreenshot(self):
+    def getScreenshot(self, path):
         self.__sock.send("screen capture\r\n")
         start = time.time()
-        chars = self.__sock.recv(4096)
-        countOfChars = int(chars)
-        #print(countOfChars)
-        img_data = ""
-        while len(img_data) < countOfChars:
-            img_data += self.__sock.recv(4096)
-
-        fh = open("screenshot.jpg", "wb")
+        try:
+            chars = self.__sock.recv(4096)
+            countOfChars = int(chars)
+            #print(countOfChars)
+            img_data = ""
+            while len(img_data) < countOfChars:
+                img_data += self.__sock.recv(4096)
+        except:
+            return False
+        fh = open(path, "wb")
         fh.write(img_data.decode('base64'))
         fh.close()
+        return True
         #print time.time() - start
 
     def __sendCommandRecursive(self, command, again):
@@ -73,12 +76,17 @@ class TelnetClient:
             and not again):
             #handle missing auth
             log.debug('__sendCommandRecursive: Auth required')
-            self.__auth();
-            self.__sendCommandRecursive(command, True);
+            self.authenticated = self.__auth();
+            return self.__sendCommandRecursive(command, True);
+        elif ("KO: password required. Use 'password' or 'auth'" in x
+            and again):
+            log.debug("__sendCommandRecursive: Failed to auth...")
+            self.authenticated = False
+            return (x, False)
         else:
             log.debug('__sendCommandRecursive: Sent command successfully')
-            self.authenticated = False
-            return (True, x)
+            self.authenticated = True
+            return (x, True)
 
     #just a function to make the function call look better
     def sendCommand(self, command):

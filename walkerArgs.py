@@ -30,6 +30,10 @@ def parseArgs():
     parser.add_argument('-cf', '--config',
             is_config_file=True, help='Set configuration file')
 
+    parser.add_argument('-sm', '--screen_method', required=True, default=1, type=int,
+            help=('Screen method to be used. 0 = RGC only, 1 = VNC only'))
+
+
     #VNC
     parser.add_argument('-vncip', '--vnc_ip', required=False,
             help=('IP Address of VNC Server on Device.'))
