@@ -71,7 +71,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #temp_path:                  # Path for generated files while detecting raids (default: temp/)
 #raidscreen_path:            # Path for taken screenshots (default: screenshots/)
 #unknown_path:               # Path for not automaticly detected gyms or mons (defaul: unknown/)
-#cleanup_age:                # Delete Screenshots older than X minutes. Default: 1440
+#cleanup_age:                # Delete Screenshots older than X minutes. Default: 1440 - 0 to disable
 
 # timezone settings
 ######################

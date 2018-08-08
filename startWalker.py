@@ -165,7 +165,9 @@ def main():
 
 def deleteOldScreens(folder, minutes):
     
-    
+    if minutes == "0":
+        log.info('deleteOldScreens: Search/Delete Screenshots is disabled')
+        return
 
     folder_path = folder
     file_ends_with = ".png"
