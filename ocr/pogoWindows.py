@@ -58,32 +58,39 @@ class PogoWindows:
         bounds = None
         if type == 'post_login_ok_driving':
             bounds = self.resolutionCalculator.getPostLoginOkDrivingBounds()
+            buttonExists = self.__lookForButton(filename, ratio)
         else:
             bounds = self.resolutionCalculator.getPostLoginOkPrivatePropertyBounds()
+            
+        buttonExists = self.__lookForButton(filename, 2.20)
 
-        okFont = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        log.debug('checkPostLoginOkButton: bounds of okFont: %s' % str(bounds))
+        #okFont = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
+        #log.debug('checkPostLoginOkButton: bounds of okFont: %s' % str(bounds))
 
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_login.jpg"
-        cv2.imwrite(tempPathColoured, okFont)
+        #tempPathColoured = self.tempDirPath + "/" + str(hash) + "_login.jpg"
+        #cv2.imwrite(tempPathColoured, okFont)
 
-        col = Image.open(tempPathColoured)
-        width, height = col.size
+        #col = Image.open(tempPathColoured)
+        #width, height = col.size
 
         #check for the colour of the button that says "show all"
-        mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
-        log.debug('checkPostLoginOkButton: most present colour is %s' % str(mostPresentColour))
+        #mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
+        #log.debug('checkPostLoginOkButton: most present colour is %s' % str(mostPresentColour))
         #just gonna check the most occuring colours on that button...
-        if (mostPresentColour != (144, 217, 152)
-            and mostPresentColour != (145, 217, 152)
-            and mostPresentColour != (146, 217, 152)
-            and mostPresentColour != (152, 218, 151)
-            and mostPresentColour != (153, 218, 151)
-            and mostPresentColour != (151, 218, 151)
-            and mostPresentColour != (77, 209, 163)
-            and mostPresentColour != (255, 255, 255)
-            and mostPresentColour != (136, 216, 153)
-            and mostPresentColour != (136, 215, 153)):
+        #if (mostPresentColour != (144, 217, 152)
+        #    and mostPresentColour != (145, 217, 152)
+        #    and mostPresentColour != (146, 217, 152)
+        #    and mostPresentColour != (152, 218, 151)
+        #    and mostPresentColour != (153, 218, 151)
+        #    and mostPresentColour != (151, 218, 151)
+        #    and mostPresentColour != (77, 209, 163)
+        #    and mostPresentColour != (255, 255, 255)
+        #    and mostPresentColour != (136, 216, 153)
+        #    and mostPresentColour != (136, 215, 153)):
+        #    return False
+        
+        if not buttonExists:
+            log.debug('checkPostLoginOkButton: No Button found')
             return False
 
         gray = col.convert('L')
@@ -160,6 +167,32 @@ class PogoWindows:
         else:
             log.debug("readCirclesOfRaids: Determined screenshot to have 0 Raids - Bug")
             return -1
+
+    def __lookForButton(self, filename, ratio):
+        log.debug("lookForButton: Reading lines")
+        screenshotRead = cv2.imread(filename)
+        gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
+        height, width, _ = screenshotRead.shape
+        edges = cv2.Canny(gray,100,200,apertureSize = 3)
+        maxLineLength = width / ratio
+        log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
+        minLineLength = width / ratio - 10
+        log.debug("lookForButton: MinLineLength:" + str(minLineLength))
+        maxLineGap = 10
+        lineCount = 0
+        lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
+        for line in lines:
+            for x1,y1,x2,y2 in line:
+                if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and y1 > height/2:
+                    lineCount += 1
+                    log.debug("lookForButton: Found Button line Nr. " + str(lineCount) + "- Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
+        
+        if lineCount == 2:
+            log.debug("lookForButton: Button found")
+            return True
+                       
+        log.debug("lookForButton: Button not found")
+        return False
 
     def __checkRaidLine(self, filename, hash):
         log.debug("checkRaidLine: Reading lines")
