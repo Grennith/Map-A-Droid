@@ -126,9 +126,9 @@ class PogoWindows:
         gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
-        maxLineLength = width / ratio + 10
+        maxLineLength = width / ratio + 10 #0
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 30
+        minLineLength = width / ratio - 30 #-10
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
         maxLineGap = 10
         lineCount = 0
