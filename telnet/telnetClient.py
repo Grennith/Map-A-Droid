@@ -60,7 +60,8 @@ class TelnetClient:
             img_data = ""
             while len(img_data) < countOfChars:
                 img_data += self.__sock.recv(4096)
-        except:
+        except Exception as e:
+            log.error('Exception retrieving screenshot: ' + str(e))
             return False
         fh = open(path, "wb")
         fh.write(img_data.decode('base64'))
