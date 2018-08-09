@@ -29,7 +29,7 @@ class TelnetClient:
         #log.error(self.__sock.recv(1024))
         result = ""
         while not "OK" in result:
-            result = self.__sock.recv(1024)
+            result = self.__sock.recv(4096)
         self.authenticated = self.__auth()
 
         #print(authenticated)
@@ -48,7 +48,8 @@ class TelnetClient:
     def __sendCommandWithoutChecks(self, command):
         self.__sock.send(command)
         #TODO: handle socketError
-        return self.__sock.recv(1024)
+        #returnedVal = ""
+        return self.__sock.recv(4096)
 
     def getScreenshot(self, path):
         self.__sock.send("screen capture\r\n")

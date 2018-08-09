@@ -427,6 +427,7 @@ def main_thread():
         #check time to restart pogo and reset google play services
         i = 0 #index, iterating with it to either get to the next gym or the priority of our queue
         failcount = 0
+        lastRoundEggHatch = False
         while i < len(route):
             while sleep:
                 time.sleep(1)
@@ -451,7 +452,7 @@ def main_thread():
             egghatchLocation = False
             log.debug("Checking for raidqueue priority. Current time: %s, Current queue: %s" % (str(time.time()), str(nextRaidQueue)))
             #determine whether we move to the next gym or to the top of our priority queue
-            if (len(nextRaidQueue) > 0 and nextRaidQueue[0][0] < time.time()):
+            if (not lastRoundEggHatch and len(nextRaidQueue) > 0 and nextRaidQueue[0][0] < time.time()):
                 #the topmost item in the queue lays in the past...
                 log.info('An egg has hatched, get there asap. Location: %s' % str(nextRaidQueue[0]))
                 egghatchLocation = True
@@ -459,6 +460,7 @@ def main_thread():
                 curLat = nextStop.latitude
                 curLng = nextStop.longitude
                 time.sleep(1)
+                lastRoundEggHatch = True
             else:
                 #continue as usual
                 log.info('Moving on with gym at %s' % route[i])
@@ -468,6 +470,7 @@ def main_thread():
                 #curLat = curLat.strip()
                 #curLng = curLng.strip()
                 i += 1
+                lastRoundEggHatch = False
 
             log.debug("next stop: %s, %s" % (str(curLat), str(curLng)))
             log.debug('LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' % (lastLat, lastLng, curLat, curLng))
