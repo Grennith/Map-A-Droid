@@ -8,7 +8,7 @@
 # Screen Capture Mode
 ######################
 
-#screen_method               # Screen method to be used. 0 = RGC only, 1 = VNC only (default: 0)
+#screen_method               # Screen method to be used. 0 = RGC only, 1 = VNC only (default: 1)
 
 # VNC Settings
 ######################
