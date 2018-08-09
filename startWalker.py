@@ -141,13 +141,13 @@ def main():
         t_observ = Thread(name='observer', target=observer(args.raidscreen_path, args.screen_width, args.screen_height))
         t_observ.daemon = True
         t_observ.start()
-        
+
         log.info('Starting Cleanup Thread....')
         t_observ = Thread(name='cleanup', target=deleteOldScreens(args.raidscreen_path, args.cleanup_age))
         t_observ.daemon = True
         t_observ.start()
-        
-        
+
+
         #param = str(args.raidscreen_path)
         #process = Process(target=observer, args=(param,))
         #process.daemon = True
@@ -164,16 +164,16 @@ def main():
         time.sleep(10)
 
 def deleteOldScreens(folder, minutes):
-    
+
     if minutes == "0":
         log.info('deleteOldScreens: Search/Delete Screenshots is disabled')
         return
 
     folder_path = folder
     file_ends_with = ".png"
-    
+
     while True:
-        
+
         log.info('deleteOldScreens: Search/Delete Screenshots older than ' + str(minutes) + ' minutes')
 
         now = time.time()
@@ -183,10 +183,10 @@ def deleteOldScreens(folder, minutes):
             file_full_path = os.path.join(folder_path,file)
             if os.path.isfile(file_full_path) and file.endswith(file_ends_with):
                 #Delete files older than x days
-                if os.stat(file_full_path).st_mtime < now - int(minutes) * 60: 
+                if os.stat(file_full_path).st_mtime < now - int(minutes) * 60:
                     os.remove(file_full_path)
                     log.debug('deleteOldScreens: File Removed : ' + file_full_path)
-    
+
         log.info('deleteOldScreens: Search/Delete Screenshots finished')
         time.sleep(3600)
 
@@ -309,7 +309,7 @@ def reopenRaidTab():
     if pogoWindowManager.isOtherCloseButtonPresent('screenshot.png', 123):
         screenWrapper.backButton()
         log.debug("reopenRaidTab: Closebutton was present, checking raidscreen...")
-        time.sleep(0.4)
+        time.sleep(0.7)
         #screenWrapper.getScreenshot('screenshot.png')
         #pogoWindowManager.checkRaidscreen('screenshot.png', 123)
         screenWrapper.getScreenshot('screenshot.png')
@@ -349,8 +349,8 @@ def checkSpeedWeatherWarningThread():
                 log.error("checkSpeedWeatherWarning: Failed to find the raidscreen 5 times in a row. Aborting check for speedWeather and let main do its job")
                 break;
             #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
-            found = pogoWindowManager.checkCloseExceptNearbyButton('screenshot.png', 123)
-            if not found and pogoWindowManager.checkSpeedwarning('screenshot.png', 123):
+            found = pogoWindowManager.checkSpeedwarning('screenshot.png', 123)
+            if not found and pogoWindowManager.checkCloseExceptNearbyButton('screenshot.png', 123):
                 log.info("checkSpeedWeatherWarning: Found speed warning")
                 found = True
             if not found and pogoWindowManager.checkWeatherWarning('screenshot.png', 123):
@@ -517,14 +517,14 @@ def main_thread():
                     attempts = 0
                 #not using continue since we need to get a screen before the next round... TODO: consider getting screen for checkRaidscreen within function
                 found =  pogoWindowManager.checkPostLoginOkButton('screenshot.png', 123)
+                if not found and pogoWindowManager.checkSpeedwarning('screenshot.png', 123):
+                    log.info("Found speed warning")
+                    found = True
                 if not found and pogoWindowManager.checkCloseExceptNearbyButton('screenshot.png', 123):
                     log.info("Found close button (X) on a window other than nearby")
                     found = True
                 if not found and pogoWindowManager.checkWeatherWarning('screenshot.png', 123):
                     log.info("checkSpeedWeatherWarning: Found weather warning")
-                    found = True
-                if not found and pogoWindowManager.checkSpeedwarning('screenshot.png', 123):
-                    log.info("Found speed warning")
                     found = True
                 if not found and pogoWindowManager.checkPostLoginNewsMessage('screenshot.png', 123):
                     log.info("Found post login news message")
@@ -567,7 +567,6 @@ def main_thread():
 
             log.info("Checking raidcount and copying raidscreen if raids present")
             countOfRaids = pogoWindowManager.readRaidCircles('screenshot.png', 123)
-
             if countOfRaids == -1:
                 #reopen raidtab and take screenshot...
                 log.warning("Count present but no raid shown, reopening raidTab")

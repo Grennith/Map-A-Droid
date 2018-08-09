@@ -72,7 +72,7 @@ class PogoWindows:
         log.debug('checkPostLoginOkButton: Starting check')
         return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving')
             or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property'))
-            
+
     def __readCircleCount(self,filename,hash,ratio):
         log.debug("__readCircleCount: Reading circles")
 
@@ -99,24 +99,25 @@ class PogoWindows:
         else:
             log.debug("__readCircleCount: Determined screenshot to have 0 Circle")
             return -1
-        
-    
+
+
 
     def readRaidCircles(self, filename, hash):
         log.debug("readCircles: Reading circles")
         if not self.readAmountOfRaidsCircle(filename, hash):
+            #no raidcount (orange circle) present...
             return 0
-            
+
         circle = self.__readCircleCount(filename, hash, 4.7)
-        
+
         if circle > 6:
             circle = 6
-        
+
         if circle > 0:
             log.debug("readCircles: Determined screenshot to have " + str(circle) + " Circle.")
             return circle
-        
-        log.debug("readCircles: Determined screenshot to have 0 Circle")    
+
+        log.debug("readCircles: Determined screenshot to not contain raidcircles, but a raidcount!")
         return -1
 
 
@@ -138,11 +139,11 @@ class PogoWindows:
                 if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and y1 > height/2:
                     lineCount += 1
                     log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
-        
+
         if lineCount >= 1:
             log.debug("lookForButton: Button found")
             return True
-                       
+
         log.debug("lookForButton: Button not found")
         return False
 
@@ -169,7 +170,7 @@ class PogoWindows:
     def readAmountOfRaidsCircle(self, filename, hash):
         if not os.path.isfile(filename):
             return None
-            
+
         log.debug("readAmountOfRaidsCircle: Cropping circle")
 
         if self.__readCircleCount(filename, hash, 18.95) > 0:
@@ -183,10 +184,10 @@ class PogoWindows:
     def checkPostLoginNewsMessage(self, filename, hash):
         if not os.path.isfile(filename):
             return False
-            
+
 
         log.debug('checkPostLoginNewsMessage: Checking for small news popup ...')
-        
+
         if not self.__lookForButton(filename, 3.01):
             log.debug('checkPostLoginNewsMessage: no popup found')
             return False
@@ -258,9 +259,9 @@ class PogoWindows:
     def checkGameQuitPopup(self, filename, hash):
         if not os.path.isfile(filename):
             return False
-        
-        log.debug('checkGameQuitPopup: Checking for quit-game popup ...')    
-        
+
+        log.debug('checkGameQuitPopup: Checking for quit-game popup ...')
+
         if not self.__lookForButton(filename, 2.20):
             log.debug('checkGameQuitPopup: Could not find quit popup')
             return False
@@ -274,7 +275,7 @@ class PogoWindows:
             return False
 
         log.debug('checkSpeedwarning: Checking for speed-warning ...')
-        
+
         if not self.__lookForButton(filename, 1.60):
             log.debug('checkSpeedwarning: No speedmessage found')
             return False
@@ -290,7 +291,7 @@ class PogoWindows:
             return False
 
         log.debug('checkWeatherwarning: Checking for weatherwarning ...')
-        
+
         if not self.__lookForButton(filename, 1.05):
             log.debug('checkWeatherwarning: No weatherwarning found')
             return False
@@ -308,6 +309,7 @@ class PogoWindows:
 
     def __checkClosePresent(self, filename, hash, windowsToCheck):
         if not os.path.isfile(filename):
+            log.warning("__checkClosePresent: %s does not exist" % str(filename))
             return False
 
         bounds = None
@@ -329,10 +331,12 @@ class PogoWindows:
         width, height = im.size
 
         mostPresentColour = self.__mostPresentColour(tempPath, width * height)
-
+        log.debug("__checkClosePresent: found most present colour %s" % str(mostPresentColour))
         os.remove(self.tempDirPath + "/" + str(hash) + "_xbutton.jpg")
-        return ((mostPresentColour == (28, 135, 150))
-            or (mostPresentColour == (236, 252, 235)))
+        return (mostPresentColour == (28, 135, 150)
+            or mostPresentColour == (236, 252, 235)
+            or mostPresentColour == (42, 119, 125)
+            or mostPresentColour == (29, 134, 153))
 
     def isNewsQuestCloseButtonPresent(self, filename, hash):
         return self.__checkClosePresent(filename, hash, 'news_or_quest')

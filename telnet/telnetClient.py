@@ -55,6 +55,9 @@ class TelnetClient:
         start = time.time()
         try:
             chars = self.__sock.recv(4096)
+            if ('KO' in chars):
+                log.fatal("It looks like you did not start media projection in RGC")
+                return False
             countOfChars = int(chars)
             #print(countOfChars)
             img_data = ""
