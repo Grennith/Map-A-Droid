@@ -5,6 +5,11 @@
 # A different config-files can be included directly in processes by "--config-file" or "-cf" and path
 # Value without # are needed for this script
 
+# Screen Capture Mode
+######################
+
+#screen_method               # Screen method to be used. 0 = RGC only, 1 = VNC only (default: 0)
+
 # VNC Settings
 ######################
 
@@ -63,6 +68,7 @@ screen_height:
 #only_scan                   # running this instance in scanning mode without OCR tracing
 #only_ocr                    # running this instance in ocr mode without Scanning
 #ocr_multitask               # running OCR as multiprocessing task
+
 
 # path settings
 ######################
