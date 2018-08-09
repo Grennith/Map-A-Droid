@@ -78,6 +78,7 @@ class PogoWindows:
 
         screenshotRead = cv2.imread(filename)
         height, width, _ = screenshotRead.shape
+        log.debug("__readCircleCount: Determined screenshot scale: " + str(height) + " x " + str(width))
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
 
@@ -125,6 +126,7 @@ class PogoWindows:
         screenshotRead = cv2.imread(filename)
         gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
+        log.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
         maxLineLength = width / ratio + 10 #0
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
@@ -151,19 +153,20 @@ class PogoWindows:
         screenshotRead = cv2.imread(filename)
         gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
+        log.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
         maxLineLength = width / 3.30
-        log.debug("checkRaidLine: MaxLineLength:" + str(maxLineLength))
+        log.debug("__checkRaidLine: MaxLineLength:" + str(maxLineLength))
         minLineLength = width / 3.30 - 10
-        log.debug("checkRaidLine: MinLineLength:" + str(minLineLength))
+        log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
         maxLineGap = 10
         lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
         for line in lines:
             for x1,y1,x2,y2 in line:
                 if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and x1 > width/2:
-                    log.debug("checkRaidLine: Raid-tab is active - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
+                    log.debug("__checkRaidLine: Raid-tab is active - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
                     return True
-        log.debug("checkRaidLine: Raid-tab is not active")
+        log.debug("__checkRaidLine: Raid-tab is not active")
         return False
 
     def readAmountOfRaidsCircle(self, filename, hash):
@@ -171,12 +174,19 @@ class PogoWindows:
             return None
             
         log.debug("readAmountOfRaidsCircle: Cropping circle")
+        
+        image = cv2.imread(filename)
+        height, width, _ = image.shape
+        image = image[int(height/2-(height/3)):int(height/2+(height/3)),0:int(width)]
+        cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_AmountOfRaids.jpg", image)
 
-        if self.__readCircleCount(filename, hash, 18.95) > 0:
+        if self.__readCircleCount(self.tempDirPath + "/" + str(hash) + "_AmountOfRaids.jpg", hash, 18.95) > 0:
             log.info("readAmountOfRaidsCircle: Raidcircle found, assuming raids nearby")
+            os.remove(self.tempDirPath + "/" + str(hash) + "_AmountOfRaids.jpg")
             return True
         else:
             log.info("readAmountOfRaidsCircle: No raidcircle found, assuming no raids nearby")
+            os.remove(self.tempDirPath + "/" + str(hash) + "_AmountOfRaids.jpg")
             return False
 
 
