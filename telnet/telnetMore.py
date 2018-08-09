@@ -19,6 +19,9 @@ class TelnetMore:
     def resetAppdata(self, packageName):
         return self.telnetClient.sendCommand("more reset %s\r\n" % (packageName))[0]
 
+    def clearAppCache(self, packageName):
+        return self.telnetClient.sendCommand("more cache %s\r\n" % (packageName))[0]
+
     def turnScreenOn(self):
         return self.telnetClient.sendCommand("more screen on\r\n")[0]
 

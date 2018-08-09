@@ -209,6 +209,7 @@ def sleeptimer(sleeptime):
             #Stopping pogo...
             if telnMore:
                 telnMore.stopApp("com.nianticlabs.pokemongo")
+                telnMore.clearAppCache("com.nianticlabs.pokemongo")
             sleep = True
 
             while sleep:
@@ -280,6 +281,7 @@ def restartPogo():
     #TODO: check if pogo was closed...
     log.debug("restartPogo: stop pogo resulted in %s" % str(successfulStop))
     if successfulStop:
+        telnMore.clearAppCache("com.nianticlabs.pokemongo")
         time.sleep(5)
         if "OK" in telnMore.startApp("com.nianticlabs.pokemongo"):
             log.warning("Starting pogo...")
@@ -309,6 +311,7 @@ def reopenRaidTab():
     if pogoWindowManager.isOtherCloseButtonPresent('screenshot.png', 123):
         screenWrapper.backButton()
         log.debug("reopenRaidTab: Closebutton was present, checking raidscreen...")
+        telnMore.clearAppCache("com.nianticlabs.pokemongo")
         time.sleep(0.7)
         #screenWrapper.getScreenshot('screenshot.png')
         #pogoWindowManager.checkRaidscreen('screenshot.png', 123)

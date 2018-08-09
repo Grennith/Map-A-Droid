@@ -1,4 +1,5 @@
 import socket
+import select
 import time
 import logging
 log = logging.getLogger()
@@ -17,10 +18,24 @@ class TelnetClient:
         self.password = password
         self.connected = False
 
+        self.__sock = None
+        self.connected = False
+        self.authenticated = False
+        self.__setupSocket()
+        #print(authenticated)
+
+    def __reconnect(self):
+        self.__sock.close()
+        time.sleep(1)
+        self.__setupSocket()
+
+    def __setupSocket(self):
         self.__sock = socket.socket()
+        #self.__sock.setblocking(0)
         attempts = 0
         while (not self.__connectSocket() and attempts < 10):
             time.sleep(1)
+            attempts += 1
         if (self.__sock is None):
             raise ValueError('Socket not connected')
         else:
@@ -28,12 +43,14 @@ class TelnetClient:
         #Retrieve the help instructions to have auth only receive "OK"
         #log.error(self.__sock.recv(1024))
         result = ""
-        while not "OK" in result:
-            result = self.__sock.recv(4096)
+        ready = select.select([self.__sock], [], [], 3)
+        while (ready[0]):
+            ready = select.select([self.__sock], [], [], 3)
+            if ready[0]:
+                result = self.__sock.recv(4096)
+        #while not "OK" in result:
+        #    result = self.__sock.recv(4096)
         self.authenticated = self.__auth()
-
-        #print(authenticated)
-
 
     def __del__(self):
         self.__sock.close()
@@ -48,25 +65,57 @@ class TelnetClient:
     def __sendCommandWithoutChecks(self, command):
         self.__sock.send(command)
         #TODO: handle socketError
-        #returnedVal = ""
-        return self.__sock.recv(4096)
+        returnedVal = ""
+        while (len(returnedVal) == 0):
+            ready = select.select([self.__sock], [], [], 10)
+            if ready[0]:
+                returnedVal = self.__sock.recv(4096)
+            else:
+                log.warning("Telnet client experienced timeout, reconnecting")
+                self.__reconnect()
+                return "KO: Timeout"
+        return returnedVal
 
     def getScreenshot(self, path):
         self.__sock.send("screen capture\r\n")
         start = time.time()
-        try:
-            chars = self.__sock.recv(4096)
-            if ('KO' in chars):
-                log.fatal("It looks like you did not start media projection in RGC")
+
+        img_data = ""
+        while (len(img_data) == 0):
+            ready = select.select([self.__sock], [], [], 10)
+            if ready[0]:
+                first = ""
+                try:
+                    first = self.__sock.recv(4096)
+                    first = first.split("_")
+                    log.debug(first)
+                    if ('KO' in first):
+                        log.fatal("It looks like you did not start media projection in RGC")
+                        return False
+                    chars = first[0]
+                    img_data = first[1]
+                    countOfChars = int(chars)
+                    #print(countOfChars)
+                    while len(img_data) < countOfChars:
+                        ready = select.select([self.__sock], [], [], 3)
+                        if ready[0]:
+                            img_data += self.__sock.recv(4096)
+                        else:
+                            log.warning("Telnet client experienced timeout, reconnecting")
+                            self.__reconnect()
+                            return False
+                        #time.sleep(0.02)
+                except Exception as e:
+                    log.error('Exception retrieving screenshot: ' + str(e))
+                    #time.sleep(1)
+                    log.error(first)
+                    self.__reconnect()
+                    return False
+            else:
+                log.warning("Telnet client experienced timeout, reconnecting")
+                self.__reconnect()
                 return False
-            countOfChars = int(chars)
-            #print(countOfChars)
-            img_data = ""
-            while len(img_data) < countOfChars:
-                img_data += self.__sock.recv(4096)
-        except Exception as e:
-            log.error('Exception retrieving screenshot: ' + str(e))
-            return False
+
         fh = open(path, "wb")
         fh.write(img_data.decode('base64'))
         fh.close()
@@ -87,6 +136,10 @@ class TelnetClient:
             and again):
             log.debug("__sendCommandRecursive: Failed to auth...")
             self.authenticated = False
+            return (x, False)
+        elif 'KO' in x:
+            log.debug("__sendCommandRecursive: Timeout or other error...")
+            self.authenticated = True
             return (x, False)
         else:
             log.debug('__sendCommandRecursive: Sent command successfully')
