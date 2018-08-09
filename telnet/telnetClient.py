@@ -66,7 +66,7 @@ class TelnetClient:
         self.__sock.send(command)
         #TODO: handle socketError
         returnedVal = ""
-        while (len(returnedVal) == 0):
+        while (len(returnedVal) <= 1):
             ready = select.select([self.__sock], [], [], 10)
             if ready[0]:
                 returnedVal = self.__sock.recv(4096)
@@ -83,18 +83,31 @@ class TelnetClient:
         img_data = ""
         while (len(img_data) == 0):
             ready = select.select([self.__sock], [], [], 10)
-            if ready[0]:
-                first = ""
-                try:
+            first = ""
+            if ready[0] :
+                first = self.__sock.recv(4096)
+                if (len(first) <= 1):
                     first = self.__sock.recv(4096)
+                chars = 0
+                img_data = ""
+                try:
                     first = first.split("_")
-                    log.debug(first)
-                    if ('KO' in first):
-                        log.fatal("It looks like you did not start media projection in RGC")
-                        return False
                     chars = first[0]
                     img_data = first[1]
-                    countOfChars = int(chars)
+                except:
+                    #clear the buffer
+                    ready = select.select([self.__sock], [], [], 3)
+                    while (ready[0]):
+                        ready = select.select([self.__sock], [], [], 3)
+                        if ready[0]:
+                            result = self.__sock.recv(4096)
+                    return False
+                log.debug(first)
+                if ('KO: ' in first):
+                    log.fatal("It looks like you did not start media projection in RGC")
+                    return False
+                countOfChars = int(chars)
+                try:
                     #print(countOfChars)
                     while len(img_data) < countOfChars:
                         ready = select.select([self.__sock], [], [], 3)
