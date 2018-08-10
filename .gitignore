@@ -1,5 +1,6 @@
 *.zip
 *.pyc
+*.jpg
 
 config.ini
 hash/*
