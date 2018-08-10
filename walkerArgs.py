@@ -117,26 +117,25 @@ def parseArgs():
                   'See https://github.com/ZeChrales/PogoAssets/'))
 
     parser.add_argument('-rscrpath', '--raidscreen_path', default='screenshots',
-            help=('Folder for processed Raidscreens. Default: screenshots'))
-            
-    parser.add_argument('-clnupa', '--cleanup_age', default='1440',
-            help=('Delete Screenshots older than X minutes. Default: 1440'))
+            help=('Folder for processed Raidscreens. Default: screenshots')) 
 
+    parser.add_argument('-ssvpath', '--successsave_path', default='success',
+            help=('Folder for saved Raidcrops. Default: success')) 
+            
     parser.add_argument('-unkpath', '--unknown_path', default='unknown',
             help=('Folder for unknows Gyms or Mons. Default: unknown'))
 
 
-    # Egg - Mon placeholder
-    parser.add_argument('-egg1mon', '--egg1_mon_id', default='15',
-            help=('Mon Placeholder for Level 1. Default: 15'))
-    parser.add_argument('-egg2mon', '--egg2_mon_id', default='20',
-            help=('Mon Placeholder for Level 2. Default: 20'))
-    parser.add_argument('-egg3mon', '--egg3_mon_id', default='55',
-            help=('Mon Placeholder for Level 3. Default: 55'))
-    parser.add_argument('-egg4mon', '--egg4_mon_id', default='164',
-            help=('Mon Placeholder for Level 4. Default: 164'))
-    parser.add_argument('-egg5mon', '--egg5_mon_id', default='198',
-            help=('Mon Placeholder for Level 5. Default: 198'))
+    # div. settings
+    
+    parser.add_argument('-clnupa', '--cleanup_age', default='1440',
+            help=('Delete Screenshots older than X minutes. Default: 1440'))
+            
+    parser.add_argument('-ssv', '--save_success', action='store_true', default=False,
+            help=('Save success submitted raidcrops.')) 
+            
+    parser.add_argument('-lc', '--last_scanned', action='store_true', default=False,
+            help=('Submit last scanned location to RM DB (if supported). Default: False'))    
 
     # Cleanup Hash Database
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,

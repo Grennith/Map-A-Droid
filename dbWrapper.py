@@ -181,7 +181,7 @@ class DbWrapper:
         if self.raidExist(gym, type, raidNo):
             self.refreshTimes(gym, raidNo, captureTime)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: %s already submitted - ignoring' % str(type))
-            return True
+            return False
 
         try:
             connection = mysql.connector.connect(host = self.host,

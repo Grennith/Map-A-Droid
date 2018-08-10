@@ -20,8 +20,8 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
     if (fort_img is None):
         log.error('[Crop: ' + str(raidNo) + ' (' + str(hash) +') ] ' + 'fort_image_matching: %s appears to be corrupted' % str(fort_img_name))
         return 0.0
-    height, width, channels = url_img.shape
-    height_f, width_f, channels_f = fort_img.shape
+    height, width, channel = url_img.shape
+    height_f, width_f, channel_f = fort_img.shape
 
     if zoom == True:
         if width_f < 180:

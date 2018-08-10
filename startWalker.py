@@ -568,8 +568,9 @@ def main_thread():
                 log.warning("Closing and opening raidtab every 30 locations scanned... Doing so")
                 reopenRaidTab()
 
-            log.info('Set new scannedlocation in Database')
-            dbWrapper.setScannedLocation(str(curLat), str(curLng), str(curTime))
+            if args.last_scanned:
+                log.info('Set new scannedlocation in Database')
+                dbWrapper.setScannedLocation(str(curLat), str(curLng), str(curTime))
 
             log.info("Checking raidcount and copying raidscreen if raids present")
             countOfRaids = pogoWindowManager.readRaidCircles('screenshot.png', 123)

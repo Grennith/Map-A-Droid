@@ -77,7 +77,14 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #temp_path:                  # Path for generated files while detecting raids (default: temp/)
 #raidscreen_path:            # Path for taken screenshots (default: screenshots/)
 #unknown_path:               # Path for not automaticly detected gyms or mons (defaul: unknown/)
+#successsave_path:           # Path for successful submitted crops (default: success/)
+
+# other settings
+######################
+
 #cleanup_age:                # Delete Screenshots older than X minutes. Default: 1440 - 0 to disable
+#save_success                # Save successful submitted crops to successsave_path
+#last_scanned                # Submit last scanned locations to RM database (if your fork support this!)
 
 # timezone settings
 ######################
@@ -96,11 +103,3 @@ timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Ge
 #latlngleft:                 # download gym cords from this param f.e. [47.1, 47.2]
 #latlngright:                # download gym cords to this param  f.e. [9.1, 9.5]
 
-# Egg - Mon placeholder
-######################
-
-#egg1_mon_id:                # set this mon-id for detected lvl 1 raids (replace later after hatch)
-#egg2_mon_id:                # set this mon-id for detected lvl 2 raids (replace later after hatch)
-#egg3_mon_id:                # set this mon-id for detected lvl 3 raids (replace later after hatch)
-#egg4_mon_id:                # set this mon-id for detected lvl 4 raids (replace later after hatch)
-#egg5_mon_id:                # set this mon-id for detected lvl 5 raids (replace later after hatch)
