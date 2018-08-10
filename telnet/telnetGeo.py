@@ -14,7 +14,7 @@ class TelnetGeo:
         self.telnetClient = TelnetClient(ip, port, password)
 
     def setLocation(self, lat, lng, alt):
-        return self.telnetClient.sendCommand("geo fix %s %s %s\r\n" % (lat, lng, alt))
+        return self.telnetClient.sendCommand("geo fix %s %s %s\r\n" % (lat, lng, alt), 5)
 
     #coords need to be float values
     #speed integer with km/h

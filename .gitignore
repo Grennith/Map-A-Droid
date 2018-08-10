@@ -15,3 +15,4 @@ gym_info.json
 
 mon_img/_mon*
 *.csv
+.idea/
