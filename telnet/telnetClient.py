@@ -66,7 +66,8 @@ class TelnetClient:
                     result += self.__sock.recv(4096)
 
                 result = result.rstrip()
-                log.debug("__retrieveMessage: Received message: %s" % result)
+                if len(result) < 2000:
+                    log.debug("__retrieveMessage: Received message: %s" % result)
                 return result
             except socket.error as e:
                 log.error("__retrieveMessage: socket.error: %s" % str(e))
