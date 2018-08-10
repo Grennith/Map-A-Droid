@@ -129,9 +129,9 @@ class PogoWindows:
         height, width, _ = screenshotRead.shape
         log.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
-        maxLineLength = width / ratio + 10 #0
+        maxLineLength = width / ratio 
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 30 #-10
+        minLineLength = width / ratio - 10
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
         maxLineGap = 10
         lineCount = 0

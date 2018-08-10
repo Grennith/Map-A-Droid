@@ -132,17 +132,10 @@ def main():
         t_observ.start()
 
         log.info('Starting Cleanup Thread....')
-        t_observ = Thread(name='cleanup', target=deleteOldScreens(args.raidscreen_path, args.cleanup_age))
+        t_observ = Thread(name='cleanupraidscreen', target=deleteOldScreens(args.raidscreen_path, args.successsave_path, args.cleanup_age))
         t_observ.daemon = True
         t_observ.start()
-
-
-        #param = str(args.raidscreen_path)
-        #process = Process(target=observer, args=(param,))
-        #process.daemon = True
-        #process.start();
-
-
+        
     if args.sleeptimer:
         log.info('Starting Sleeptimer....')
         t_sleeptimer = Thread(name='sleeptimer', target=sleeptimer(args.sleepinterval))
@@ -153,14 +146,11 @@ def main():
         time.sleep(10)
 
 
-def deleteOldScreens(folder, minutes):
+def deleteOldScreens(folderscreen, foldersuccess, minutes):
 
     if minutes == "0":
         log.info('deleteOldScreens: Search/Delete Screenshots is disabled')
         return
-
-    folder_path = folder
-    file_ends_with = ".png"
 
     while True:
 
@@ -168,14 +158,28 @@ def deleteOldScreens(folder, minutes):
 
         now = time.time()
         only_files = []
+        
+        log.debug('deleteOldScreens: Cleanup Folder: ' + str(folderscreen))
 
-        for file in os.listdir(folder_path):
-            file_full_path = os.path.join(folder_path,file)
-            if os.path.isfile(file_full_path) and file.endswith(file_ends_with):
+        for file in os.listdir(folderscreen):
+            file_full_path = os.path.join(folderscreen,file)
+            if os.path.isfile(file_full_path) and file.endswith(".png"):
                 #Delete files older than x days
                 if os.stat(file_full_path).st_mtime < now - int(minutes) * 60:
                     os.remove(file_full_path)
                     log.debug('deleteOldScreens: File Removed : ' + file_full_path)
+        
+        if args.save_success:
+        
+            log.debug('deleteOldScreens: Cleanup Folder: ' + str(foldersuccess))
+                    
+            for file in os.listdir(foldersuccess):
+                file_full_path = os.path.join(foldersuccess,file)
+                if os.path.isfile(file_full_path) and file.endswith(".png"):
+                    #Delete files older than x days
+                    if os.stat(file_full_path).st_mtime < now - int(minutes) * 60:
+                        os.remove(file_full_path)
+                        log.debug('deleteOldScreens: File Removed : ' + file_full_path)
 
         log.info('deleteOldScreens: Search/Delete Screenshots finished')
         time.sleep(3600)
