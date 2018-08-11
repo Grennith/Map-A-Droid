@@ -55,7 +55,7 @@ class PogoWindows:
             return False
         log.debug('checkPostLoginOkButton: Checking for post-login ok button of type %s...' % type)
 
-        if not self.__lookForButton(filename, 2.20):
+        if not self.__lookForButton(filename, 2.20, 26):
             log.debug('checkPostLoginOkButton: Could not find OK button')
             return False
         else:
@@ -122,16 +122,17 @@ class PogoWindows:
         return -1
 
 
-    def __lookForButton(self, filename, ratio):
+    def __lookForButton(self, filename, ratio, minmiddledist = False):
         log.debug("lookForButton: Reading lines")
+        disToMiddleMin = None
         screenshotRead = cv2.imread(filename)
         gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
         log.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
-        maxLineLength = width / ratio 
+        maxLineLength = width / ratio + 15
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 10
+        minLineLength = width / ratio - 15
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
         maxLineGap = 10
         lineCount = 0
@@ -140,11 +141,26 @@ class PogoWindows:
             for x1,y1,x2,y2 in line:
                 if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and y1 > height/2:
                     lineCount += 1
+                    disToMiddle = y1 - (height/2) 
+            
+                    if disToMiddleMin is None or disToMiddle < disToMiddleMin:
+                	    disToMiddleMin = disToMiddle
+                        
                     log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
 
         if lineCount >= 1:
-            log.debug("lookForButton: Button found")
-            return True
+            log.debug("lookForButton: disToMiddleMin: " + str(disToMiddleMin))
+            if minmiddledist:
+                log.debug(height / disToMiddleMin)
+                if ((height / disToMiddleMin)-2 < (minmiddledist) and (height / disToMiddleMin)+2 > (minmiddledist)):
+                    log.debug("lookForButton: Button found")
+                    return True
+                else:
+                    log.debug("lookForButton: Button not found")
+                    return False
+            else:
+                log.debug("lookForButton: Button found")
+                return True
 
         log.debug("lookForButton: Button not found")
         return False
@@ -272,7 +288,7 @@ class PogoWindows:
 
         log.debug('checkGameQuitPopup: Checking for quit-game popup ...')
 
-        if not self.__lookForButton(filename, 2.20):
+        if not self.__lookForButton(filename, 2.20, 128):
             log.debug('checkGameQuitPopup: Could not find quit popup')
             return False
         else:

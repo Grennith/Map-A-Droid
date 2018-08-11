@@ -167,6 +167,11 @@ def deleteOldScreens(folderscreen, foldersuccess, minutes):
                     log.debug('deleteOldScreens: File Removed : ' + file_full_path)
 
         if args.save_success:
+            
+            if not os.path.exists(args.successsave_path):
+                log.info('deleteOldScreens: Save directory created')
+                os.makedirs(args.successsave_path)
+            
             log.debug('deleteOldScreens: Cleanup Folder: ' + str(foldersuccess))
             for file in os.listdir(foldersuccess):
                 file_full_path = os.path.join(foldersuccess,file)
@@ -303,7 +308,7 @@ def startPogo(withLock=True):
     reachedRaidtab = False
     if startResult is not None and "OK" in startResult:
         log.warning("Starting pogo...")
-        time.sleep(args.post_pogo_start_delay)
+        #time.sleep(args.post_pogo_start_delay)
         lastPogoRestart = curTime
 
         # let's handle the login and stuff

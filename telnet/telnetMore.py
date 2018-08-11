@@ -1,4 +1,5 @@
 from telnetClient import *
+import time
 
 class TelnetMore:
     def __init__(self, ip, port, password):

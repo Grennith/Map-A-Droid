@@ -213,8 +213,8 @@ class Scanner:
         
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'checkDummy: Check for dummy Gym Image')
         
-        img = cv2.imread(raidpic,0)
-        template = cv2.imread("mon_img/dummy_nearby.jpg",0)
+        img = cv2.imread(raidpic,3)
+        template = cv2.imread("mon_img/dummy_nearby.jpg",3)
         crop = img[int(y1):int(y2),int(x1):int(x2)]
 
         result = cv2.matchTemplate(crop, template, cv2.TM_CCOEFF_NORMED)
