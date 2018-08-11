@@ -149,9 +149,9 @@ class PogoWindows:
                     log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
 
         if lineCount >= 1:
-            log.debug("lookForButton: disToMiddleMin: " + str(disToMiddleMin))
+            log.debug("lookForButton: disToMiddleMin: " + str(disToMiddleMin) + " - Ratio: " + str(height / disToMiddleMin))
             if minmiddledist:
-                log.debug(height / disToMiddleMin)
+                log.debug("lookForButton: Check Ratio of button")
                 if ((height / disToMiddleMin)-2 < (minmiddledist) and (height / disToMiddleMin)+2 > (minmiddledist)):
                     log.debug("lookForButton: Button found")
                     return True
