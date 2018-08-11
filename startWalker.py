@@ -135,7 +135,7 @@ def main():
         t_observ = Thread(name='cleanupraidscreen', target=deleteOldScreens(args.raidscreen_path, args.successsave_path, args.cleanup_age))
         t_observ.daemon = True
         t_observ.start()
-        
+
     if args.sleeptimer:
         log.info('Starting Sleeptimer....')
         t_sleeptimer = Thread(name='sleeptimer', target=sleeptimer(args.sleepinterval))
@@ -147,20 +147,17 @@ def main():
 
 
 def deleteOldScreens(folderscreen, foldersuccess, minutes):
-
     if minutes == "0":
         log.info('deleteOldScreens: Search/Delete Screenshots is disabled')
         return
 
     while True:
-
         log.info('deleteOldScreens: Search/Delete Screenshots older than ' + str(minutes) + ' minutes')
 
         now = time.time()
         only_files = []
-        
-        log.debug('deleteOldScreens: Cleanup Folder: ' + str(folderscreen))
 
+        log.debug('deleteOldScreens: Cleanup Folder: ' + str(folderscreen))
         for file in os.listdir(folderscreen):
             file_full_path = os.path.join(folderscreen,file)
             if os.path.isfile(file_full_path) and file.endswith(".png"):
@@ -168,11 +165,9 @@ def deleteOldScreens(folderscreen, foldersuccess, minutes):
                 if os.stat(file_full_path).st_mtime < now - int(minutes) * 60:
                     os.remove(file_full_path)
                     log.debug('deleteOldScreens: File Removed : ' + file_full_path)
-        
+
         if args.save_success:
-        
             log.debug('deleteOldScreens: Cleanup Folder: ' + str(foldersuccess))
-                    
             for file in os.listdir(foldersuccess):
                 file_full_path = os.path.join(foldersuccess,file)
                 if os.path.isfile(file_full_path) and file.endswith(".png"):
@@ -269,17 +264,24 @@ def mergeRaidQueue(newQueue):
 
 
 def restartPogo():
-    global telnMore
     curTime = time.time()
     successfulStop = stopPogo()
     # TODO: errorhandling if it returned false, maybe try again next round?
     # TODO: check if pogo was closed...
     log.debug("restartPogo: stop pogo resulted in %s" % str(successfulStop))
     if successfulStop:
-        return startPogo()
+        return startPogo(False)
         # TODO: handle login screen... ?
     else:
         return False
+
+
+def tabOutAndInPogo():
+    global telnMore
+    telnMore.startApp("de.grennith.rgc.remotegpscontroller")
+    time.sleep(3)
+    telnMore.startApp("com.nianticlabs.pokemongo")
+    time.sleep(2)
 
 
 def stopPogo():
@@ -333,29 +335,30 @@ def getToRaidscreen(maxAttempts, checkAll=False):
             return False
         # not using continue since we need to get a screen before the next round...
         found = pogoWindowManager.checkSpeedwarning('screenshot.png', 123)
-        if not found and pogoWindowManager.checkGameQuitPopup('screenshot.png', 123):
-            log.info("getToRaidscreen: Found game quit popup")
-            found = True
         if checkAll:
             # also check for login and stuff...
             if not found and pogoWindowManager.checkPostLoginOkButton('screenshot.png', 123):
                 log.info("getToRaidscreen: Found post-login OK button")
                 found = True
+                time.sleep(0.5)
             if not found and pogoWindowManager.checkPostLoginNewsMessage('screenshot.png', 123):
                 log.info("getToRaidscreen: Found post login news message")
                 found = True
-
+                time.sleep(0.5)
         if not found and pogoWindowManager.checkCloseExceptNearbyButton('screenshot.png', 123):
             log.info("getToRaidscreen: Found speed warning")
             found = True
+            time.sleep(0.5)
         if not found and pogoWindowManager.checkWeatherWarning('screenshot.png', 123):
             log.info("getToRaidscreen: Found weather warning")
             found = True
+            time.sleep(0.5)
         if not found and pogoWindowManager.checkGameQuitPopup('screenshot.png', 123):
             log.info("getToRaidscreen: Found game quit popup")
             found = True
+            time.sleep(0.5)
 
-        log.info("getToRaidscreen: Previous checks found popups: %s" % str(not found))
+        log.info("getToRaidscreen: Previous checks found popups: %s" % str(found))
         if not found:
             log.info("getToRaidscreen: Previous checks found nothing. Checking nearby open")
             pogoWindowManager.checkNearby('screenshot.png', 123)
@@ -398,8 +401,7 @@ def reopenRaidTab():
         time.sleep(0.7)
         # screenWrapper.getScreenshot('screenshot.png')
         # pogoWindowManager.checkRaidscreen('screenshot.png', 123)
-        screenWrapper.getScreenshot('screenshot.png')
-        pogoWindowManager.checkNearby('screenshot.png', 123)
+        getToRaidscreen(3)
         time.sleep(1)
 
 
@@ -461,6 +463,8 @@ def main_thread():
 
     if lastPogoRestart is None:
         lastPogoRestart = time.time()
+
+    emptycount = 0
 
     while True:
         log.info("main: Next round")
@@ -584,6 +588,8 @@ def main_thread():
             if not egghatchLocation and math.fmod(i, 30) == 0:
                 log.warning("main: Closing and opening raidtab every 30 locations scanned... Doing so")
                 reopenRaidTab()
+                tabOutAndInPogo()
+                screenWrapper.getScreenshot('screenshot.png')
                 reopenedRaidTab = True
 
             if args.last_scanned:
@@ -596,9 +602,15 @@ def main_thread():
                 # reopen raidtab and take screenshot...
                 log.warning("main: Count present but no raid shown, reopening raidTab")
                 reopenRaidTab()
+                tabOutAndInPogo()
                 screenWrapper.getScreenshot('screenshot.png')
                 countOfRaids = pogoWindowManager.readRaidCircles('screenshot.png', 123)
-
+        #    elif countOfRaids == 0:
+        #        emptycount += 1
+        #        if emptycount > 30:
+        #            emptycount = 0
+        #            log.error("Had 30 empty scans, restarting pogo")
+        #            restartPogo()
             log.debug("main: countOfRaids: %s" % str(countOfRaids))
             if countOfRaids > 0:
                 curTime = time.time()

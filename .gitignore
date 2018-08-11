@@ -1,7 +1,7 @@
 *.zip
 *.pyc
 *.jpg
-
+*.DS_STORE
 config.ini
 hash/*
 gym_img/*
