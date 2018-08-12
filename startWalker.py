@@ -167,11 +167,11 @@ def deleteOldScreens(folderscreen, foldersuccess, minutes):
                     log.debug('deleteOldScreens: File Removed : ' + file_full_path)
 
         if args.save_success:
-            
+
             if not os.path.exists(args.successsave_path):
                 log.info('deleteOldScreens: Save directory created')
                 os.makedirs(args.successsave_path)
-            
+
             log.debug('deleteOldScreens: Cleanup Folder: ' + str(foldersuccess))
             for file in os.listdir(foldersuccess):
                 file_full_path = os.path.join(foldersuccess,file)
@@ -428,7 +428,7 @@ def checkSpeedWeatherWarningThread():
             startPogo(False)
             windowLock.release()
             return
-        reachedRaidscreen = getToRaidscreen(4)
+        reachedRaidscreen = getToRaidscreen(4, True)
         if reachedRaidscreen:
             log.debug("checkSpeedWeatherWarningThread: checkSpeedWeatherWarningThread: reached raidscreen...")
         else:
@@ -457,20 +457,20 @@ def main_thread():
     updateRaidQueue(dbWrapper)
     lastRaidQueueUpdate = time.time()
 
-    route = getJsonRoute(args.file, args.gym_distance, args.max_count_gym_sum_up_around_gym)
-
-    log.info("main: Route to be taken: %s, amount of coords: %s" % (str(route), str(len(route))))
-    log.info("main: Max_distance before teleporting: %s" % args.max_distance)
-    log.info("main: Checking if screen is on and pogo is running")
-
     if not sleep:
         turnScreenOnAndStartPogo()
 
     if lastPogoRestart is None:
         lastPogoRestart = time.time()
 
-    emptycount = 0
+    route = getJsonRoute(args.file, args.gym_distance, args.max_count_gym_sum_up_around_gym)
 
+    log.info("main: Route to be taken: %s, amount of coords: %s" % (str(route), str(len(route))))
+    log.info("main: Max_distance before teleporting: %s" % args.max_distance)
+    log.info("main: Checking if screen is on and pogo is running")
+
+    emptycount = 0
+    locationCount = 0
     while True:
         log.info("main: Next round")
         curLat = 0.0
@@ -497,9 +497,13 @@ def main_thread():
 
             # Restart pogo every now and then...
             if args.restart_pogo > 0:
-                log.debug("main: Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
-                if curTime - lastPogoRestart >= (args.restart_pogo * 60):
+                #log.debug("main: Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
+                # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
+                locationCount += 1
+                if locationCount > args.restart_pogo:
+                    log.error("scanned " + str(args.restart_pogo) + " locations, restarting pogo")
                     restartPogo()
+                    locationCount = 0
 
             # let's check for speed and weather warnings while we're walking/teleporting...
             runWarningThreadEvent.set()
@@ -585,17 +589,17 @@ def main_thread():
                           "break of 5 minutes")
                 stopPogo()
                 time.sleep(300)
-                turnScreenOnAndStartPogo()
+                startPogo(False)
             failcount = 0
 
             # well... we are on the raidtab, but we want to reopen it every now and then, so screw it
             reopenedRaidTab = False
-            if not egghatchLocation and math.fmod(i, 30) == 0:
-                log.warning("main: Closing and opening raidtab every 30 locations scanned... Doing so")
-                reopenRaidTab()
-                tabOutAndInPogo()
-                screenWrapper.getScreenshot('screenshot.png')
-                reopenedRaidTab = True
+            # if not egghatchLocation and math.fmod(i, 30) == 0:
+            #    log.warning("main: Closing and opening raidtab every 30 locations scanned... Doing so")
+            #    reopenRaidTab()
+            #    tabOutAndInPogo()
+            #    screenWrapper.getScreenshot('screenshot.png')
+            #    reopenedRaidTab = True
 
             if args.last_scanned:
                 log.info('main: Set new scannedlocation in Database')

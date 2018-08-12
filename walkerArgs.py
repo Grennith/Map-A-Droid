@@ -89,8 +89,8 @@ def parseArgs():
             help=('The delay in seconds to wait after reaching a destination when walking. Default: 2.0'))
     parser.add_argument('-psd', '--post_screenshot_delay', required=False, type=float, default=0.2,
             help=('The delay in seconds to wait after taking a screenshot to copy it and start the next round. Default: 0.2'))
-    parser.add_argument('-rp', '--restart_pogo', required=False, type=int, default=120,
-            help=('The time in minutes inbetween pogo restarts. Default: 120'))
+    parser.add_argument('-rp', '--restart_pogo', required=False, type=int, default=80,
+            help=('The amount of location-changes/scan-locations inbetween pogo restarts. Default: 80'))
     parser.add_argument('-ptsod', '--post_turn_screen_on_delay', required=False, type=float, default=7.0,
             help=('The delay in seconds to wait after sending the turn screen on command. Default: 7.0'))
     parser.add_argument('-ppsd', '--post_pogo_start_delay', required=False, type=float, default=60.0,
@@ -117,25 +117,25 @@ def parseArgs():
                   'See https://github.com/ZeChrales/PogoAssets/'))
 
     parser.add_argument('-rscrpath', '--raidscreen_path', default='screenshots',
-            help=('Folder for processed Raidscreens. Default: screenshots')) 
+            help=('Folder for processed Raidscreens. Default: screenshots'))
 
     parser.add_argument('-ssvpath', '--successsave_path', default='success',
-            help=('Folder for saved Raidcrops. Default: success')) 
-            
+            help=('Folder for saved Raidcrops. Default: success'))
+
     parser.add_argument('-unkpath', '--unknown_path', default='unknown',
             help=('Folder for unknows Gyms or Mons. Default: unknown'))
 
 
     # div. settings
-    
+
     parser.add_argument('-clnupa', '--cleanup_age', default='1440',
             help=('Delete Screenshots older than X minutes. Default: 1440'))
-            
+
     parser.add_argument('-ssv', '--save_success', action='store_true', default=False,
-            help=('Save success submitted raidcrops.')) 
-            
+            help=('Save success submitted raidcrops.'))
+
     parser.add_argument('-lc', '--last_scanned', action='store_true', default=False,
-            help=('Submit last scanned location to RM DB (if supported). Default: False'))    
+            help=('Submit last scanned location to RM DB (if supported). Default: False'))
 
     # Cleanup Hash Database
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,

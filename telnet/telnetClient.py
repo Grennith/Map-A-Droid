@@ -9,7 +9,7 @@ log = logging.getLogger()
 
 class TelnetClient:
     def __init__(self, ip, port, password):
-        self.passwordSet = (password is not None and len(password) > 0)
+        self.passwordSet = not (password is None or password == "None" or len(password) == 0)
         if self.passwordSet:
             log.debug('Trying to build up a telnet connection to %s:%s with a password'
                 % (str(ip), str(port)))
