@@ -55,7 +55,7 @@ class Scanner:
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Reading Raidtimer')
         raidtimer = raidpic[200:230, 30:150]
         raidtimer = cv2.resize(raidtimer, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_emptyraid.png"
+        emptyRaidTempPath = os.path.join(self.tempPath, str(raidNo) + str(hash) + '_emptyraid.png')
         cv2.imwrite(emptyRaidTempPath, raidtimer)
         rt = Image.open(emptyRaidTempPath)
         gray = rt.convert('L')
@@ -91,7 +91,7 @@ class Scanner:
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Reading Raidtimer')
         raidtimer = raidpic[178:200, 45:130]
         raidtimer = cv2.resize(raidtimer, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
-        emptyRaidTempPath = self.tempPath + "/" + str(raidNo) + str(hash) + "_endraid.png"
+        emptyRaidTempPath = os.path.join(self.tempPath, str(raidNo) + str(hash) + '_endraid.png')
         cv2.imwrite(emptyRaidTempPath, raidtimer)
         rt = Image.open(emptyRaidTempPath)
         gray = rt.convert('L')
@@ -139,11 +139,11 @@ class Scanner:
         monAsset = cv2.morphologyEx(monAsset, cv2.MORPH_CLOSE, kernel)
         monAsset = cv2.morphologyEx(monAsset, cv2.MORPH_OPEN, kernel2)
 
-        picName = self.tempPath + "/" + str(hash) + "_raidboss" + str(raidNo) +".jpg"
+        picName = os.path.join(self.tempPath, str(hash) + '_raidboss' + str(raidNo) +'.jpg')
         cv2.imwrite(picName, monAsset)
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidBoss: Scanning Raidboss')
-        monHash = self.imageHashExists(self.tempPath + "/" + str(hash) + "_raidboss" + str(raidNo) +".jpg", False, 'mon-' + str(lvl), raidNo)
+        monHash = self.imageHashExists(os.path.join(self.tempPath, str(hash) + '_raidboss' + str(raidNo) + '.jpg'), False, 'mon-' + str(lvl), raidNo)
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidBoss: Monhash: ' + str(monHash))
 
         if monHash is None:
@@ -185,11 +185,11 @@ class Scanner:
         raidlevel = raidpic[230:260, 0:170]
         #raidlevel = cv2.resize(raidlevel, (0,0), fx=2, fy=2)
 
-        cv2.imwrite(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) +".jpg", raidlevel)
+        cv2.imwrite(os.path.join(self.tempPath, str(hash) + '_raidlevel' + str(raidNo) + '.jpg'), raidlevel)
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'Scanning Level')
         for file in lvlTypes:
-            find_lvl = mt.fort_image_matching(file, self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) +".jpg", False, 0.7, raidNo, hash)
+            find_lvl = mt.fort_image_matching(file, os.path.join(self.tempPath, str(hash) + '_raidlevel' + str(raidNo) +'.jpg'), False, 0.7, raidNo, hash)
 
             if foundlvl is None or find_lvl > foundlvl[0]:
     	    	foundlvl = find_lvl, file
@@ -200,7 +200,7 @@ class Scanner:
                 lvl = lvlSplit[3]
 
 
-        os.remove(self.tempPath + "/" + str(hash) + "_raidlevel" + str(raidNo) + ".jpg")
+        os.remove(os.path.join(self.tempPath, str(hash) + '_raidlevel' + str(raidNo) +'.jpg'))
 
         if lvl:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectLevel: found level %s' % str(lvl))
@@ -304,11 +304,11 @@ class Scanner:
         
         if captureTime:
             text = datetime.datetime.fromtimestamp(float(captureTime))
-            text = "Scanned: " + str(test.strftime("%Y-%m-%d %H:%M"))
+            text = "Scanned: " + str(text.strftime("%Y-%m-%d %H:%M"))
             self.addTextToCrop(raidpic, text)
         
         raidpic = cv2.imread(raidpic)
-        cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +".jpg", raidpic)
+        cv2.imwrite(os.path.join(self.unknownPath, str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +".jpg"), raidpic)
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'unknownfound: Write unknown file: ' + str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +".jpg")
         return True
         
@@ -331,7 +331,7 @@ class Scanner:
         
         
         text = datetime.datetime.fromtimestamp(float(captureTime))
-        text = "Scanned: " + str(test.strftime("%Y-%m-%d %H:%M"))
+        text = "Scanned: " + str(text.strftime("%Y-%m-%d %H:%M"))
         self.addTextToCrop(raidpic, text)
 
         if not os.path.exists(args.successsave_path):
@@ -354,7 +354,7 @@ class Scanner:
         saveFileName = str(type) + "_" +  str(curTime) + "__LVL_" + str(lvl) + "__MON_" + str(mon) + "__LAT_"+ str(latitude) + "__LNG_" + str(longitude) + "__" + str(gymname) + "__" + str(gymId) + ".jpg"
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'successfound: Filename: ' + str(saveFileName))
         
-        copyfile(raidpic, args.successsave_path + "/" + str(saveFileName))
+        copyfile(raidpic, os.path.join(args.successsave_path, str(saveFileName)))
         
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'successfound: Raidcrop successfully saved')
     
@@ -427,7 +427,7 @@ class Scanner:
         raidhash = img[0:175, 0:170]
         raidhash = self.cropImage(raidhash, raidNo)
 
-        raidhashPic = self.tempPath + "/" + str(hash) + "_raidhash" + str(raidNo) +".jpg"
+        raidhashPic = os.path.join(self.tempPath, str(hash) + "_raidhash" + str(raidNo) +".jpg")
         cv2.imwrite(raidhashPic, raidhash)
 
         #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
@@ -598,7 +598,7 @@ class Scanner:
         else:
             crop = image2
 
-        tempHash = self.tempPath + "/" + str(time.time()) + "_" + str(raidNo) + "temphash_check.jpg"
+        tempHash = os.path.join(self.tempPath, str(time.time()) + "_" + str(raidNo) + "temphash_check.jpg")
         cv2.imwrite(tempHash, crop)
         hashPic = Image.open(tempHash)
         imageHash = self.dhash(hashPic, raidNo)
@@ -618,7 +618,7 @@ class Scanner:
         else:
             crop = image2
 
-        tempHash = self.tempPath + "/" + str(time.time()) + "_" + str(raidNo) + "temphash_new.jpg"
+        tempHash = os.path.join(self.tempPath, str(time.time()) + "_" + str(raidNo) + "temphash_new.jpg")
         cv2.imwrite(tempHash, crop)
         hashPic = Image.open(tempHash)
         imageHash = self.dhash(hashPic, raidNo)

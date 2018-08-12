@@ -175,7 +175,7 @@ def deleteOldScreens(folderscreen, foldersuccess, minutes):
             log.debug('deleteOldScreens: Cleanup Folder: ' + str(foldersuccess))
             for file in os.listdir(foldersuccess):
                 file_full_path = os.path.join(foldersuccess,file)
-                if os.path.isfile(file_full_path) and file.endswith(".png"):
+                if os.path.isfile(file_full_path) and file.endswith(".jpg"):
                     #Delete files older than x days
                     if os.stat(file_full_path).st_mtime < now - int(minutes) * 60:
                         os.remove(file_full_path)

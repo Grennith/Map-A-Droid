@@ -7,7 +7,7 @@ from PIL import Image
 #import pytesseract
 from pytesseract import image_to_string
 from resolutionCalculator import *
-
+import os
 import os.path
 import sys
 sys.path.insert(0, '../')
@@ -130,7 +130,7 @@ class PogoWindows:
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
         maxLineLength = width / ratio + 15
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 15
+        minLineLength = width / ratio - 25
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
         maxLineGap = 10
         lineCount = 0
@@ -193,15 +193,15 @@ class PogoWindows:
         image = cv2.imread(filename)
         height, width, _ = image.shape
         image = image[int(height/2-(height/3)):int(height/2+(height/3)),0:int(width)]
-        cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_AmountOfRaids.jpg", image)
+        cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), image)
 
-        if self.__readCircleCount(self.tempDirPath + "/" + str(hash) + "_AmountOfRaids.jpg", hash, 18.95) > 0:
+        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), hash, 18.95) > 0:
             log.info("readAmountOfRaidsCircle: Raidcircle found, assuming raids nearby")
-            os.remove(self.tempDirPath + "/" + str(hash) + "_AmountOfRaids.jpg")
+            os.remove(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'))
             return True
         else:
             log.info("readAmountOfRaidsCircle: No raidcircle found, assuming no raids nearby")
-            os.remove(self.tempDirPath + "/" + str(hash) + "_AmountOfRaids.jpg")
+            os.remove(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'))
             return False
 
 
@@ -250,29 +250,31 @@ class PogoWindows:
     #assumes we are on the general view of the game
     def checkRaidscreen(self, filename, hash):
         log.debug("checkRaidscreen: Checking if RAID is present (nearby tab)")
-        if self.__checkRaidTabOnScreen(filename, hash):
+        #if self.__checkRaidTabOnScreen(filename, hash):
             #RAID Tab visible
-            log.debug('checkRaidscreen: RAID-tab found')
-            if not self.__checkRaidLine(filename, hash):
+            #log.debug('checkRaidscreen: RAID-tab found')
+        if not self.__checkRaidLine(filename, hash):
                 #RAID Tab not active
-                log.debug('checkRaidscreen: RAID-tab not activated')
-                pos = self.resolutionCalculator.getNearbyRaidTabClick()
-                self.screenWrapper.click(pos.x, pos.y)
-                time.sleep(1)
-                log.debug('checkRaidscreen: RAID-tab clicked')
-                return True
-            return True
-        else:
-            log.warning('checkRaidscreen: Could not locate RAID-tab')
+            log.debug('checkRaidscreen: RAID-tab not activated')
+            #pos = self.resolutionCalculator.getNearbyRaidTabClick()
+            #self.screenWrapper.click(pos.x, pos.y)
+            #time.sleep(1)
+            #log.debug('checkRaidscreen: RAID-tab clicked')
             return False
+        #return True
+        else:
+            log.debug('checkRaidscreen: RAID-tab found')
+            #log.warning('checkRaidscreen: Could not locate RAID-tab')
+            return True
 
     def checkNearby(self, filename, hash):
-        if not self.__checkRaidTabOnScreen(filename, hash):
+        if not self.__checkRaidLine(filename, hash):
+            #self.__checkRaidTabOnScreen(filename, hash):
             #RAID Tab not visible => not on Nearby screen
             log.info('Raidscreen not running...')
             posNearby = self.resolutionCalculator.getNearbyClick()
             self.screenWrapper.click(posNearby.x, posNearby.y)
-            time.sleep(1)
+            time.sleep(2)
             posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
             self.screenWrapper.click(posRaids.x, posRaids.y)
             return False
@@ -347,7 +349,7 @@ class PogoWindows:
 
         log.debug('__checkClosePresent: checking bounds %s' % str(bounds))
         closeButton = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = self.tempDirPath + "/" + str(hash) + "_xbutton.jpg"
+        tempPath = os.path.join(self.tempDirPath, str(hash) + '_xbutton.jpg')
         log.debug("TempPath: %s" % tempPath)
         cv2.imwrite(tempPath, closeButton)
 
@@ -356,7 +358,7 @@ class PogoWindows:
 
         mostPresentColour = self.__mostPresentColour(tempPath, width * height)
         log.debug("__checkClosePresent: found most present colour %s" % str(mostPresentColour))
-        os.remove(self.tempDirPath + "/" + str(hash) + "_xbutton.jpg")
+        os.remove(os.path.join(self.tempDirPath, str(hash) + '_xbutton.jpg'))
         return (mostPresentColour == (28, 135, 150)
             or mostPresentColour == (236, 252, 235)
             or mostPresentColour == (42, 119, 125)
