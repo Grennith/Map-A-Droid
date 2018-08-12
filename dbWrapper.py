@@ -171,7 +171,7 @@ class DbWrapper:
     def submitRaid(self, gym, pkm, lvl, start, end, type, raidNo, captureTime, MonWithNoEgg=False):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: Submitting raid')
         zero = datetime.datetime.now()
-        zero =  time.mktime(zero.timetuple())
+        zero =  time.mktime(zero.timetuple()) - (self.timezone * 60 * 60)
         now_timezone = datetime.datetime.fromtimestamp(float(captureTime))
         now_timezone =  time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
         now = datetime.datetime.now()
@@ -202,8 +202,8 @@ class DbWrapper:
                 'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
                 'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
                 'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
-            data = (gym, lvl, start, start, end, None, "999", "1", "1", now_timezone, #TODO: check None vs null?
-                lvl, start, start, end, None, "999", "1", "1", now_timezone)
+            data = (gym, lvl, zero, start, end, None, "999", "1", "1", now_timezone, #TODO: check None vs null?
+                lvl, zero, start, end, None, "999", "1", "1", now_timezone)
             #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
             cursor.execute(query, data)
         else:

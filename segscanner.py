@@ -300,17 +300,40 @@ class Scanner:
             #we could not find the gym...
             return None
 
-    def unknownfound(self, raidpic, type, zoom, raidNo, hash, lat=0, lng=0):
+    def unknownfound(self, raidpic, type, zoom, raidNo, hash, captureTime, lat=0, lng=0):
+        
+        if captureTime:
+            text = datetime.datetime.fromtimestamp(float(captureTime))
+            text = "Scanned: " + str(test.strftime("%Y-%m-%d %H:%M"))
+            self.addTextToCrop(raidpic, text)
+        
         raidpic = cv2.imread(raidpic)
         cv2.imwrite(self.unknownPath + "/" + str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +".jpg", raidpic)
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'unknownfound: Write unknown file: ' + str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +".jpg")
         return True
         
-    def successfound(self, raidpic, type, gymId, raidNo, lvl, mon=0):
+    def addTextToCrop(self, picture, text):
+        from PIL import Image, ImageFont, ImageDraw
+        img = Image.open(picture)
+        draw = ImageDraw.Draw(img)
+        font = ImageFont.truetype('font/arial.ttf', 10)
+        x,y = 0,0
+        
+        w, h = font.getsize(text)
+        draw.rectangle((x, y, x + img.size[0] , y + h + 1), fill='black')
+        draw.text((x, y),text,(255,255,255),font=font)
+        img.save(picture)
+        
+    def successfound(self, raidpic, type, gymId, raidNo, lvl, captureTime, mon=0):
         if not args.save_success:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'successfound: Saving submit raidpics is disable')
-            return True
+            return
         
+        
+        text = datetime.datetime.fromtimestamp(float(captureTime))
+        text = "Scanned: " + str(test.strftime("%Y-%m-%d %H:%M"))
+        self.addTextToCrop(raidpic, text)
+
         if not os.path.exists(args.successsave_path):
             log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'successfound: Save directory created')
             os.makedirs(args.successsave_path)
@@ -477,7 +500,7 @@ class Scanner:
             if not monFound[0]:
                 #we could not determine the mon... let's move the crop to unknown and stop analysing
                 log.error('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine mon in crop, aborting and moving crop to unknown')
-                self.unknownfound(filenameOfCrop, 'mon', False, raidNo, hash, captureLat, captureLng)
+                self.unknownfound(filenameOfCrop, 'mon', False, raidNo, hash, captureTime, captureLat, captureLng)
                 log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: could not determine mon, aborting analysis')
                 os.remove(raidhashPic)
                 os.remove(filenameOfCrop)
@@ -493,8 +516,8 @@ class Scanner:
         if gymId is None:
             #gym unknown...
             log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine gym, aborting analysis')
-            self.unknownfound(filenameOfCrop, 'gym', False, raidNo, hash, captureLat, captureLng)
-            self.unknownfound(raidhashPic, 'gym_crop', False, raidNo, hash, captureLat, captureLng)
+            self.unknownfound(filenameOfCrop, 'gym', False, raidNo, hash, captureTime, captureLat, captureLng)
+            self.unknownfound(raidhashPic, 'gym_crop', False, raidNo, hash, False, captureLat, captureLng)
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
@@ -504,7 +527,7 @@ class Scanner:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found egg level %s starting at %s and ending at %s. GymID: %s' % (raidlevel, raidstart, raidend, gymId))
             submitStatus = self.dbWrapper.submitRaid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG', raidNo, captureTime)
             if submitStatus:
-                self.successfound(filenameOfCrop, 'EGG', gymId, raidNo, raidlevel)
+                self.successfound(filenameOfCrop, 'EGG', gymId, raidNo, raidlevel, captureTime)
             raidHashJson = self.encodeHashJson(gymId, raidlevel, False, raidNo)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Adding Raidhash to Database')
             #self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
@@ -525,7 +548,7 @@ class Scanner:
                 submitStatus = self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON', raidNo, captureTime)
                 
             if submitStatus:
-                self.successfound(filenameOfCrop, 'MON', gymId, raidNo, raidlevel, str(monFound[0]))
+                self.successfound(filenameOfCrop, 'MON', gymId, raidNo, raidlevel, captureTime, str(monFound[0]))
 
             raidHashJson = self.encodeHashJson(gymId, raidlevel, monFound[0], raidNo)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Adding Raidhash to Database')
