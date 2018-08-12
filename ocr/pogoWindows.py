@@ -50,12 +50,12 @@ class PogoWindows:
         except TypeError:
             return None
 
-    def __checkPostLoginOkButton(self, filename, hash, type):
+    def __checkPostLoginOkButton(self, filename, hash, type, ratio):
         if not os.path.isfile(filename):
             return False
         log.debug('checkPostLoginOkButton: Checking for post-login ok button of type %s...' % type)
 
-        if not self.__lookForButton(filename, 2.20, 26):
+        if not self.__lookForButton(filename, 2.20, ratio):
             log.debug('checkPostLoginOkButton: Could not find OK button')
             return False
         else:
@@ -70,8 +70,8 @@ class PogoWindows:
 
     def checkPostLoginOkButton(self, filename, hash):
         log.debug('checkPostLoginOkButton: Starting check')
-        return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving')
-            or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property'))
+        return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving', 26)
+            or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property', 17))
 
     def __readCircleCount(self,filename,hash,ratio):
         log.debug("__readCircleCount: Reading circles")
@@ -100,8 +100,6 @@ class PogoWindows:
         else:
             log.debug("__readCircleCount: Determined screenshot to have 0 Circle")
             return -1
-
-
 
     def readRaidCircles(self, filename, hash):
         log.debug("readCircles: Reading circles")
