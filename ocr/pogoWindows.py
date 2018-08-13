@@ -73,7 +73,7 @@ class PogoWindows:
         return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving', 26)
             or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property', 17))
 
-    def __readCircleCount(self,filename,hash,ratio):
+    def __readCircleCount(self,filename,hash,ratio, xcord = False):
         log.debug("__readCircleCount: Reading circles")
 
         screenshotRead = cv2.imread(filename)
@@ -93,7 +93,11 @@ class PogoWindows:
             circles = np.round(circles[0, :]).astype("int")
             # loop over the (x, y) coordinates and radius of the circles
             for (x, y, r) in circles:
-                circle += 1
+                if not xcord:
+                    circle += 1
+                else:
+                    if x >= (width/2)-100 and x <= (width/2)+100 and y>=(width-(width/3)):
+                        circle += 1
 
             log.debug("__readCircleCount: Determined screenshot to have " + str(circle) + " Circle.")
             return circle
@@ -130,9 +134,9 @@ class PogoWindows:
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
         maxLineLength = width / ratio + 15
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 25
+        minLineLength = 0
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
-        maxLineGap = 10
+        maxLineGap = 50
         lineCount = 0
         lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
         for line in lines:
@@ -337,32 +341,15 @@ class PogoWindows:
         if not os.path.isfile(filename):
             log.warning("__checkClosePresent: %s does not exist" % str(filename))
             return False
-
-        bounds = None
-        col = cv2.imread(filename)
-        if (windowsToCheck == 'news_or_quest'):
-            log.debug('__checkClosePresent: Checking for news or quest close button')
-            bounds = self.resolutionCalculator.getNewsQuestCloseButtonBounds()
-        else:
-            log.debug('__checkClosePresent: Checking for menu or raids close button')
-            bounds = self.resolutionCalculator.getMenuRaidsCloseButtonBounds()
-
-        log.debug('__checkClosePresent: checking bounds %s' % str(bounds))
-        closeButton = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = os.path.join(self.tempDirPath, str(hash) + '_xbutton.jpg')
-        log.debug("TempPath: %s" % tempPath)
-        cv2.imwrite(tempPath, closeButton)
-
-        im = Image.open(tempPath)
-        width, height = im.size
-
-        mostPresentColour = self.__mostPresentColour(tempPath, width * height)
-        log.debug("__checkClosePresent: found most present colour %s" % str(mostPresentColour))
-        os.remove(os.path.join(self.tempDirPath, str(hash) + '_xbutton.jpg'))
-        return (mostPresentColour == (28, 135, 150)
-            or mostPresentColour == (236, 252, 235)
-            or mostPresentColour == (42, 119, 125)
-            or mostPresentColour == (29, 134, 153))
+            
+        image = cv2.imread(filename)
+        height, width, _ = image.shape
+        image = image[int(height/2):int(height),int(0):int(width)]
+        cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), image)
+            
+            
+        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash, 12, True) > 0:
+            return True
 
     def isNewsQuestCloseButtonPresent(self, filename, hash):
         return self.__checkClosePresent(filename, hash, 'news_or_quest')

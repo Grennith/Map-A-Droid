@@ -5,11 +5,13 @@ import datetime
 import collections
 import datetime
 import time
+from webhook import send_webhook
+from walkerArgs import parseArgs
 
 log = logging.getLogger(__name__)
 
 RaidLocation = collections.namedtuple('RaidLocation', ['latitude', 'longitude'])
-
+args = parseArgs()
 
 class DbWrapper:
     def __init__(self, host, port, user, password, database, timezone, uniqueHash = "123"):
@@ -92,16 +94,16 @@ class DbWrapper:
             return None
         cursor = connection.cursor()
 
-        #query = (' SELECT  id, BIT_COUNT( ' +
-        #         ' CONV(hash, 16, 10) ^ CONV(\'' + str(imghash) + '\', 16, 10) ' +
-        #         ' ) as hamming_distance, type ' +
-        #         ' FROM trshash ' +
-        #         ' HAVING hamming_distance < 2 and type = \'' + str(type) + '\'' +
-        #         ' ORDER BY hamming_distance ASC')
-                 
-        query = (' SELECT  id, type ' +
+        query = (' SELECT  id, BIT_COUNT( ' +
+                 ' CONV(hash, 16, 10) ^ CONV(\'' + str(imghash) + '\', 16, 10) ' +
+                 ' ) as hamming_distance, type ' +
                  ' FROM trshash ' +
-                 ' where hash = \'' + str(imghash) + '\' and type = \'' + str(type) + '\'')       
+                 ' HAVING hamming_distance < 4 and type = \'' + str(type) + '\'' +
+                 ' ORDER BY hamming_distance ASC')
+                 
+        #query = (' SELECT  id, type ' +
+        #         ' FROM trshash ' +
+        #         ' where hash = \'' + str(imghash) + '\' and type = \'' + str(type) + '\'')       
             
 
         #query = (' SELECT id FROM trshash ' +
@@ -190,6 +192,8 @@ class DbWrapper:
         except:
             log.error("Could not connect to the SQL database")
             return False
+            
+        wh_send = False
 
         cursor = connection.cursor()
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: Submitting something of type %s' % type)
@@ -202,15 +206,30 @@ class DbWrapper:
                 'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
                 'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
                 'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
-            data = (gym, lvl, zero, start, end, None, "999", "1", "1", now_timezone, #TODO: check None vs null?
-                lvl, zero, start, end, None, "999", "1", "1", now_timezone)
-            #data = (lvl, start, start, end, None, "999", "1", "1", today1, guid)
+            data = (gym, lvl, start, start, end, None, "999", "1", "1", now_timezone, #TODO: check None vs null?
+                lvl, start, start, end, None, "999", "1", "1", now_timezone)
+
             cursor.execute(query, data)
+            
+            wh_send = True
+            wh_start = start
+            wh_end = end
+            
         else:
             log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s' % (pkm, lvl, today1, gym))
             if not MonWithNoEgg:
                 query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s) WHERE gym_id = %s "
                 data = (lvl, pkm, "999", "1", "1",  now_timezone, gym)
+                
+                foundEndTime, EndTime = self.getRaidEndtime(gym, raidNo)
+                
+                if foundEndTime:
+                    wh_send = True
+                    wh_start = int(EndTime)-2700
+                    wh_end = EndTime
+                else:
+                    wh_send = False
+                
             else:
                 query = (' INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, ' +
                     'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
@@ -219,12 +238,20 @@ class DbWrapper:
                     'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
                 data = (gym, lvl, int(zero)-10000, int(zero)-10000, end, pkm, "999", "1", "1", now_timezone, #TODO: check None vs null?
                     lvl, int(zero)-10000, int(zero)-10000, end, pkm, "999", "1", "1", now_timezone)
+                
+                wh_send = True    
+                wh_start = int(end)-2700
+                wh_end = end
 
             cursor.execute(query, data)
 
         connection.commit()
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: Submit finished')
         self.refreshTimes(gym, raidNo, captureTime)
+        
+        if args.webhook and wh_send:
+            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: Send webhook')
+            send_webhook(gym, 'RAID', wh_start, wh_end, lvl, pkm)
 
         return True
 
@@ -254,7 +281,35 @@ class DbWrapper:
 
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'readRaidEndtime: Endtime is new - submitting')
         return False
+        
+    def getRaidEndtime(self, gym, raidNo):
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Check DB for existing mon')
+        now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
+        try:
+            connection = mysql.connector.connect(host = self.host,
+            user = self.user, port = self.port, passwd = self.password,
+            db = self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
 
+        cursor = connection.cursor()
+        query = (' SELECT UNIX_TIMESTAMP(raid.end) FROM raid ' +
+            ' WHERE STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\'')
+        cursor.execute(query)
+        result=cursor.fetchone()
+        number_of_rows=result[0]
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Found Rows: %s' % str(number_of_rows))
+        rows_affected=number_of_rows
+        
+        if number_of_rows > 0:
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Returning found endtime')
+            for row in data:
+                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: ID: ' + str(row[0]))
+                return True, row[0]
+        else:
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: No matching endtime found')
+            return False, None
 
     def raidExist(self, gym, type, raidNo):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'raidExist: Check DB for existing entry')
@@ -351,7 +406,7 @@ class DbWrapper:
             ' ) ' +
             ' ) AS distance ' +
             ' FROM gym ' +
-            ' HAVING distance <= 1.7 ' +
+            ' HAVING distance <= 2 ' +
             ' ORDER BY distance')
             
         cursor.execute(query)

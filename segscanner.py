@@ -273,12 +273,12 @@ class Scanner:
             for closegym in closestGymIds:
 
                 for file in glob.glob("gym_img/*" + closegym[0] + "*.jpg"):
-                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.65, raidNo, hash, x1, x2, y1, y2)
+                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.80, raidNo, hash, x1, x2, y1, y2)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Compare Gym-ID - ' + str(closegym[0]) + ' - Match: ' + str(find_gym))
                     if foundgym is None or find_gym > foundgym[0]:
     	        	    foundgym = find_gym, file
 
-                    if foundgym and foundgym[0]>=0.65:
+                    if foundgym and foundgym[0]>=0.80:
                         #okay, we very likely found our gym
                         gymSplit = foundgym[1].split('_')
                         gymId = gymSplit[2]
@@ -300,7 +300,7 @@ class Scanner:
             #we could not find the gym...
             return None
 
-    def unknownfound(self, raidpic, type, zoom, raidNo, hash, captureTime, lat=0, lng=0):
+    def unknownfound(self, raidpic, type, zoom, raidNo, hash, captureTime, imageHash =0, lat=0, lng=0):
         
         if captureTime:
             text = datetime.datetime.fromtimestamp(float(captureTime))
@@ -308,7 +308,7 @@ class Scanner:
             self.addTextToCrop(raidpic, text)
         
         raidpic = cv2.imread(raidpic)
-        cv2.imwrite(os.path.join(self.unknownPath, str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +".jpg"), raidpic)
+        cv2.imwrite(os.path.join(self.unknownPath, str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +  "_" + str(imageHash) +".jpg"), raidpic)
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'unknownfound: Write unknown file: ' + str(type) + "_" + str(lat) + "_" + str(lng) + "_" + str(time.time()) +".jpg")
         return True
         
@@ -500,7 +500,7 @@ class Scanner:
             if not monFound[0]:
                 #we could not determine the mon... let's move the crop to unknown and stop analysing
                 log.error('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine mon in crop, aborting and moving crop to unknown')
-                self.unknownfound(filenameOfCrop, 'mon', False, raidNo, hash, captureTime, captureLat, captureLng)
+                self.unknownfound(filenameOfCrop, 'mon', False, raidNo, hash, captureTime, False, captureLat, captureLng)
                 log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: could not determine mon, aborting analysis')
                 os.remove(raidhashPic)
                 os.remove(filenameOfCrop)
@@ -516,8 +516,9 @@ class Scanner:
         if gymId is None:
             #gym unknown...
             log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine gym, aborting analysis')
-            self.unknownfound(filenameOfCrop, 'gym', False, raidNo, hash, captureTime, captureLat, captureLng)
-            self.unknownfound(raidhashPic, 'gym_crop', False, raidNo, hash, False, captureLat, captureLng)
+            gymhash = self.getImageHash(raidhashPic, True, raidNo, x1=25, x2=50, y1=50, y2=80)
+            self.unknownfound(filenameOfCrop, 'gym', False, raidNo, hash, captureTime, False, captureLat, captureLng)
+            self.unknownfound(raidhashPic, 'gym_crop', False, raidNo, hash, False, gymhash, captureLat, captureLng)
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
             log.debug("start_detect[crop %s]: finished" % str(raidNo))
@@ -630,6 +631,25 @@ class Scanner:
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'imageHash: Adding Hash to Database')
 
         self.dbWrapper.insertHash(str(imageHash), str(type), str(id), raidNo)
+
+    def getImageHash(self, image, zoom, raidNo, x1=25, x2=50, y1=50, y2=80, hashSize=8):
+        image2 = cv2.imread(image,3)
+        image2 = cv2.cvtColor(image2, cv2.COLOR_BGR2GRAY)
+        if zoom:
+            crop = image2[int(y1):int(y2),int(x1):int(x2)]
+        else:
+            crop = image2
+
+        tempHash = os.path.join(self.tempPath, str(time.time()) + "_" + str(raidNo) + "temphash_new.jpg")
+        cv2.imwrite(tempHash, crop)
+        hashPic = Image.open(tempHash)
+        imageHash = self.dhash(hashPic, raidNo)
+
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' +  'imageHash: ' + str(imageHash))
+
+        os.remove(tempHash)
+
+        return imageHash
 
     def checkHourMin(self, hour_min):
         hour_min[0] = unicode(hour_min[0].replace('O','0').replace('o','0').replace('A','4'))
