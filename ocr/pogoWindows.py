@@ -132,13 +132,17 @@ class PogoWindows:
         height, width, _ = screenshotRead.shape
         log.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
-        maxLineLength = width / ratio + 15
+        maxLineLength = width / ratio + 25
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = 0
+        minLineLength = width / ratio - 30
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
         maxLineGap = 50
         lineCount = 0
+        lines = []
         lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
+        if lines is None:
+            return False
+            
         for line in lines:
             for x1,y1,x2,y2 in line:
                 if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and y1 > height/2:

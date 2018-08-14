@@ -214,6 +214,7 @@ class DbWrapper:
             wh_send = True
             wh_start = start
             wh_end = end
+            pkm = 0
             
         else:
             log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s' % (pkm, lvl, today1, gym))
@@ -297,8 +298,8 @@ class DbWrapper:
         query = (' SELECT UNIX_TIMESTAMP(raid.end) FROM raid ' +
             ' WHERE STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\'')
         cursor.execute(query)
-        result=cursor.fetchone()
-        number_of_rows=result[0]
+        data = cursor.fetchall()
+        number_of_rows=data[0]
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Found Rows: %s' % str(number_of_rows))
         rows_affected=number_of_rows
         

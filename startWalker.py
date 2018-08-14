@@ -456,7 +456,7 @@ def main_thread():
     dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
     updateRaidQueue(dbWrapper)
     lastRaidQueueUpdate = time.time()
-
+    
     if not sleep:
         turnScreenOnAndStartPogo()
 

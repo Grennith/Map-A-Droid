@@ -13,9 +13,10 @@ sys.setdefaultencoding('utf8')
 log = logging.getLogger(__name__)
 args = parseArgs()
 
+webhook_payload = {}
 
-WH_PAYLOAD = """
-    [{{
+
+webhook_payload['other'] =     """[{{
       "message": {{
         "name": "{name_id}",
         "latitude": {lat},
@@ -31,9 +32,41 @@ WH_PAYLOAD = """
         "team": {team}
       }},
       "type": "{type}"
+   }} ]"""
+
+
+webhook_payload['PA_gyminfos'] = """
+    [{{
+      "message": {{
+        "name": "{name_id}",
+        "url": "{url}",
+        "description": "{description}",
+        "latitude": {lat},
+        "longitude": {lon},
+        "id": "{ext_id}",
+        "team": {team}
+      }},
+      "type": "gym_details"
    }} ]
 """
 
+webhook_payload['PA_raid'] = """
+    [{{
+      "message": {{
+        "latitude": {lat},
+        "longitude": {lon},
+        "level": {lvl},
+        "pokemon_id": {poke_id},
+        "end": {end},
+        "start": {hatch_time},
+        "cp": {cp},
+        "move_1": {move_1},
+        "move_2": {move_2},
+        "gymid": "{ext_id}"
+      }},
+      "type": "raid"
+   }} ]
+"""
 
 def send_webhook(gymid, type, start, end, lvl, mon=0):
     
@@ -57,13 +90,20 @@ def send_webhook(gymid, type, start, end, lvl, mon=0):
     name = 'unknown'
     lat = '0'
     lon = '0'
+    url = '0'
+    description = ''
     
     if str(gymid) in data:
-        name = data[str(gymid)]["name"]
+        name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
         lat = data[str(gymid)]["latitude"]
         lon = data[str(gymid)]["longitude"]
+        url = data[str(gymid)]["url"]
+        description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '')
     
-    payload_raw = WH_PAYLOAD.format(
+    for whtyp in args.webhook_type:
+        log.debug('Using WH Type: ' + str(whtyp))
+    
+        payload_raw = webhook_payload[whtyp].format(
                 ext_id=gymid,
                 lat=lat,
                 lon=lon,
@@ -78,10 +118,13 @@ def send_webhook(gymid, type, start, end, lvl, mon=0):
                 cp = cp,
                 form = form,
                 team = team,
-                type=type_)
-    log.debug(payload_raw)
-    payload = json.loads(payload_raw)
-    response = requests.post(
+                type=type_,
+                url=url,
+                description=description
+                )
+
+        payload = json.loads(payload_raw)
+        response = requests.post(
                 args.webhook_url, data=json.dumps(payload),
                 headers={'Content-Type': 'application/json'}
             )
@@ -89,7 +132,7 @@ def send_webhook(gymid, type, start, end, lvl, mon=0):
     
     
 if __name__ == '__main__':
-    send_webhook('0c4ddebbfdb44bd78cc3264e8c8c6232.1', 'EGG', '1534163280', '1534165980', '3', '004')
+    send_webhook('0c4ddebbfdb44bd78cc3264e8c8c6232.16', 'EGG', '1534163280', '1534165980', '3', '004')
     
     
     

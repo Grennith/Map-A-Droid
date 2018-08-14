@@ -159,10 +159,11 @@ def parseArgs():
 
     #webhook
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
-            help=('Active webhook support'))
-            
+            help=('Active webhook support'))    
     parser.add_argument('-whurl', '--webhook_url', default='',
-            help=('URL to receive webhooks'))            
+            help=('URL to receive webhooks'))
+    parser.add_argument('-whtype', '--webhook_type', default=[], action='append',
+            help=('Select types of webhook f.e. [PA_gyminfos, PA_raid, other]'))            
 
     #log settings
     parser.add_argument('--no-file-logs',
