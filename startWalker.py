@@ -457,9 +457,6 @@ def main_thread():
     updateRaidQueue(dbWrapper)
     lastRaidQueueUpdate = time.time()
 
-    if not sleep:
-        turnScreenOnAndStartPogo()
-
     if lastPogoRestart is None:
         lastPogoRestart = time.time()
 
@@ -468,6 +465,9 @@ def main_thread():
     log.info("main: Route to be taken: %s, amount of coords: %s" % (str(route), str(len(route))))
     log.info("main: Max_distance before teleporting: %s" % args.max_distance)
     log.info("main: Checking if screen is on and pogo is running")
+
+    if not sleep:
+        turnScreenOnAndStartPogo()
 
     emptycount = 0
     locationCount = 0
