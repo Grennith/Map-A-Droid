@@ -43,7 +43,7 @@ webhook_payload['PA_gyminfos'] = """
         "description": "{description}",
         "latitude": {lat},
         "longitude": {lon},
-        "id": "{ext_id}",
+        "gymid": "{ext_id}",
         "team": {team}
       }},
       "type": "gym_details"
