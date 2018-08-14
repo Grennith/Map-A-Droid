@@ -131,15 +131,16 @@ class PogoWindows:
         gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
         log.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
+        gray = cv2.GaussianBlur(gray,(5, 5), 0)
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
-        maxLineLength = width / ratio + 25
+        maxLineLength = width / ratio + 15
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 30
+        minLineLength = width / 4.22 - 50
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
         maxLineGap = 50
         lineCount = 0
         lines = []
-        lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
+        lines = cv2.HoughLinesP(edges,1,np.pi/180,160,maxLineGap, minLineLength)
         if lines is None:
             return False
             
@@ -282,7 +283,7 @@ class PogoWindows:
             log.info('Raidscreen not running...')
             posNearby = self.resolutionCalculator.getNearbyClick()
             self.screenWrapper.click(posNearby.x, posNearby.y)
-            time.sleep(2)
+            time.sleep(.5)
             posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
             self.screenWrapper.click(posRaids.x, posRaids.y)
             return False
@@ -310,7 +311,7 @@ class PogoWindows:
 
         log.debug('checkSpeedwarning: Checking for speed-warning ...')
 
-        if not self.__lookForButton(filename, 1.60):
+        if not self.__lookForButton(filename, 1.60, 6.3):
             log.debug('checkSpeedwarning: No speedmessage found')
             return False
         else:
