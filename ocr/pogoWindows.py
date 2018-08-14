@@ -366,7 +366,7 @@ class PogoWindows:
     #checks for X button on any screen... could kill raidscreen, handle properly
     def checkCloseExceptNearbyButton(self, filename, hash):
         if (not os.path.isfile(filename)
-            or self.__checkRaidTabOnScreen(filename, hash)):
+            or self.__checkRaidLine(filename, hash)):
             #file not found or raid tab present
             log.debug("Not checking for close button (X). Input wrong OR nearby window open")
             return False
