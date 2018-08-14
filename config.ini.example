@@ -106,5 +106,6 @@ timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Ge
 # webhook
 ######################
 
-#webhook                     # active support for webhooks
-#webhook_url:                # URL endpoint for your webhooks
+#webhook                     # active support for webhook
+#webhook_url:                # URL endpoint for your webhook
+#webhook_type: [x,y,z]       # which webhook type should be send. selection: [PA_gyminfos, PA_raid, other]
