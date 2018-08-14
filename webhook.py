@@ -43,7 +43,7 @@ webhook_payload['PA_gyminfos'] = """
         "description": "{description}",
         "latitude": {lat},
         "longitude": {lon},
-        "gymid": "{ext_id}",
+        "id": "{ext_id}",
         "team": {team}
       }},
       "type": "gym_details"
@@ -62,7 +62,7 @@ webhook_payload['PA_raid'] = """
         "cp": {cp},
         "move_1": {move_1},
         "move_2": {move_2},
-        "gymid": "{ext_id}"
+        "gym_id": "{ext_id}"
       }},
       "type": "raid"
    }} ]

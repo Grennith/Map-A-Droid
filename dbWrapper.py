@@ -297,13 +297,12 @@ class DbWrapper:
         cursor = connection.cursor()
         query = (' SELECT UNIX_TIMESTAMP(raid.end) FROM raid ' +
             ' WHERE STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\'')
-        cursor.execute(query)
-        data = cursor.fetchall()
-        number_of_rows=data[0]
+        number_of_rows = cursor.execute(query)
+        
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Found Rows: %s' % str(number_of_rows))
-        rows_affected=number_of_rows
         
         if number_of_rows > 0:
+            data = cursor.fetchall()
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Returning found endtime')
             for row in data:
                 log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: ID: ' + str(row[0]))
