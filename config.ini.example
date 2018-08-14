@@ -102,3 +102,10 @@ timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Ge
 
 #latlngleft:                 # download gym cords from this param f.e. [47.1, 47.2]
 #latlngright:                # download gym cords to this param  f.e. [9.1, 9.5]
+
+# webhook
+######################
+
+#webhook                     # active support for webhook
+#webhook_url:                # URL endpoint for your webhook
+#webhook_type: [x,y,z]       # which webhook type should be send. selection: [PA_gyminfos, PA_raid, other]

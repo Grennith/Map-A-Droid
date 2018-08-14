@@ -157,6 +157,14 @@ def parseArgs():
     parser.add_argument('-latlngright', '--latlngright', default=[], action='append',
             help=('download gym cords to this param  f.e. [9.1, 9.5]'))
 
+    #webhook
+    parser.add_argument('-wh', '--webhook', action='store_true', default=False,
+            help=('Active webhook support'))    
+    parser.add_argument('-whurl', '--webhook_url', default='',
+            help=('URL to receive webhooks'))
+    parser.add_argument('-whtype', '--webhook_type', default=[], action='append',
+            help=('Select types of webhook f.e. [PA_gyminfos, PA_raid, other]'))            
+
     #log settings
     parser.add_argument('--no-file-logs',
                         help=('Disable logging to files. ' +

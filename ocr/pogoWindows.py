@@ -73,7 +73,7 @@ class PogoWindows:
         return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving', 26)
             or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property', 17))
 
-    def __readCircleCount(self,filename,hash,ratio):
+    def __readCircleCount(self,filename,hash,ratio, xcord = False):
         log.debug("__readCircleCount: Reading circles")
 
         screenshotRead = cv2.imread(filename)
@@ -93,7 +93,11 @@ class PogoWindows:
             circles = np.round(circles[0, :]).astype("int")
             # loop over the (x, y) coordinates and radius of the circles
             for (x, y, r) in circles:
-                circle += 1
+                if not xcord:
+                    circle += 1
+                else:
+                    if x >= (width/2)-100 and x <= (width/2)+100 and y>=(width-(width/3)):
+                        circle += 1
 
             log.debug("__readCircleCount: Determined screenshot to have " + str(circle) + " Circle.")
             return circle
@@ -127,14 +131,19 @@ class PogoWindows:
         gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
         log.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
+        gray = cv2.GaussianBlur(gray,(5, 5), 0)
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
         maxLineLength = width / ratio + 15
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 25
+        minLineLength = width / 4.22 - 50
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
-        maxLineGap = 10
+        maxLineGap = 50
         lineCount = 0
-        lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
+        lines = []
+        lines = cv2.HoughLinesP(edges,1,np.pi/180,160,maxLineGap, minLineLength)
+        if lines is None:
+            return False
+            
         for line in lines:
             for x1,y1,x2,y2 in line:
                 if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and y1 > height/2:
@@ -274,7 +283,7 @@ class PogoWindows:
             log.info('Raidscreen not running...')
             posNearby = self.resolutionCalculator.getNearbyClick()
             self.screenWrapper.click(posNearby.x, posNearby.y)
-            time.sleep(2)
+            time.sleep(.5)
             posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
             self.screenWrapper.click(posRaids.x, posRaids.y)
             return False
@@ -302,7 +311,7 @@ class PogoWindows:
 
         log.debug('checkSpeedwarning: Checking for speed-warning ...')
 
-        if not self.__lookForButton(filename, 1.60):
+        if not self.__lookForButton(filename, 1.60, 6.3):
             log.debug('checkSpeedwarning: No speedmessage found')
             return False
         else:
@@ -337,32 +346,15 @@ class PogoWindows:
         if not os.path.isfile(filename):
             log.warning("__checkClosePresent: %s does not exist" % str(filename))
             return False
-
-        bounds = None
-        col = cv2.imread(filename)
-        if (windowsToCheck == 'news_or_quest'):
-            log.debug('__checkClosePresent: Checking for news or quest close button')
-            bounds = self.resolutionCalculator.getNewsQuestCloseButtonBounds()
-        else:
-            log.debug('__checkClosePresent: Checking for menu or raids close button')
-            bounds = self.resolutionCalculator.getMenuRaidsCloseButtonBounds()
-
-        log.debug('__checkClosePresent: checking bounds %s' % str(bounds))
-        closeButton = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = os.path.join(self.tempDirPath, str(hash) + '_xbutton.jpg')
-        log.debug("TempPath: %s" % tempPath)
-        cv2.imwrite(tempPath, closeButton)
-
-        im = Image.open(tempPath)
-        width, height = im.size
-
-        mostPresentColour = self.__mostPresentColour(tempPath, width * height)
-        log.debug("__checkClosePresent: found most present colour %s" % str(mostPresentColour))
-        os.remove(os.path.join(self.tempDirPath, str(hash) + '_xbutton.jpg'))
-        return (mostPresentColour == (28, 135, 150)
-            or mostPresentColour == (236, 252, 235)
-            or mostPresentColour == (42, 119, 125)
-            or mostPresentColour == (29, 134, 153))
+            
+        image = cv2.imread(filename)
+        height, width, _ = image.shape
+        image = image[int(height/2):int(height),int(0):int(width)]
+        cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), image)
+            
+            
+        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash, 12, True) > 0:
+            return True
 
     def isNewsQuestCloseButtonPresent(self, filename, hash):
         return self.__checkClosePresent(filename, hash, 'news_or_quest')
@@ -374,7 +366,7 @@ class PogoWindows:
     #checks for X button on any screen... could kill raidscreen, handle properly
     def checkCloseExceptNearbyButton(self, filename, hash):
         if (not os.path.isfile(filename)
-            or self.__checkRaidTabOnScreen(filename, hash)):
+            or self.__checkRaidLine(filename, hash)):
             #file not found or raid tab present
             log.debug("Not checking for close button (X). Input wrong OR nearby window open")
             return False
