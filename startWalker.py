@@ -367,6 +367,7 @@ def getToRaidscreen(maxAttempts, checkAll=False):
         if not found:
             log.info("getToRaidscreen: Previous checks found nothing. Checking nearby open")
             pogoWindowManager.checkNearby('screenshot.png', 123)
+            
         log.info("getToRaidscreen: Attempting to retrieve screenshot checking windows")
         if screenWrapper.getScreenshot('screenshot.png'):
             lastScreenshotTaken = time.time()

@@ -84,8 +84,8 @@ class PogoWindows:
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
 
-        radMin = int((width / ratio - 10) / 2)
-        radMax = int((width / ratio + 10) / 2)
+        radMin = int((width / float(ratio) - 3) / 2)
+        radMax = int((width / float(ratio) + 3) / 2)
         log.debug("__readCircleCount: Detect radius of circle: Min " + str(radMin) + " Max " + str(radMax))
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,1,width / 8,param1=100,param2=15,minRadius=radMin,maxRadius=radMax)
         circle = 0
@@ -175,28 +175,41 @@ class PogoWindows:
         log.debug("lookForButton: Button not found")
         return False
 
-    def __checkRaidLine(self, filename, hash):
-        log.debug("checkRaidLine: Reading lines")
+    def __checkRaidLine(self, filename, hash, leftSide = False):
+        log.debug("__checkRaidLine: Reading lines")
+        if leftSide:
+            log.debug("__checkRaidLine: Check nearby open " )
         screenshotRead = cv2.imread(filename)
         gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
-        grfay = cv2.GaussianBlur(gray,(5, 5), 0)
+        gray = cv2.GaussianBlur(gray,(5, 5), 0)
         log.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
-        edges = cv2.Canny(gray,100,200,apertureSize = 3)
+        edges = cv2.Canny(gray,50,150,apertureSize = 3)
         maxLineLength = width / 3.30 + 30
         log.debug("__checkRaidLine: MaxLineLength:" + str(maxLineLength))
         minLineLength = width / 3.30 - 30
         log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
-        maxLineGap = 10
-        lines = cv2.HoughLinesP(edges,1,np.pi/180,160,maxLineGap,minLineLength)
+        maxLineGap = 50
+        lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
         if lines is None:
             return False
         for line in lines:
             for x1,y1,x2,y2 in line:
-                if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and x1 > width/2:
-                    log.debug("__checkRaidLine: Raid-tab is active - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
-                    return True
-        log.debug("__checkRaidLine: Raid-tab is not active")
+                if not leftSide:
+                    if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and x1 > width/2:
+                        log.debug("__checkRaidLine: Raid-tab is active - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
+                        return True
+                    #else:
+                        #log.debug("__checkRaidLine: Raid-tab is not active - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
+                        #return False
+                else:
+                    if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and x1 < width/2:
+                        log.debug("__checkRaidLine: Nearby is active - but not Raid-tab")
+                        return True
+                    #else:
+                        #log.debug("__checkRaidLine: Nearby not active - but maybe Raid-tab")
+                        #return False
+        log.debug("__checkRaidLine: Raid-tab or nearby is not active")
         return False
 
     def readAmountOfRaidsCircle(self, filename, hash):
@@ -268,31 +281,34 @@ class PogoWindows:
         #if self.__checkRaidTabOnScreen(filename, hash):
             #RAID Tab visible
             #log.debug('checkRaidscreen: RAID-tab found')
-        if not self.__checkRaidLine(filename, hash):
+        if self.__checkRaidLine(filename, hash, True):
                 #RAID Tab not active
             log.debug('checkRaidscreen: RAID-tab not activated')
-            #pos = self.resolutionCalculator.getNearbyRaidTabClick()
-            #self.screenWrapper.click(pos.x, pos.y)
-            self.checkNearby(filename, hash)
+            pos = self.resolutionCalculator.getNearbyRaidTabClick()
+            self.screenWrapper.click(pos.x, pos.y)
             time.sleep(1)
-            #log.debug('checkRaidscreen: RAID-tab clicked')
+            log.debug('checkRaidscreen: RAID-tab clicked')
             return False
-        #return True
-        else:
+        if self.__checkRaidLine(filename, hash):
             log.debug('checkRaidscreen: RAID-tab found')
-            #log.warning('checkRaidscreen: Could not locate RAID-tab')
             return True
 
+        log.debug('checkRaidscreen: nearby not found')
+            #log.warning('checkRaidscreen: Could not locate RAID-tab')
+        return False
+
     def checkNearby(self, filename, hash):
-        if not self.__checkRaidLine(filename, hash):
+        if (not self.__checkRaidLine(filename, hash) or
+            not self.__checkRaidLine(filename, hash, True)):
             #self.__checkRaidTabOnScreen(filename, hash):
             #RAID Tab not visible => not on Nearby screen
             log.info('Raidscreen not running...')
             posNearby = self.resolutionCalculator.getNearbyClick()
             self.screenWrapper.click(posNearby.x, posNearby.y)
-            time.sleep(.5)
+            time.sleep(1)
             posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
             self.screenWrapper.click(posRaids.x, posRaids.y)
+            time.sleep(1)
             return False
         else:
             log.info('Nearby already open')
@@ -356,13 +372,12 @@ class PogoWindows:
         if not os.path.isfile(filename):
             log.warning("__checkClosePresent: %s does not exist" % str(filename))
             return False
-            
+              
         image = cv2.imread(filename)
         height, width, _ = image.shape
-        image = image[int(height/2):int(height),int(0):int(width)]
+        image = image[int(height)-int(height/4.5):int(height),int(width)/2-int(width)/8:int(width)/2+int(width)/8]
         cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), image)
-            
-            
+             
         if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash, 12, True) > 0:
             return True
 
@@ -375,7 +390,7 @@ class PogoWindows:
 
     #checks for X button on any screen... could kill raidscreen, handle properly
     def checkCloseExceptNearbyButton(self, filename, hash):
-        if (not os.path.isfile(filename)
+        if (not os.path.isfile(filename) 
             or self.__checkRaidLine(filename, hash)):
             #file not found or raid tab present
             log.debug("Not checking for close button (X). Input wrong OR nearby window open")
