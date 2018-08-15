@@ -108,7 +108,7 @@ def __getLessWithRelations(relations, maxAmountOfGymsToSumUpWithGym):
     if relations is None or len(relations) == 0:
         log.error("__getMaxSetInGivenSet: relations none or empty")
         return [] #TODO: return useful data...
-    
+
     #log.debug("__getLessWithRelations: Relations: %s" % str(relations))
     coordsToReturn = []
     while len(relations) > 0:
@@ -280,7 +280,8 @@ def getJsonRoute(filePath, gymDistance, maxAmountOfGymsToSumUpWithGym):
         log.info("less than 3 coordinates... not gonna take a shortest route on that")
         export_data = []
         for i in range(len(lessCoordinates)):
-            export_data.append(lessCoordinates[i])
+            export_data.append({'lat' : lessCoordinates[i][0].item(),
+                'lng' : lessCoordinates[i][1].item()})
         return export_data
 
     log.info("Calculating a short route through all those coords. Might take a while")

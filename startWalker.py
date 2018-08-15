@@ -307,8 +307,8 @@ def startPogo(withLock=True):
     startResult = telnMore.startApp("com.nianticlabs.pokemongo")
     reachedRaidtab = False
     if startResult is not None and "OK" in startResult:
-        log.warning("Starting pogo...")
-        #time.sleep(args.post_pogo_start_delay)
+        log.warning("startPogo: Starting pogo...")
+        time.sleep(args.post_pogo_start_delay)
         lastPogoRestart = curTime
 
         # let's handle the login and stuff
@@ -390,7 +390,7 @@ def turnScreenOnAndStartPogo():
         time.sleep(args.post_turn_screen_on_delay)
     # check if pogo is running and start it if necessary
     if not telnMore.isPogoTopmost():
-        log.warning("Starting Pogo")
+        log.warning("turnScreenOnAndStartPogo: Starting Pogo")
         startPogo()
 
 
