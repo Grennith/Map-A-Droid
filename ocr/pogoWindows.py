@@ -180,6 +180,7 @@ class PogoWindows:
         screenshotRead = cv2.imread(filename)
         gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
+        gray = cv2.GaussianBlur(gray,(5, 5), 0)
         log.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
         maxLineLength = width / 3.30 + 30
@@ -187,7 +188,7 @@ class PogoWindows:
         minLineLength = width / 3.30 - 30
         log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
         maxLineGap = 10
-        lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
+        lines = cv2.HoughLinesP(edges,1,np.pi/180,160,maxLineGap,minLineLength)
         if lines is None:
             return False
         for line in lines:
