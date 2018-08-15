@@ -144,11 +144,11 @@ class TelnetClient:
     def __setupSocket(self):
         self.__sock = socket.socket()
         attempts = 0
-        while not self.__connectSocket() and attempts < 10:
+        while not self.__connectSocket() and attempts < 1000:
             time.sleep(1)
             attempts += 1
-        if attempts >= 10:
-            log.fatal("__setupSocket: Failed to connect to RGC. Shutting down.")
+        if attempts >= 1000:
+            log.fatal("__setupSocket: Failed to connect to RGC 1000 times. Shutting down.")
             sys.exit(1)
 
         self.connected = True
