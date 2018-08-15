@@ -196,14 +196,14 @@ class PogoWindows:
         for line in lines:
             for x1,y1,x2,y2 in line:
                 if not leftSide:
-                    if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and x1 > width/2:
+                    if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and x1 > width/2 and y1<(height/2):
                         log.debug("__checkRaidLine: Raid-tab is active - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
                         return True
                     #else:
                         #log.debug("__checkRaidLine: Raid-tab is not active - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
                         #return False
                 else:
-                    if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and x1 < width/2:
+                    if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and x1 < width/2 and y1<(height/2):
                         log.debug("__checkRaidLine: Nearby is active - but not Raid-tab")
                         return True
                     #else:
