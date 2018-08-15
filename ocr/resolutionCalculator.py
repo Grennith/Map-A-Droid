@@ -89,6 +89,11 @@ class ResolutionCalc:
         #old concept for generic height
         #y = self.__getHeightMiddle() + 98.9 * (self.ppi / referencePpi)
         return self.__getClick('post_login_ok_driving')
+        
+    def getquitGameClick(self):
+        #old concept for generic height
+        #y = self.__getHeightMiddle() + 98.9 * (self.ppi / referencePpi)
+        return self.__getClick('quit_game_popup')
 
     def getPostLoginOkPrivatePropertyClick(self):
         #old concept for generic height

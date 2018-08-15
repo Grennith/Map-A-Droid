@@ -99,7 +99,7 @@ def send_webhook(gymid, type, start, end, lvl, mon=0):
         lon = data[str(gymid)]["longitude"]
         url = data[str(gymid)]["url"]
         if data[str(gymid)]["description"]:
-            description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '')
+            description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
     
     for whtyp in args.webhook_type:
         log.debug('Using WH Type: ' + str(whtyp))
@@ -133,7 +133,7 @@ def send_webhook(gymid, type, start, end, lvl, mon=0):
     
     
 if __name__ == '__main__':
-    send_webhook('0c4ddebbfdb44bd78cc3264e8c8c6232.16', 'EGG', '1534163280', '1534165980', '3', '004')
+    send_webhook('33578092c5554275a589bd1e144bbbcc.16', 'EGG', '1534163280', '1534165980', '5', '004')
     
     
     

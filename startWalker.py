@@ -403,7 +403,7 @@ def reopenRaidTab():
         screenWrapper.backButton()
         log.debug("reopenRaidTab: Closebutton was present, checking raidscreen...")
         telnMore.clearAppCache("com.nianticlabs.pokemongo")
-        time.sleep(0.7)
+        time.sleep(1)
         # screenWrapper.getScreenshot('screenshot.png')
         # pogoWindowManager.checkRaidscreen('screenshot.png', 123)
         getToRaidscreen(3)

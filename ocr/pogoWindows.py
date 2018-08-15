@@ -137,7 +137,7 @@ class PogoWindows:
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
         maxLineLength = width / ratio + 15
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / 4.22 - 50
+        minLineLength = width / ratio - 50
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
         maxLineGap = 50
         lineCount = 0
@@ -182,9 +182,9 @@ class PogoWindows:
         height, width, _ = screenshotRead.shape
         log.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
-        maxLineLength = width / 3.30
+        maxLineLength = width / 3.30 + 30
         log.debug("__checkRaidLine: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / 3.30 - 10
+        minLineLength = width / 3.30 - 30
         log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
         maxLineGap = 10
         lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
@@ -302,8 +302,10 @@ class PogoWindows:
             return False
 
         log.debug('checkGameQuitPopup: Checking for quit-game popup ...')
+        pos = None
+        pos = self.resolutionCalculator.getquitGameClick()
 
-        if not self.__lookForButton(filename, 2.20, 128):
+        if not self.__lookForButton(filename, 2.20, pos.y):
             log.debug('checkGameQuitPopup: Could not find quit popup')
             return False
         else:
