@@ -327,11 +327,23 @@ def getToRaidscreen(maxAttempts, checkAll=False):
     log.debug("getToRaidscreen: Trying to get to the raidscreen with %s max attempts..." % str(maxAttempts))
 
     log.info("getToRaidscreen: Attempting to retrieve screenshot before checking windows")
-    if not screenWrapper.getScreenshot('screenshot.png'):
-        log.error("getToRaidscreen: Failed retrieving screenshot before checking for closebutton")
-        return False
-    else:
-        lastScreenshotTaken = time.time()
+    # check if last screenshot is way too old to be of use...
+    # log.fatal(lastScreenshotTaken)
+    compareToTime = time.time() - lastScreenshotTaken
+    if not lastScreenshotTaken or compareToTime > 1:
+        log.info("getToRaidscreen: last screenshot too old, getting a new one")
+        # log.error("compareToTime: %s" % str(compareToTime))
+        # log.error("delayUsed: %s" % str(delayUsed))
+        if not screenWrapper.getScreenshot('screenshot.png'):
+            log.error("getToRaidscreen: Failed retrieving screenshot before checking windows")
+            return False
+            # failcount += 1
+            # TODO: consider proper errorhandling?
+            # even restart entire thing? VNC dead means we won't be using the device
+            # maybe send email? :D
+        else:
+            lastScreenshotTaken = time.time()
+
     attempts = 0
     while not pogoWindowManager.checkRaidscreen('screenshot.png', 123):
         if attempts > maxAttempts:
@@ -563,24 +575,6 @@ def main_thread():
                 windowLock.release()
                 continue
 
-            log.info("main: Attempting to retrieve screenshot before checking windows")
-            # check if last screenshot is way too old to be of use...
-            # log.fatal(lastScreenshotTaken)
-            compareToTime = time.time() - lastScreenshotTaken
-            if not lastScreenshotTaken or compareToTime > 1:
-                log.info("main: last screenshot too old, getting a new one")
-                # log.error("compareToTime: %s" % str(compareToTime))
-                # log.error("delayUsed: %s" % str(delayUsed))
-                if not screenWrapper.getScreenshot('screenshot.png'):
-                    log.error("main: Failed retrieving screenshot before checking windows")
-                    windowLock.release()
-                    break
-                    # failcount += 1
-                    # TODO: consider proper errorhandling?
-                    # even restart entire thing? VNC dead means we won't be using the device
-                    # maybe send email? :D
-                else:
-                    lastScreenshotTaken = time.time()
             while not getToRaidscreen(12):
                 if failcount > 5:
                     log.fatal("main: failed to find raidscreen way too often. Exiting")
