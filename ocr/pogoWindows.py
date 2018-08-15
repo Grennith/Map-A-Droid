@@ -84,8 +84,8 @@ class PogoWindows:
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
 
-        radMin = int((width / ratio - 3) / 2)
-        radMax = int((width / ratio + 3) / 2)
+        radMin = int((width / ratio - 10) / 2)
+        radMax = int((width / ratio + 10) / 2)
         log.debug("__readCircleCount: Detect radius of circle: Min " + str(radMin) + " Max " + str(radMax))
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,1,width / 8,param1=100,param2=15,minRadius=radMin,maxRadius=radMax)
         circle = 0
@@ -180,7 +180,7 @@ class PogoWindows:
         screenshotRead = cv2.imread(filename)
         gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
-        gray = cv2.GaussianBlur(gray,(5, 5), 0)
+        grfay = cv2.GaussianBlur(gray,(5, 5), 0)
         log.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
         maxLineLength = width / 3.30 + 30
