@@ -54,17 +54,19 @@ class PogoWindows:
         if not os.path.isfile(filename):
             return False
         log.debug('checkPostLoginOkButton: Checking for post-login ok button of type %s...' % type)
+        pos = None
+        if type == 'post_login_ok_driving':
+            pos = self.resolutionCalculator.getPostLoginOkDrivingClick()
+        else:
+            pos = self.resolutionCalculator.getPostLoginOkPrivatePropertyClick()
 
-        if not self.__lookForButton(filename, 2.20, ratio):
+        if not self.__lookForButton(filename, 2.20, pos.y):
             log.debug('checkPostLoginOkButton: Could not find OK button')
             return False
         else:
             log.debug('checkPostLoginOkButton: Found post login OK button - closing ...')
-            pos = None
-            if type == 'post_login_ok_driving':
-                pos = self.resolutionCalculator.getPostLoginOkDrivingClick()
-            else:
-                pos = self.resolutionCalculator.getPostLoginOkPrivatePropertyClick()
+            
+            
             self.screenWrapper.click(pos.x, pos.y)
             return True
 
@@ -96,7 +98,7 @@ class PogoWindows:
                 if not xcord:
                     circle += 1
                 else:
-                    if x >= (width/2)-100 and x <= (width/2)+100 and y>=(width-(width/3)):
+                    if x >= (width/2)-100 and x <= (width/2)+100 and y>=(height-(height/3)):
                         circle += 1
 
             log.debug("__readCircleCount: Determined screenshot to have " + str(circle) + " Circle.")
@@ -148,7 +150,7 @@ class PogoWindows:
             for x1,y1,x2,y2 in line:
                 if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and y1 > height/2:
                     lineCount += 1
-                    disToMiddle = y1 - (height/2) 
+                    disToMiddle = y1
             
                     if disToMiddleMin is None or disToMiddle < disToMiddleMin:
                 	    disToMiddleMin = disToMiddle
@@ -156,10 +158,11 @@ class PogoWindows:
                     log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
 
         if lineCount >= 1:
-            log.debug("lookForButton: disToMiddleMin: " + str(disToMiddleMin) + " - Ratio: " + str(height / disToMiddleMin))
+            log.debug("lookForButton: disToMiddleMin: " + str(disToMiddleMin))
+            log.debug("lookForButton: minmiddledist: " + str(minmiddledist))
             if minmiddledist:
-                log.debug("lookForButton: Check Ratio of button")
-                if ((height / disToMiddleMin)-2 < (minmiddledist) and (height / disToMiddleMin)+2 > (minmiddledist)):
+                log.debug("lookForButton: Check Y-cord of button")
+                if ((disToMiddleMin)-100 < (minmiddledist) and (disToMiddleMin)+100 > (minmiddledist)):
                     log.debug("lookForButton: Button found")
                     return True
                 else:
@@ -185,6 +188,8 @@ class PogoWindows:
         log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
         maxLineGap = 10
         lines = cv2.HoughLinesP(edges,1,np.pi/180,100,minLineLength,maxLineGap)
+        if lines is None:
+            return False
         for line in lines:
             for x1,y1,x2,y2 in line:
                 if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and x1 > width/2:
@@ -267,7 +272,8 @@ class PogoWindows:
             log.debug('checkRaidscreen: RAID-tab not activated')
             #pos = self.resolutionCalculator.getNearbyRaidTabClick()
             #self.screenWrapper.click(pos.x, pos.y)
-            #time.sleep(1)
+            self.checkNearby(filename, hash)
+            time.sleep(1)
             #log.debug('checkRaidscreen: RAID-tab clicked')
             return False
         #return True
@@ -310,8 +316,9 @@ class PogoWindows:
             return False
 
         log.debug('checkSpeedwarning: Checking for speed-warning ...')
+        posPassenger = self.resolutionCalculator.getSpeedwarningClick()
 
-        if not self.__lookForButton(filename, 1.60, 6.3):
+        if not self.__lookForButton(filename, 1.60, posPassenger.y):
             log.debug('checkSpeedwarning: No speedmessage found')
             return False
         else:
