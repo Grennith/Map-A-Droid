@@ -426,7 +426,7 @@ def checkSpeedWeatherWarningThread():
         log.debug("checkSpeedWeatherWarningThread: Checking if pogo is running...")
         if not telnMore.isPogoTopmost():
             log.warning("checkSpeedWeatherWarningThread: Starting Pogo")
-            startPogo(False)
+            restartPogo()
             windowLock.release()
             return
         reachedRaidscreen = getToRaidscreen(4, True)
