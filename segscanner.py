@@ -273,12 +273,12 @@ class Scanner:
             for closegym in closestGymIds:
 
                 for file in glob.glob("gym_img/*" + closegym[0] + "*.jpg"):
-                    find_gym = mt.fort_image_matching(raidpic, file, True, 0.65, raidNo, hash, x1, x2, y1, y2)
+                    find_gym = mt.fort_image_matching(raidpic, file, True, args.gym_detection_value, raidNo, hash, x1, x2, y1, y2)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Compare Gym-ID - ' + str(closegym[0]) + ' - Match: ' + str(find_gym))
                     if foundgym is None or find_gym > foundgym[0]:
     	        	    foundgym = find_gym, file
 
-                    if foundgym and foundgym[0]>=0.65:
+                    if foundgym and foundgym[0]>=args.gym_detection_value:
                         #okay, we very likely found our gym
                         gymSplit = foundgym[1].split('_')
                         gymId = gymSplit[2]
@@ -346,7 +346,7 @@ class Scanner:
         longitude = '00'
         
         if str(gymId) in data:
-            gymname = data[str(gymId)]["name"].replace('/', '-').replace('\', '-')
+            gymname = data[str(gymId)]["name"].replace('/', '-').replace('\\','/')
             latitude = data[str(gymId)]["latitude"]
             longitude = data[str(gymId)]["longitude"]
             
