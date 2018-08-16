@@ -302,9 +302,8 @@ class DbWrapper:
 
         for (end) in cursor:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Returning found endtime')
-            for row in data:
-                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: ID: ' + str(end))
-                return True, end
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: ID: ' + str(end))
+            return True, end
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: No matching endtime found')
         return False, None
