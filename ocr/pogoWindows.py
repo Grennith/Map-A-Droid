@@ -180,8 +180,9 @@ class PogoWindows:
         if leftSide:
             log.debug("__checkRaidLine: Check nearby open " )
         screenshotRead = cv2.imread(filename)
-        gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         height, width, _ = screenshotRead.shape
+        screenshotRead = screenshotRead[int(height/2)-int(height/3):int(height/2)+int(height/3),int(0):int(width)]
+        gray = cv2.cvtColor(screenshotRead,cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray,(5, 5), 0)
         log.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray,50,150,apertureSize = 3)
@@ -209,7 +210,7 @@ class PogoWindows:
                     #else:
                         #log.debug("__checkRaidLine: Nearby not active - but maybe Raid-tab")
                         #return False
-        log.debug("__checkRaidLine: Raid-tab or nearby is not active")
+        log.debug("__checkRaidLine: Not active")
         return False
 
     def readAmountOfRaidsCircle(self, filename, hash):
@@ -286,7 +287,7 @@ class PogoWindows:
             log.debug('checkRaidscreen: RAID-tab not activated')
             pos = self.resolutionCalculator.getNearbyRaidTabClick()
             self.screenWrapper.click(pos.x, pos.y)
-            time.sleep(1)
+            time.sleep(.5)
             log.debug('checkRaidscreen: RAID-tab clicked')
             return False
         if self.__checkRaidLine(filename, hash):
@@ -298,21 +299,26 @@ class PogoWindows:
         return False
 
     def checkNearby(self, filename, hash):
-        if (not self.__checkRaidLine(filename, hash) or
-            not self.__checkRaidLine(filename, hash, True)):
-            #self.__checkRaidTabOnScreen(filename, hash):
-            #RAID Tab not visible => not on Nearby screen
-            log.info('Raidscreen not running...')
-            posNearby = self.resolutionCalculator.getNearbyClick()
-            self.screenWrapper.click(posNearby.x, posNearby.y)
-            time.sleep(1)
-            posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
-            self.screenWrapper.click(posRaids.x, posRaids.y)
-            time.sleep(1)
-            return False
-        else:
+        if self.__checkRaidLine(filename, hash):
             log.info('Nearby already open')
             return True
+            
+        if self.__checkRaidLine(filename, hash, True):
+            log.info('Raidscreen not running but nearby open')
+            posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
+            self.screenWrapper.click(posRaids.x, posRaids.y)
+            time.sleep(.5)
+            return False
+        
+        log.info('Raidscreen not running...')
+        posNearby = self.resolutionCalculator.getNearbyClick()
+        self.screenWrapper.click(posNearby.x, posNearby.y)
+        time.sleep(.5)
+        posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
+        self.screenWrapper.click(posRaids.x, posRaids.y)
+        time.sleep(.5)
+        return False
+
 
     def checkGameQuitPopup(self, filename, hash):
         if not os.path.isfile(filename):
