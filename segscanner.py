@@ -346,7 +346,7 @@ class Scanner:
         longitude = '00'
         
         if str(gymId) in data:
-            gymname = data[str(gymId)]["name"]
+            gymname = data[str(gymId)]["name"].replace('/', '-').replace('\', '-')
             latitude = data[str(gymId)]["latitude"]
             longitude = data[str(gymId)]["longitude"]
             
