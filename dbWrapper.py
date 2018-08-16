@@ -324,7 +324,7 @@ class DbWrapper:
         if type == "EGG":
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'raidExist: Check for EGG')
             cursor = connection.cursor()
-            query = (' SELECT gym_id FROM raid ' +
+            query = (' SELECT start FROM raid ' +
                 ' WHERE STR_TO_DATE(raid.start,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\'')
             log.debug(query)
             cursor.execute(query)
@@ -340,7 +340,7 @@ class DbWrapper:
         else:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'raidExist: Check for Mon')
             cursor = connection.cursor()
-            query = (' SELECT gym_id FROM raid ' +
+            query = (' SELECT start FROM raid ' +
                 ' WHERE STR_TO_DATE(raid.start,\'%Y-%m-%d %H:%i:%s\') <= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\' and pokemon_id is not NULL')
             log.debug(query)
             cursor.execute(query)
