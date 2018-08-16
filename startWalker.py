@@ -349,6 +349,10 @@ def getToRaidscreen(maxAttempts, checkAll=False):
         log.info("getToRaidscreen: last screenshot too old, getting a new one")
         # log.error("compareToTime: %s" % str(compareToTime))
         # log.error("delayUsed: %s" % str(delayUsed))
+        log.info("getToRaidscreen: Attempting to retrieve screenshot checking windows")
+        log.info("getToRaidscreen: Waiting %s seconds befor taking screenshot" % str(args.post_screenshot_delay))
+
+        time.sleep(args.post_screenshot_delay)
         if not screenWrapper.getScreenshot('screenshot.png'):
             log.error("getToRaidscreen: Failed retrieving screenshot before checking windows")
             return False
@@ -395,14 +399,13 @@ def getToRaidscreen(maxAttempts, checkAll=False):
             log.info("getToRaidscreen: Previous checks found nothing. Checking nearby open")
             pogoWindowManager.checkNearby('screenshot.png', 123)
 
-        log.info("getToRaidscreen: Attempting to retrieve screenshot checking windows")
+        time.sleep(2)
         if screenWrapper.getScreenshot('screenshot.png'):
             lastScreenshotTaken = time.time()
         else:
             log.error("getToRaidscreen: Failed getting screenshot while checking windows")
             return False
 
-        time.sleep(args.post_screenshot_delay)
         attempts += 1
     log.debug("getToRaidscreen: done")
     return True

@@ -180,7 +180,7 @@ class DbWrapper:
         date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
         today1 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
 
-        if self.raidExist(gym, type, raidNo):
+        if self.raidExist(gym, type, raidNo, pkm):
             self.refreshTimes(gym, raidNo, captureTime)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'submitRaid: %s already submitted - ignoring' % str(type))
             return False
@@ -310,7 +310,7 @@ class DbWrapper:
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: No matching endtime found')
         return False, None
 
-    def raidExist(self, gym, type, raidNo):
+    def raidExist(self, gym, type, raidNo, mon = 0):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'raidExist: Check DB for existing entry')
         now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
         try:
@@ -341,7 +341,7 @@ class DbWrapper:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'raidExist: Check for Mon')
             cursor = connection.cursor()
             query = (' SELECT start FROM raid ' +
-                ' WHERE STR_TO_DATE(raid.start,\'%Y-%m-%d %H:%i:%s\') <= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\' and pokemon_id is not NULL')
+                ' WHERE STR_TO_DATE(raid.start,\'%Y-%m-%d %H:%i:%s\') <= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\' and pokemon_id=' + str(mon))
             log.debug(query)
             cursor.execute(query)
             data = cursor.fetchall()
