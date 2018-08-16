@@ -291,7 +291,14 @@ def tabOutAndInPogo():
 
 def stopPogo():
     global telnMore
-    stopResult = telnMore.stopApp("com.nianticlabs.pokemongo")
+    pogoTopmost = telnMore.isPogoTopmost()
+    if not pogoTopmost:
+        return True
+    stopResult = None
+    while pogoTopmost:
+        stopResult = telnMore.stopApp("com.nianticlabs.pokemongo")
+        time.sleep(1)
+        pogoTopmost = telnMore.isPogoTopmost()
     return stopResult is not None and "OK" in stopResult
 
 
@@ -299,12 +306,20 @@ def startPogo(withLock=True):
     global telnMore
     global lastPogoRestart
     global windowLock
+    pogoTopmost = telnMore.isPogoTopmost()
+    if pogoTopmost:
+        return True
     if withLock:
         windowLock.acquire()
+
     curTime = time.time()
     telnMore.clearAppCache("com.nianticlabs.pokemongo")
     time.sleep(1)
-    startResult = telnMore.startApp("com.nianticlabs.pokemongo")
+    startResult = None
+    while not pogoTopmost:
+        startResult = telnMore.startApp("com.nianticlabs.pokemongo")
+        time.sleep(1)
+        pogoTopmost = telnMore.isPogoTopmost()
     reachedRaidtab = False
     if startResult is not None and "OK" in startResult:
         log.warning("startPogo: Starting pogo...")
