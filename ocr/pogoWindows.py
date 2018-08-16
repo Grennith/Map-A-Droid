@@ -137,7 +137,7 @@ class PogoWindows:
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
         maxLineLength = width / ratio + 15
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 50
+        minLineLength = width / ratio - 15
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
         maxLineGap = 50
         lineCount = 0
@@ -162,7 +162,7 @@ class PogoWindows:
             log.debug("lookForButton: minmiddledist: " + str(minmiddledist))
             if minmiddledist:
                 log.debug("lookForButton: Check Y-cord of button")
-                if ((disToMiddleMin)-100 < (minmiddledist) and (disToMiddleMin)+100 > (minmiddledist)):
+                if ((disToMiddleMin)-50 < (minmiddledist) and (disToMiddleMin)+50 > (minmiddledist)):
                     log.debug("lookForButton: Button found")
                     return True
                 else:
@@ -327,8 +327,8 @@ class PogoWindows:
         log.debug('checkGameQuitPopup: Checking for quit-game popup ...')
         pos = None
         pos = self.resolutionCalculator.getquitGameClick()
-
-        if not self.__lookForButton(filename, 2.20, pos.y):
+        bounds = self.resolutionCalculator.getQuitGamePopupBounds()
+        if not self.__lookForButton(filename, 2.20, bounds.top):
             log.debug('checkGameQuitPopup: Could not find quit popup')
             return False
         else:
@@ -342,6 +342,7 @@ class PogoWindows:
 
         log.debug('checkSpeedwarning: Checking for speed-warning ...')
         posPassenger = self.resolutionCalculator.getSpeedwarningClick()
+        
 
         if not self.__lookForButton(filename, 1.60, posPassenger.y):
             log.debug('checkSpeedwarning: No speedmessage found')

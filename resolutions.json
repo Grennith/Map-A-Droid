@@ -114,7 +114,7 @@
     },
     "quit_game_popup" : {
       "click" : {
-        "x" : 0.5,
+        "x" : 0.513,
         "y" : 0.63
       },
       "bounds" : {
