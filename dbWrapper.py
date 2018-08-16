@@ -299,11 +299,13 @@ class DbWrapper:
             ' WHERE STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\'')
 
         cursor.execute(query)
-
-        for (end) in cursor:
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Returning found endtime')
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: ID: ' + str(end))
-            return True, end
+        data = cursor.fetchall()
+        number_of_rows=cursor.rowcount
+        if number_of_rows > 0:
+            for row in data:
+                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Returning found endtime')
+                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Time: ' + str(row[0]))
+                return True, row[0]
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: No matching endtime found')
         return False, None
