@@ -275,6 +275,8 @@ def restartPogo():
     # TODO: check if pogo was closed...
     log.debug("restartPogo: stop pogo resulted in %s" % str(successfulStop))
     if successfulStop:
+        telnMore.clearAppCache("com.nianticlabs.pokemongo")
+        time.sleep(1)
         return startPogo(False)
         # TODO: handle login screen... ?
     else:
@@ -313,8 +315,6 @@ def startPogo(withLock=True):
         windowLock.acquire()
 
     curTime = time.time()
-    telnMore.clearAppCache("com.nianticlabs.pokemongo")
-    time.sleep(1)
     startResult = None
     while not pogoTopmost:
         startResult = telnMore.startApp("com.nianticlabs.pokemongo")
