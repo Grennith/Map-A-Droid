@@ -401,7 +401,7 @@ class PogoWindows:
             self.screenWrapper.click(posPassenger.x, posPassenger.y)
             return True
 
-    def __checkClosePresent(self, filename, hash, windowsToCheck):
+    def __checkClosePresent(self, filename, hash, windowsToCheck, radiusratio=12, Xcord=True):
         if not os.path.isfile(filename):
             log.warning("__checkClosePresent: %s does not exist" % str(filename))
             return False
@@ -411,7 +411,7 @@ class PogoWindows:
         image = image[int(height)-int(height/4.5):int(height),int(width)/2-int(width)/8:int(width)/2+int(width)/8]
         cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), image)
              
-        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash, 12, True) > 0:
+        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash, float(radiusratio), Xcord) > 0:
             return True
 
     def isNewsQuestCloseButtonPresent(self, filename, hash):
@@ -426,14 +426,20 @@ class PogoWindows:
         if (not os.path.isfile(filename) 
             or self.__checkRaidLine(filename, hash)):
             #file not found or raid tab present
-            log.debug("Not checking for close button (X). Input wrong OR nearby window open")
+            log.debug("checkCloseExceptNearbyButton: Not checking for close button (X). Input wrong OR nearby window open")
             return False
+            
+        log.debug("checkCloseExceptNearbyButton: Checking for close button (X). Input wrong OR nearby window open")   
 
-        #we are not on the nearby window, check for X
-        #self.isNewsQuestCloseButtonPresent(filename, hash)
-            #or
         if (self.isOtherCloseButtonPresent(filename, hash)):
-            #X button found and not on nearby (we checked that earlier)
+            log.debug("Found close button (X). Closing the window")
+            self.screenWrapper.backButton()
+            return True
+        if (self.__checkClosePresent(filename, hash, 'gym', 14, False)):
+            log.debug("Found close button (X). Closing the window")
+            self.screenWrapper.backButton()
+            return True
+        if (self.__checkClosePresent(filename, hash, 'gym', 13, False)):
             log.debug("Found close button (X). Closing the window")
             self.screenWrapper.backButton()
             return True
