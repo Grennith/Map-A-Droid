@@ -9,13 +9,9 @@ from ocr.resolutionCalculator import *
 import collections
 import cv2
 import multiprocessing
-#from ocr.pogoWindows import PogoWindows
 import re
 
-
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
-
-
 
 log = logging.getLogger()
 args = parseArgs()
@@ -24,7 +20,8 @@ class RaidScan:
     @staticmethod
     def process(filename, hash, raidno, captureTime, captureLat, captureLng, src_path):
         args = parseArgs()
-        scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path, args.unknown_path, args.timezone, hash)
+        scanner = Scanner(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword,
+                          args.dbname, args.temp_path, args.unknown_path, args.timezone, hash)
         checkcrop = scanner.start_detect(filename, hash, raidno, captureTime, captureLat, captureLng, src_path)
         return checkcrop
 
@@ -51,14 +48,14 @@ class checkScreenshot(PatternMatchingEventHandler):
         return p
 
     def process(self, event):
-        #pathSplit = event.src_path.split("/")
-        #filename = pathSplit[len(pathSplit) - 1]
-        #print filename
+        # pathSplit = event.src_path.split("/")
+        # filename = pathSplit[len(pathSplit) - 1]
+        # print filename
         time.sleep(2)
-        #groups: 1 -> timestamp, 2 -> latitude, 3 -> longitude, 4 -> raidcount
-        raidcount = re.search(r'raidscreen_(\d+\.\d*)_(-?\d+\.\d+)_(-?\d+\.\d+)_(\d+)\.png', event.src_path)
+        # groups: 1 -> timestamp, 2 -> latitude, 3 -> longitude, 4 -> raidcount
+        raidcount = re.search(r'raidscreen_(\d+.?\d*)_(-?\d+\.\d+)_(-?\d+\.\d+)_(\d+)\.png', event.src_path)
         if raidcount is None:
-            #we could not read the raidcount... stop
+            # we could not read the raidcount... stop
             log.warning("Could not read raidcount in %s" % event.src_path)
             return
         captureTime = (raidcount.group(1))
@@ -71,7 +68,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         log.debug("Read a lng of %s in new file" % str(captureLng))
         log.debug("Read a raidcount of %s in new file" % str(amountOfRaids))
         raidPic = cv2.imread(event.src_path)
-        #amountOfRaids = self.pogoWindowManager.getAmountOfRaids(event.src_path)
+        # amountOfRaids = self.pogoWindowManager.getAmountOfRaids(event.src_path)
         if amountOfRaids is None or amountOfRaids == 0:
             return
         log.debug(amountOfRaids)
@@ -79,7 +76,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         bounds = []
 
         if int(amountOfRaids) == 1:
-            #we got just one raid...
+            # we got just one raid...
             boundsOfSingleRaid = self.resolutionCalculator.getRaidBoundsSingle()
             log.debug(boundsOfSingleRaid)
             p = self.prepareAnalysis(1, boundsOfSingleRaid, raidPic, captureTime, captureLat, captureLng, event.src_path)

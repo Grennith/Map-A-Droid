@@ -47,6 +47,8 @@ def parseArgs():
                         help='Password of VNC Server on Device.')
 
     # MySQL
+    parser.add_argument('-dbm', '--db_method', required=False,
+                        help='DB scheme to be used. Either "monocle" or "rm".')
     parser.add_argument('-dbip', '--dbip', required=False,
                         help='IP of MySql Server.')
     parser.add_argument('-dbuser', '--dbusername', required=False,

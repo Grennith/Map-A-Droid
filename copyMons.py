@@ -9,10 +9,11 @@ import json
 from shutil import copyfile
 from PIL import Image
 from walkerArgs import parseArgs
-from dbWrapper import *
+from db.dbWrapper import DbWrapper
 
 log = logging.getLogger(__name__)
 args = parseArgs()
+
 
 class MonRaidImages(object):
 
@@ -83,7 +84,7 @@ class MonRaidImages(object):
                     cv2.imwrite(monFile, crop)
 
         _monList = myList = ','.join(map(str, monList))
-        dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
+        dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
         dbWrapper.deleteHashTable(_monList, 'mon')
 
 

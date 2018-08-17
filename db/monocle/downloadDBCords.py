@@ -24,13 +24,13 @@ def main():
     llr = args.latlngright
     queryStr = ""
     if lll and llr:
-        queryStr = ' where (latitude BETWEEN {} AND {}) AND (longitude BETWEEN {} AND {})'.format(lll[0], llr[0], lll[1], llr[1])
-    query = ("SELECT latitude, longitude FROM gym {}").format(queryStr)
+        queryStr = ' where (lat BETWEEN {} AND {}) AND (lon BETWEEN {} AND {})'.format(lll[0], llr[0], lll[1], llr[1])
+    query = ("SELECT lat, lon FROM forts {}").format(queryStr)
     cursor = connection.cursor()
     cursor.execute(query)
     file = open(args.file, 'w') 
-    for (latitude, longitude) in cursor:
-        file.write(str(latitude) + ', ' + str(longitude) + '\n') 
+    for (lat, lon) in cursor:
+        file.write(str(lat) + ', ' + str(lon) + '\n') 
     cursor.close()
     connection.close()
     file.close()

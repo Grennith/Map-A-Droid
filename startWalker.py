@@ -18,7 +18,7 @@ from multiprocessing import Process
 from routecalc.calculate_route import getJsonRoute, getDistanceOfTwoPointsInMeters
 from telnet.telnetGeo import TelnetGeo
 from telnet.telnetMore import TelnetMore
-from dbWrapper import *
+from db.dbWrapper import DbWrapper
 from screenWrapper import ScreenWrapper
 from ocr.pogoWindows import PogoWindows
 import collections
@@ -100,7 +100,7 @@ def main():
     log.info("Parsing arguments")
     args = parseArgs()
     set_log_and_verbosity(log)
-    dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
+    dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
 
     if args.clean_hash_database:
         log.info('Cleanup Hash Database')
@@ -109,7 +109,6 @@ def main():
     if not os.path.exists(args.raidscreen_path):
         log.info('Raidscreen directory created')
         os.makedirs(args.raidscreen_path)
-
 
     dbWrapper.createHashDatabaseIfNotExists()
 
@@ -491,7 +490,7 @@ def main_thread():
                         args.tel_timeout_socket)
 
     log.info("main: Starting dbWrapper")
-    dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
+    dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
     updateRaidQueue(dbWrapper)
     lastRaidQueueUpdate = time.time()
 

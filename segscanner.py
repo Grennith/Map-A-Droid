@@ -14,7 +14,7 @@ import glob, os
 import mysql
 import mysql.connector
 import imutils
-from dbWrapper import *
+from db.dbWrapper import DbWrapper
 import json
 import hashlib
 import re
@@ -30,7 +30,7 @@ args = parseArgs()
 eggIdsByLevel = [1, 1, 2, 2, 3] #egg IDs are always the same, just remember to decrement your raidlevel
 
 class Scanner:
-    def __init__(self, dbIp, dbPort, dbUser, dbPassword, dbName, tempPath, unknownPath, timezone, hash):
+    def __init__(self, dbMethod, dbIp, dbPort, dbUser, dbPassword, dbName, tempPath, unknownPath, timezone, hash):
         self.dbIp = dbIp
         self.dbPort = dbPort
         self.dbUser = dbUser
@@ -40,8 +40,9 @@ class Scanner:
         self.unknownPath = unknownPath
         self.timezone = timezone
         self.uniqueHash = hash
+        self.dbMethod = dbMethod
 
-        self.dbWrapper = DbWrapper(self.dbIp, self.dbPort, self.dbUser, self.dbPassword, self.dbName, self.timezone, self.uniqueHash)
+        self.dbWrapper = DbWrapper(self.dbMethod, self.dbIp, self.dbPort, self.dbUser, self.dbPassword, self.dbName, self.timezone, self.uniqueHash)
 
         if not os.path.exists(self.tempPath):
             log.info('Temp directory created')

@@ -101,6 +101,9 @@ def updateEntry(gymName, lat, long, uri):
 
 def main():
     content = None
+    if not os.path.isfile("updateGyms.txt"):
+        print("Could not find updateGyms.txt")
+        return False
     with open("updateGyms.txt") as f:
         content = f.readlines()
     # you may also want to remove whitespace characters like `\n` at the end of each line
