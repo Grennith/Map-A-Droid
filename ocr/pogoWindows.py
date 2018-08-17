@@ -341,10 +341,9 @@ class PogoWindows:
             return False
 
         log.debug('checkSpeedwarning: Checking for speed-warning ...')
-        posPassenger = self.resolutionCalculator.getSpeedwarningClick()
-        
+        bounds = self.resolutionCalculator.getSpeedwarningBounds()
 
-        if not self.__lookForButton(filename, 1.60, posPassenger.y):
+        if not self.__lookForButton(filename, 1.60, bounds.top):
             log.debug('checkSpeedwarning: No speedmessage found')
             return False
         else:
