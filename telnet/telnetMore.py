@@ -38,7 +38,7 @@ class TelnetMore:
         encoded = self.telnetClient.sendCommand("screen capture\r\n", self.__commandTimeout)
         if encoded is None:
             return False
-        elif "KO" in encoded:
+        elif len(encoded) < 500 and "KO: " in encoded:
             log.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
             return False
         fh = open(path, "wb")
