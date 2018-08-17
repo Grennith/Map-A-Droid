@@ -89,7 +89,7 @@ class PogoWindows:
         width, height = col.size
 
         # check for the colour of the GPS error
-        if self.__mostPresentColour(tempPathColoured, width * height) != (240, 75, 95):
+        if self.__mostPresentColour(tempPathColoured, width * height) == (240, 75, 95):
             return True
         else:
             return False
