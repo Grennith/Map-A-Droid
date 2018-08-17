@@ -84,7 +84,7 @@ class MonRaidImages(object):
 
         _monList = myList = ','.join(map(str, monList))
         dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
-        dbWrapper.deleteHashTable(_monList, 'Mon%')
+        dbWrapper.deleteHashTable(_monList, 'mon')
 
 
 
