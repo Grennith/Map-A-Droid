@@ -126,7 +126,7 @@ class PogoWindows:
         return -1
 
 
-    def __lookForButton(self, filename, ratio, minmiddledist = False):
+    def __lookForButton(self, filename, ratio, minmiddledist = False, max = False):
         log.debug("lookForButton: Reading lines")
         disToMiddleMin = None
         screenshotRead = cv2.imread(filename)
@@ -151,9 +151,14 @@ class PogoWindows:
                 if y1 == y2 and (x2-x1<=maxLineLength) and (x2-x1>=minLineLength) and y1 > height/2:
                     lineCount += 1
                     disToMiddle = y1
-            
-                    if disToMiddleMin is None or disToMiddle < disToMiddleMin:
-                	    disToMiddleMin = disToMiddle
+                    
+                    if not max:
+                        if disToMiddleMin is None or disToMiddle < disToMiddleMin:
+                	        disToMiddleMin = disToMiddle
+                    else:
+                        if disToMiddleMin is None or disToMiddle > disToMiddleMin:
+                	        disToMiddleMin = disToMiddle
+                    
                         
                     log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(x2-x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
 
@@ -279,20 +284,18 @@ class PogoWindows:
     #assumes we are on the general view of the game
     def checkRaidscreen(self, filename, hash):
         log.debug("checkRaidscreen: Checking if RAID is present (nearby tab)")
-        #if self.__checkRaidTabOnScreen(filename, hash):
-            #RAID Tab visible
-            #log.debug('checkRaidscreen: RAID-tab found')
-        if self.__checkRaidLine(filename, hash, True):
-                #RAID Tab not active
-            log.debug('checkRaidscreen: RAID-tab not activated')
-            pos = self.resolutionCalculator.getNearbyRaidTabClick()
-            self.screenWrapper.click(pos.x, pos.y)
-            time.sleep(.5)
-            log.debug('checkRaidscreen: RAID-tab clicked')
-            return False
+        
         if self.__checkRaidLine(filename, hash):
             log.debug('checkRaidscreen: RAID-tab found')
             return True
+        if self.__checkRaidLine(filename, hash, True):
+                #RAID Tab not active
+            log.debug('checkRaidscreen: RAID-tab not activated')
+            #pos = self.resolutionCalculator.getNearbyRaidTabClick()
+            #self.screenWrapper.click(pos.x, pos.y)
+            #time.sleep(.5)
+            #log.debug('checkRaidscreen: RAID-tab clicked')
+            return False
 
         log.debug('checkRaidscreen: nearby not found')
             #log.warning('checkRaidscreen: Could not locate RAID-tab')
@@ -343,7 +346,7 @@ class PogoWindows:
         log.debug('checkSpeedwarning: Checking for speed-warning ...')
         bounds = self.resolutionCalculator.getSpeedwarningBounds()
 
-        if not self.__lookForButton(filename, 1.60, bounds.bottom):
+        if not self.__lookForButton(filename, 1.60, bounds.bottom, True):
             log.debug('checkSpeedwarning: No speedmessage found')
             return False
         else:
