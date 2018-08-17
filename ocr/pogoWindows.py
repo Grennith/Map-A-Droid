@@ -65,10 +65,34 @@ class PogoWindows:
             return False
         else:
             log.debug('checkPostLoginOkButton: Found post login OK button - closing ...')
-            
-            
+
             self.screenWrapper.click(pos.x, pos.y)
             return True
+
+    def isGpsSignalLost(self, filename, hash):
+        if not os.path.isfile(filename):
+            log.error("isGpsSignalLost: %s does not exist" % str(filename))
+            return None
+
+        log.debug("isGpsSignalLost: checking for red bar")
+        col = cv2.imread(filename)
+        bounds = None
+        bounds = self.resolutionCalculator.getGpsErrorBounds()
+
+        gpsError = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
+        log.debug('isGpsSignalLost: bounds of gpsError: %s' % str(bounds))
+
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_gpsError.png"
+        cv2.imwrite(tempPathColoured, gpsError)
+
+        col = Image.open(tempPathColoured)
+        width, height = col.size
+
+        # check for the colour of the GPS error
+        if self.__mostPresentColour(tempPathColoured, width * height) != (240, 75, 95):
+            return True
+        else:
+            return False
 
     def checkPostLoginOkButton(self, filename, hash):
         log.debug('checkPostLoginOkButton: Starting check')

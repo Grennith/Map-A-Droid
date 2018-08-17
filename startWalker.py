@@ -296,7 +296,7 @@ def stopPogo():
     pogoTopmost = telnMore.isPogoTopmost()
     if not pogoTopmost:
         return True
-    stopResult = None
+    stopResult = telnMore.stopApp("com.nianticlabs.pokemongo")
     while pogoTopmost:
         stopResult = telnMore.stopApp("com.nianticlabs.pokemongo")
         time.sleep(1)
@@ -336,7 +336,6 @@ def startPogo(withLock=True):
 
 def getToRaidscreen(maxAttempts, checkAll=False):
     # check for any popups (including post login OK)
-    global windowLock
     global lastScreenshotTaken
 
     log.debug("getToRaidscreen: Trying to get to the raidscreen with %s max attempts..." % str(maxAttempts))
@@ -360,6 +359,14 @@ def getToRaidscreen(maxAttempts, checkAll=False):
             # TODO: consider proper errorhandling?
             # even restart entire thing? VNC dead means we won't be using the device
             # maybe send email? :D
+        else:
+            lastScreenshotTaken = time.time()
+    if pogoWindowManager.isGpsSignalLost('screenshot.png', 123):
+        log.warning("getToRaidscreen: GPS signal error. Restarting pogo -_-\"")
+        restartPogo()
+        if not screenWrapper.getScreenshot('screenshot.png'):
+            log.error("getToRaidscreen: Failed retrieving screenshot before checking windows")
+            return False
         else:
             lastScreenshotTaken = time.time()
 
@@ -419,9 +426,8 @@ def turnScreenOnAndStartPogo():
         telnMore.turnScreenOn()
         time.sleep(args.post_turn_screen_on_delay)
     # check if pogo is running and start it if necessary
-    if not telnMore.isPogoTopmost():
-        log.warning("turnScreenOnAndStartPogo: Starting Pogo")
-        startPogo()
+    log.warning("turnScreenOnAndStartPogo: (Re-)Starting Pogo")
+    restartPogo()
 
 
 def reopenRaidTab():
@@ -433,8 +439,8 @@ def reopenRaidTab():
     if pogoWindowManager.isOtherCloseButtonPresent('screenshot.png', 123):
         screenWrapper.backButton()
         log.debug("reopenRaidTab: Closebutton was present, checking raidscreen...")
-        telnMore.clearAppCache("com.nianticlabs.pokemongo")
-        time.sleep(1)
+        # telnMore.clearAppCache("com.nianticlabs.pokemongo")
+        # time.sleep(1)
         # screenWrapper.getScreenshot('screenshot.png')
         # pogoWindowManager.checkRaidscreen('screenshot.png', 123)
         getToRaidscreen(3)

@@ -139,6 +139,9 @@ class ResolutionCalc:
     def getRaidcountBounds(self):
         return self.__getBounds('raidcount')
 
+    def getGpsErrorBounds(self):
+        return self.__getBounds('gps_not_found_error')
+
     def getRaidBounds(self, numberOfRaid):
         #numberOfRaid is 1 to 6
         if numberOfRaid < 1 or numberOfRaid > 6:

@@ -1,5 +1,13 @@
 {
   "9:16" : {
+    "gps_not_found_error": {
+      "bounds" : {
+        "left" : 0.0,
+        "right" : 1.0,
+        "top" : 0.043,
+        "bottom" : 0.113
+      }
+    },
     "post_login_ok_driving" : {
       "click" : {
         "x" : 0.5,

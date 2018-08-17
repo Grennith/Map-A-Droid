@@ -117,7 +117,7 @@ def main():
             # default first line, continue
             continue
         updateEntry(values[0], float(values[1]), float(values[2]), values[3])
-        
+
     connection.close()
     sys.exit(0)
 
