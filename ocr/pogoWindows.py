@@ -99,11 +99,15 @@ class PogoWindows:
         return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving', 26)
             or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property', 17))
 
-    def __readCircleCount(self,filename,hash,ratio, xcord = False):
+    def __readCircleCount(self,filename,hash,ratio, xcord = False, width = False):
         log.debug("__readCircleCount: Reading circles")
 
         screenshotRead = cv2.imread(filename)
         height, width, _ = screenshotRead.shape
+        if  width:
+            screenshotRead = screenshotRead[int(height)-int(height/4.5):int(height),int(width)/2-int(width)/8:int(width)/2+int(width)/8]
+
+         
         log.debug("__readCircleCount: Determined screenshot scale: " + str(height) + " x " + str(width))
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
@@ -408,10 +412,10 @@ class PogoWindows:
               
         image = cv2.imread(filename)
         height, width, _ = image.shape
-        image = image[int(height)-int(height/4.5):int(height),int(width)/2-int(width)/8:int(width)/2+int(width)/8]
+        
         cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), image)
              
-        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash, float(radiusratio), Xcord) > 0:
+        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash, float(radiusratio), Xcord, True) > 0:
             return True
 
     def isNewsQuestCloseButtonPresent(self, filename, hash):
@@ -424,24 +428,28 @@ class PogoWindows:
     #checks for X button on any screen... could kill raidscreen, handle properly
     def checkCloseExceptNearbyButton(self, filename, hash):
         if (not os.path.isfile(filename) 
-            or self.__checkRaidLine(filename, hash)):
+            or self.__checkRaidLine(filename, hash)
+            or self.__checkRaidLine(filename, hash, True)):
             #file not found or raid tab present
             log.debug("checkCloseExceptNearbyButton: Not checking for close button (X). Input wrong OR nearby window open")
-            return False
+            return False 
             
         log.debug("checkCloseExceptNearbyButton: Checking for close button (X). Input wrong OR nearby window open")   
 
-        if (self.isOtherCloseButtonPresent(filename, hash)):
-            log.debug("Found close button (X). Closing the window")
+        if (self.__checkClosePresent(filename, hash, 'gym', 12, False)):
+            log.debug("Found close button (X). Closing the window - Ratio: 12")
             self.screenWrapper.backButton()
+            time.sleep(1.5)
             return True
         if (self.__checkClosePresent(filename, hash, 'gym', 14, False)):
-            log.debug("Found close button (X). Closing the window")
+            log.debug("Found close button (X). Closing the window - Ratio: 14")
             self.screenWrapper.backButton()
+            time.sleep(1.5)
             return True
         if (self.__checkClosePresent(filename, hash, 'gym', 13, False)):
-            log.debug("Found close button (X). Closing the window")
+            log.debug("Found close button (X). Closing the window - Ratio: 13")
             self.screenWrapper.backButton()
+            time.sleep(1.5)
             return True
         else:
             log.debug("Could not find close button (X).")

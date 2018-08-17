@@ -427,7 +427,7 @@ def turnScreenOnAndStartPogo():
         time.sleep(args.post_turn_screen_on_delay)
     # check if pogo is running and start it if necessary
     log.warning("turnScreenOnAndStartPogo: (Re-)Starting Pogo")
-    restartPogo()
+    #restartPogo()
 
 
 def reopenRaidTab():
