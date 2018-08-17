@@ -268,21 +268,20 @@ class DbWrapper:
             return False
 
         cursor = connection.cursor()
-        query = (' SELECT count(*) FROM raid ' +
+        query = (' SELECT raid.end FROM raid ' +
             ' WHERE STR_TO_DATE(raid.end,\'%Y-%m-%d %H:%i:%s\') >= STR_TO_DATE(\'' + str(now) + '\',\'%Y-%m-%d %H:%i:%s\') and gym_id = \'' + str(gym) + '\'')
         cursor.execute(query)
-        result=cursor.fetchone()
-        number_of_rows=result[0]
-        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'readRaidEndtime: Found Rows: %s' % str(number_of_rows))
-        rows_affected=number_of_rows
-
-        if rows_affected > 0:
-            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'readRaidEndtime: Endtime already submitted')
-            return True
-
+        data = cursor.fetchall()
+        number_of_rows=cursor.rowcount
+        if number_of_rows > 0:
+            for row in data:
+                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'readRaidEndtime: Found Rows: %s' % str(number_of_rows))
+                log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'readRaidEndtime: Endtime already submitted')
+                return True
+            
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'readRaidEndtime: Endtime is new - submitting')
-        return False
-        
+        return False    
+                
     def getRaidEndtime(self, gym, raidNo):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getRaidEndtime: Check DB for existing mon')
         now = (datetime.datetime.now() - datetime.timedelta(hours = self.timezone)).strftime("%Y-%m-%d %H:%M:%S")
