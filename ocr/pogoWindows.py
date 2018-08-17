@@ -137,7 +137,7 @@ class PogoWindows:
         edges = cv2.Canny(gray,100,200,apertureSize = 3)
         maxLineLength = width / ratio + 15
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 15
+        minLineLength = width / ratio - 25
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
         maxLineGap = 50
         lineCount = 0
