@@ -86,7 +86,7 @@ lastScreenshotTaken = 0
 lastPogoRestart = None
 if not args.only_ocr:
     log.info("Starting Telnet MORE Client")
-    telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password))
+    telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password), args.tel_timeout_command, args.tel_timeout_socket)
     log.info("Starting ScreenWrapper")
     screenWrapper = ScreenWrapper(args.screen_method, telnMore, str(args.vnc_ip), args.vnc_port, args.vnc_password, args.vncscreen)
 
@@ -301,7 +301,7 @@ def stopPogo():
         stopResult = telnMore.stopApp("com.nianticlabs.pokemongo")
         time.sleep(1)
         pogoTopmost = telnMore.isPogoTopmost()
-    return stopResult is not None and "OK" in stopResult
+    return stopResult
 
 
 def startPogo(withLock=True):
@@ -315,13 +315,13 @@ def startPogo(withLock=True):
         windowLock.acquire()
 
     curTime = time.time()
-    startResult = None
+    startResult = False
     while not pogoTopmost:
         startResult = telnMore.startApp("com.nianticlabs.pokemongo")
         time.sleep(1)
         pogoTopmost = telnMore.isPogoTopmost()
     reachedRaidtab = False
-    if startResult is not None and "OK" in startResult:
+    if startResult:
         log.warning("startPogo: Starting pogo...")
         time.sleep(args.post_pogo_start_delay)
         lastPogoRestart = curTime
@@ -481,7 +481,8 @@ def main_thread():
     global lastScreenshotTaken
 
     log.info("main: Starting TelnetGeo Client")
-    telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password))
+    telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password), args.tel_timeout_command,
+                        args.tel_timeout_socket)
 
     log.info("main: Starting dbWrapper")
     dbWrapper = DbWrapper(str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)

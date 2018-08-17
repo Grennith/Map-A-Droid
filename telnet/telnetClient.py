@@ -8,15 +8,16 @@ log = logging.getLogger()
 
 
 class TelnetClient:
-    def __init__(self, ip, port, password):
+    def __init__(self, ip, port, password, socketTimeout):
         self.passwordSet = not (password is None or password == "None" or len(password) == 0)
         if self.passwordSet:
             log.debug('Trying to build up a telnet connection to %s:%s with a password'
-                % (str(ip), str(port)))
+                      % (str(ip), str(port)))
         else:
             log.debug('Trying to build up a telnet connection to %s:%s without a password'
-                % (str(ip), str(port)))
+                      % (str(ip), str(port)))
 
+        self.__socketTimeout = socketTimeout
         self.__ip = ip
         self.__port = port
         self.__password = password
@@ -31,7 +32,7 @@ class TelnetClient:
     def __connectSocket(self):
         try:
             self.__sock.connect((self.__ip, self.__port))
-            self.__sock.settimeout(30)
+            self.__sock.settimeout(self.__socketTimeout)
             return True
         except socket.error as ex:
             return False
