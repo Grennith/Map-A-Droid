@@ -99,15 +99,15 @@ class PogoWindows:
         return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving', 26)
             or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property', 17))
 
-    def __readCircleCount(self,filename,hash,ratio, xcord = False, width = False):
+    def __readCircleCount(self,filename,hash,ratio, xcord = False, crop = False):
         log.debug("__readCircleCount: Reading circles")
 
         screenshotRead = cv2.imread(filename)
         height, width, _ = screenshotRead.shape
-        if  width:
+        
+        if crop:
             screenshotRead = screenshotRead[int(height)-int(height/4.5):int(height),int(width)/2-int(width)/8:int(width)/2+int(width)/8]
 
-         
         log.debug("__readCircleCount: Determined screenshot scale: " + str(height) + " x " + str(width))
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
