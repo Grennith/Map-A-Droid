@@ -162,7 +162,7 @@ class PogoWindows:
             log.debug("lookForButton: minmiddledist: " + str(minmiddledist))
             if minmiddledist:
                 log.debug("lookForButton: Check Y-cord of button")
-                if ((disToMiddleMin)-50 < (minmiddledist) and (disToMiddleMin)+50 > (minmiddledist)):
+                if ((disToMiddleMin)-70 < (minmiddledist) and (disToMiddleMin)+70 > (minmiddledist)):
                     log.debug("lookForButton: Button found")
                     return True
                 else:
