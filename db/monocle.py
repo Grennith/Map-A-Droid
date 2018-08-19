@@ -29,7 +29,7 @@ class MonocleWrapper:
         self.uniqueHash = uniqueHash
 
     def dbTimeStringToUnixTimestamp(self, timestring):
-        dt = datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
+        dt = datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S.%f')
         unixtime = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
         return unixtime
 
@@ -47,7 +47,7 @@ class MonocleWrapper:
             str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
         query = (' SELECT time_battle, lat, lon FROM raids LEFT JOIN forts ' +
                  'ON raids.external_id = forts.external_id WHERE raids.time_end > \'%s\' ' % str(dbTimeToCheck) +
-                 'AND raid.pokemon_id IS NULL')
+                 'AND raids.pokemon_id IS NULL')
         # print(query)
         # data = (datetime.datetime.now())
         cursor.execute(query)
@@ -201,8 +201,8 @@ class MonocleWrapper:
                      'move_2) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE level = %s, ' +
                      'time_spawn=%s, time_battle=%s, time_end=%s, ' +
                      'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s')
-            data = (gym, lvl, start, start, end, None, "999", "1", "1",  # TODO: check None vs null?
-                    lvl, start, start, end, None, "999", "1", "1")
+            data = (gym, lvl, start, end, "0", "0", "999", "1", "1",  # TODO: check None vs null?
+                    lvl, start, end, "0", "0", "999", "1", "1")
 
             cursor.execute(query, data)
 
@@ -216,8 +216,8 @@ class MonocleWrapper:
                 self.uniqueHash) + ') ] ' + 'submitRaid: Submitting mon. PokemonID %s, Lv %s, gymID %s' % (
                          pkm, lvl, gym))
             if not MonWithNoEgg:
-                query = " UPDATE raids SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s WHERE fort_id = %s "
-                data = (lvl, pkm, "999", "1", "1", gym)
+                query = " UPDATE raids SET pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, time_end = %s WHERE fort_id = %s "
+                data = (pkm, "999", "1", "1", end, gym)
 
                 foundEndTime, EndTime = self.getRaidEndtime(gym, raidNo)
 
@@ -227,7 +227,6 @@ class MonocleWrapper:
                     wh_end = EndTime
                 else:
                     wh_send = False
-
             else:
                 query = (
                         ' INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, pokemon_id, cp, move_1, ' +
@@ -331,8 +330,8 @@ class MonocleWrapper:
         if type == "EGG":
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'raidExist: Check for EGG')
             cursor = connection.cursor()
-            query = (' SELECT time_start FROM raids ' +
-                     ' WHERE time_start >= ' + str(now) + ' and fort_id = \'' + str(gym) + '\'')
+            query = (' SELECT time_spawn FROM raids ' +
+                     ' WHERE time_spawn >= ' + str(now) + ' and fort_id = \'' + str(gym) + '\'')
             log.debug(query)
             cursor.execute(query)
             data = cursor.fetchall()
@@ -352,9 +351,8 @@ class MonocleWrapper:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'raidExist: Check for Mon')
             cursor = connection.cursor()
             query = (' SELECT count(*) FROM raids ' +
-                     ' WHERE time_start <= ' + str(now) + ' and time_end >= ' + str(now) + ' and fort_id = \'' + str(
+                     ' WHERE time_spawn <= ' + str(now) + ' and time_end >= ' + str(now) + ' and fort_id = \'' + str(
                         gym) + '\' and pokemon_id is not NULL')
-            cursor.execute(query)
             cursor.execute(query)
             data = cursor.fetchall()
             number_of_rows = cursor.rowcount

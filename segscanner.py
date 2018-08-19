@@ -193,7 +193,7 @@ class Scanner:
             find_lvl = mt.fort_image_matching(file, os.path.join(self.tempPath, str(hash) + '_raidlevel' + str(raidNo) +'.jpg'), False, 0.7, raidNo, hash)
 
             if foundlvl is None or find_lvl > foundlvl[0]:
-    	    	foundlvl = find_lvl, file
+                foundlvl = find_lvl, file
 
 
             if not foundlvl is None:
@@ -273,11 +273,11 @@ class Scanner:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detecting Gym')
             for closegym in closestGymIds:
 
-                for file in glob.glob("gym_img/*" + closegym[0] + "*.jpg"):
+                for file in glob.glob("gym_img/*" + str(closegym[0]) + "*.jpg"):
                     find_gym = mt.fort_image_matching(raidpic, file, True, float(args.gym_detection_value), raidNo, hash, x1, x2, y1, y2)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Compare Gym-ID - ' + str(closegym[0]) + ' - Match: ' + str(find_gym))
                     if foundgym is None or find_gym > foundgym[0]:
-    	        	    foundgym = find_gym, file
+                        foundgym = find_gym, file
 
                     if foundgym and foundgym[0]>=float(args.gym_detection_value):
                         #okay, we very likely found our gym
@@ -380,8 +380,8 @@ class Scanner:
         image_cols, image_rows, _ = image.shape
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,2,image_cols,param1=100,param2=15,minRadius=71,maxRadius=71)
         if circles is not None:
-        	circles = np.round(circles[0, :]).astype("int")
-        	for (x, y, r) in circles:
+            circles = np.round(circles[0, :]).astype("int")
+            for (x, y, r) in circles:
                         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'cropImage: Detect crop coordinates x: ' + str(x) +' y: ' + str(y) +' with radius: ' + str(r))
                         new_crop = output[y-r-1:y+r+1, x-r-1:x+r+1]
                         return new_crop
