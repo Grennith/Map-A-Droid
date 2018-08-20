@@ -152,13 +152,20 @@ class MonocleWrapper:
             return None
         cursor = connection.cursor()
 
-        query = (' SELECT  id, BIT_COUNT( ' +
-                 ' CONV(hash, 16, 10) ^ CONV(\'' + str(imghash) + '\', 16, 10) ' +
-                 ' ) as hamming_distance, type ' +
-                 ' FROM trshash ' +
-                 ' HAVING hamming_distance < 4 and type = \'' + str(type) + '\'' +
-                 ' ORDER BY hamming_distance ASC')
+        query = ('SELECT id, BIT_COUNT( '
+                 'CONVERT((CONV(hash, 16, 10)), SIGNED) '
+                 '^ CONVERT((CONV(\'' + str(imghash) + '\', 16, 10)), SIGNED)) as hamming_distance, '
+                                                       'type FROM trshash '
+                                                       'HAVING hamming_distance < 4 and type = \'' + str(type) + '\' '
+                                                                                                                 'ORDER BY hamming_distance ASC')
 
+        # query = (' SELECT  id, BIT_COUNT( ' +
+        #         ' CONV(hash, 16, 10) ^ CONV(\'' + str(imghash) + '\', 16, 10) ' +
+        #         ' ) as hamming_distance, type ' +
+        #         ' FROM trshash ' +
+        #         ' HAVING hamming_distance < 4 and type = \'' + str(type) + '\'' +
+        #         ' ORDER BY hamming_distance ASC')
+        log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'checkForHash: ' + query)
         cursor.execute(query)
         id = None
         data = cursor.fetchall()
@@ -592,6 +599,7 @@ class MonocleWrapper:
         connection.close()
         file.close()
         log.info('Downloading finished.')
+        return True
 
     def __encodeHashJson(self, team_id, latitude, longitude, name, url):
         return (
