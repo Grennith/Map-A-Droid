@@ -292,10 +292,8 @@ def tabOutAndInPogo():
 
 def stopPogo():
     global telnMore
-    pogoTopmost = telnMore.isPogoTopmost()
-    if not pogoTopmost:
-        return True
     stopResult = telnMore.stopApp("com.nianticlabs.pokemongo")
+    pogoTopmost = telnMore.isPogoTopmost()
     while pogoTopmost:
         stopResult = telnMore.stopApp("com.nianticlabs.pokemongo")
         time.sleep(1)

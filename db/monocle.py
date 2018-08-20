@@ -554,8 +554,8 @@ class MonocleWrapper:
         data = []
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(
             self.uniqueHash) + ') ] ' + 'getNearGyms: Result of NearGyms query: %s' % str(query))
-        for (gym_id) in cursor:
-            data.append(gym_id)
+        for (id) in cursor:
+            data.append(id)
 
         log.debug(
             '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'getNearGyms: Closest Gyms: %s' % str(

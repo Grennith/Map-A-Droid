@@ -273,7 +273,7 @@ class Scanner:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detecting Gym')
             for closegym in closestGymIds:
 
-                for file in glob.glob("gym_img/*" + str(closegym[0]) + "*.jpg"):
+                for file in glob.glob("gym_img/_" + str(closegym[0]) + "_.jpg"):
                     find_gym = mt.fort_image_matching(raidpic, file, True, float(args.gym_detection_value), raidNo, hash, x1, x2, y1, y2)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Compare Gym-ID - ' + str(closegym[0]) + ' - Match: ' + str(find_gym))
                     if foundgym is None or find_gym > foundgym[0]:
