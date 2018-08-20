@@ -500,7 +500,7 @@ class Scanner:
             monFound = self.detectRaidBoss(img, raidlevel, hash, raidNo)
             if not monFound[0]:
                 #we could not determine the mon... let's move the crop to unknown and stop analysing
-                log.error('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine mon in crop, aborting and moving crop to unknown')
+                log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine mon in crop, aborting and moving crop to unknown')
                 self.unknownfound(filenameOfCrop, 'mon', False, raidNo, hash, captureTime, False, captureLat, captureLng)
                 log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: could not determine mon, aborting analysis')
                 os.remove(raidhashPic)
