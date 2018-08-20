@@ -27,11 +27,6 @@ class MonocleWrapper:
         self.database = database
         self.timezone = timezone
         self.uniqueHash = uniqueHash
-        self.lastUpdatedPresent = self.__ensureLastUpdatedColumn()
-        if self.lastUpdatedPresent:
-            self.timestampColumn = 'last_updated'
-        else:
-            self.timestampColumn = 'time_spawn'
 
     def __checkLastUpdatedColumnExists(self):
         try:
@@ -52,7 +47,7 @@ class MonocleWrapper:
         return int(result)
 
     # TODO: consider adding columns for last_updated timestamp to not abuse time_spawn in raids
-    def __ensureLastUpdatedColumn(self):
+    def ensureLastUpdatedColumn(self):
         log.info("Checking if last_updated column exists in raids table and creating it if necessary")
 
         result = self.__checkLastUpdatedColumnExists()
@@ -294,20 +289,16 @@ class MonocleWrapper:
             start = end - 45 * 60
             log.info("Updating mon without egg")
 
-            if self.lastUpdatedPresent:
-                setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, ' \
-                         'pokemon_id = %s, ' + self.timestampColumn + ' = %s '
-                data = (lvl, captureTime, start, end, pkm, int(time.time()))
-            else:
-                setStr = 'SET level= %s, time_spawn = %s, time_battle = %s, time_end = %s, pokemon_id = %s '
-                data = (lvl, int(time.time()), start, end, pkm)
+            setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, ' \
+                    'pokemon_id = %s, last_updated = %s '
+            data = (lvl, captureTime, start, end, pkm, int(time.time()))
 
         elif end is None or start is None:
             # no end or start time given, just update the other stuff
             # TODO: consider skipping UPDATING/INSERTING
             # TODO: this will be an update of a hatched egg to a boss!
             log.info("Updating without endtime or starttime - we should've seen an egg before then")
-            setStr = 'SET level = %s, pokemon_id = %s, ' + self.timestampColumn + ' = %s '
+            setStr = 'SET level = %s, pokemon_id = %s, last_updated = %s '
             data = (lvl, pkm, int(time.time()))
 
             foundEndTime, EndTime = self.getRaidEndtime(gym, raidNo)
@@ -324,14 +315,9 @@ class MonocleWrapper:
         else:
             log.info("Updating everything")
             # we have start and end, mon is either with egg or we're submitting an egg
-            if self.lastUpdatedPresent:
-                setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, pokemon_id = %s, ' \
-                         'last_updated = %s '
-                data = (lvl, captureTime, start, end, pkm, int(time.time()))
-            else:
-                setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, pokemon_id = %s, ' \
-                         'last_updated = %s '
-                data = (lvl, int(time.time()), start, end, pkm)
+            setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, pokemon_id = %s, ' \
+                     'last_updated = %s '
+            data = (lvl, captureTime, start, end, pkm, int(time.time()))
 
         query = updateStr + setStr + whereStr
         log.debug(query % data)

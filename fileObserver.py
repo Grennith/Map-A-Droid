@@ -25,13 +25,15 @@ class RaidScan:
         checkcrop = scanner.start_detect(filename, hash, raidno, captureTime, captureLat, captureLng, src_path)
         return checkcrop
 
+
 class checkScreenshot(PatternMatchingEventHandler):
     def __init__(self, width, height):
         self.resolutionCalculator = ResolutionCalc(width, height)
         log.info("Starting pogo window manager in OCR thread")
-        #self.pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password, args.screen_width, args.screen_height, args.temp_path)
+        # self.pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password,
+        # args.screen_width, args.screen_height, args.temp_path)
 
-        #self.procPool = Pool(10)
+        # self.procPool = Pool(10)
 
     def prepareAnalysis(self, raidNo, bounds, screenshot, captureTime, captureLat, captureLng, src_path):
         curTime = time.time()
@@ -105,6 +107,7 @@ class checkScreenshot(PatternMatchingEventHandler):
     ignore_directories = True
     ignore_patterns = ""
     case_sensitive = False
+
     def on_created(self, event):
         t = Thread(target=self.process(event), name='OCR-processing')
         t.daemon = True

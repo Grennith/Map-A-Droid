@@ -84,6 +84,10 @@ runWarningThreadEvent = Event()
 windowLock = Lock()
 lastScreenshotTaken = 0
 lastPogoRestart = None
+
+dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname,
+                      args.timezone)
+
 if not args.only_ocr:
     log.info("Starting Telnet MORE Client")
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password), args.tel_timeout_command, args.tel_timeout_socket)
@@ -95,22 +99,21 @@ if not args.only_ocr:
 
 
 def main():
+    global dbWrapper
     log.info("Starting TheRaidMap")
     sys.excepthook = handle_exception
     log.info("Parsing arguments")
     args = parseArgs()
     set_log_and_verbosity(log)
-    dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
 
     if args.clean_hash_database:
         log.info('Cleanup Hash Database')
         dbWrapper.deleteHashTable('999', '')
+        sys.exit(0)
 
     if not os.path.exists(args.raidscreen_path):
         log.info('Raidscreen directory created')
         os.makedirs(args.raidscreen_path)
-
-    dbWrapper.createHashDatabaseIfNotExists()
 
     MonRaidImages.runAll(args.pogoasset)
 
@@ -125,6 +128,12 @@ def main():
         w.start()
 
     if not args.only_scan:
+        if not dbWrapper.ensureLastUpdatedColumn():
+            log.fatal("Missing raids.last_updated column and couldn't create it")
+            sys.exit(1)
+
+        dbWrapper.createHashDatabaseIfNotExists()
+
         log.info('Starting OCR Thread....')
         t_observ = Thread(name='observer', target=observer(args.raidscreen_path, args.screen_width, args.screen_height))
         t_observ.daemon = True

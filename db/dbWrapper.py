@@ -7,10 +7,18 @@ log = logging.getLogger(__name__)
 
 class DbWrapper:
     def __init__(self, method, host, port, user, password, database, timezone, uniqueHash = "123"):
-        if method == "rm":
+        self.__method = method
+        if self.__method == "rm":
             self.__dbWrapperUsed = RmWrapper(host, port, user, password, database, timezone, uniqueHash)
         else:
             self.__dbWrapperUsed = MonocleWrapper(host, port, user, password, database, timezone, uniqueHash)
+
+    def ensureLastUpdatedColumn(self):
+        if self.__method == "rm":
+            log.debug("No need to check for last_updated in RM")
+            return True
+        else:
+            return self.__dbWrapperUsed.ensureLastUpdatedColumn()
 
     def dbTimeStringToUnixTimestamp(self, timestring):
         return self.__dbWrapperUsed.dbTimeStringToUnixTimestamp(timestring)
