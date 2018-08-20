@@ -217,6 +217,11 @@ class RmWrapper:
 
         wh_send = False
 
+        if start is not None:
+            start = start - self.timezone * 60 * 60
+        if end is not None:
+            end = end - self.timezone * 60 * 60
+
         cursor = connection.cursor()
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(
             self.uniqueHash) + ') ] ' + 'submitRaid: Submitting something of type %s' % type)

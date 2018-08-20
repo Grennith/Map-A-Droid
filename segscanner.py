@@ -69,14 +69,14 @@ class Scanner:
 
         if raidFound:
             if ':' in raidtimer:
-                now = datetime.datetime.now()
                 log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: found raidtimer %s' % raidtimer)
                 hatchTime = self.getHatchTime(raidtimer, hash)
+
                 if hatchTime:
                     log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Hatchtime %s' % str(hatchTime))
                     #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
-                    raidstart = hatchTime - (self.timezone * 60 * 60)
-                    raidend = hatchTime + 45 * 60 - (self.timezone * 60 * 60)
+                    raidstart = hatchTime #- (self.timezone * 60 * 60)
+                    raidend = hatchTime + 45 * 60 #- (self.timezone * 60 * 60)
                     #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Start: ' + str(raidstart) + ' End: ' + str(raidend))
                     return (raidFound, True, raidstart, raidend)
@@ -113,7 +113,7 @@ class Scanner:
                 if endTime:
                     log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Endtime %s' % str(endTime))
                     #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
-                    raidend = endTime  - (self.timezone * 60 * 60)
+                    raidend = endTime  #- (self.timezone * 60 * 60)
                     #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
                     return (raidEndFound, True, raidend)
                 else:
@@ -540,13 +540,13 @@ class Scanner:
                 log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: No existing Egg found')
                 raidend = self.detectRaidEndtimer(img, hash, raidNo)
                 if raidend[1]:
-                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
+                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon without egg. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
                     submitStatus = self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, raidend[2], 'MON', raidNo, captureTime, True)
                 else:
-                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
+                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon without raidend. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
                     submitStatus = self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON', raidNo, captureTime)
             else:
-                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
+                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon with previously reported endtime. ID: %s, gymId: %s' % (str(monFound[0]), str(gymId)))
                 submitStatus = self.dbWrapper.submitRaid(str(gymId), monFound[0], raidlevel, None, None, 'MON', raidNo, captureTime)
                 
             if submitStatus:
@@ -669,7 +669,8 @@ class Scanner:
         else:
             return False, hour_min_sec
 
-    def getHatchTime(self,data,raidNo):
+    # returns UTC timestamp
+    def getHatchTime(self,data, raidNo):
         zero = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
         unix_zero =  time.mktime(zero.timetuple())
         hour_min_divider = data.find(':')
@@ -716,7 +717,7 @@ class Scanner:
             data = data.replace('~','').replace('-','').replace(' ','')
             hour_min = data.split(':')
             ret, hour_min = self.checkHourMinSec(hour_min)
-            if ret == True:
+            if ret:
                 return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60+int(hour_min[2])
             else:
                 return False

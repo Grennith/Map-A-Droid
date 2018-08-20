@@ -27,6 +27,58 @@ class MonocleWrapper:
         self.database = database
         self.timezone = timezone
         self.uniqueHash = uniqueHash
+        self.lastUpdatedPresent = self.__ensureLastUpdatedColumn()
+        if self.lastUpdatedPresent:
+            self.timestampColumn = 'last_updated'
+        else:
+            self.timestampColumn = 'time_spawn'
+
+    def __checkLastUpdatedColumnExists(self):
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+
+        query = "SELECT count(*) FROM information_schema.columns " \
+                "WHERE table_name = 'raids' AND column_name = 'last_updated'"
+        cursor = connection.cursor()
+        cursor.execute(query)
+        result = int(cursor.fetchall()[0][0])
+        cursor.close()
+        connection.close()
+        return int(result)
+
+    # TODO: consider adding columns for last_updated timestamp to not abuse time_spawn in raids
+    def __ensureLastUpdatedColumn(self):
+        log.info("Checking if last_updated column exists in raids table and creating it if necessary")
+
+        result = self.__checkLastUpdatedColumnExists()
+        if result == 1:
+            log.info("raids.last_updated already present")
+            return True
+
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+
+        alterQuery = "ALTER TABLE raids ADD COLUMN last_updated int(11) NULL after time_end"
+        cursor = connection.cursor()
+        cursor.execute(alterQuery)
+        connection.commit()
+
+        if self.__checkLastUpdatedColumnExists() == 1:
+            log.info("Successfully added last_updated column")
+            return True
+        else:
+            log.warning("Could not add last_updated column, fallback to time_spawn")
+            return False
 
     def dbTimeStringToUnixTimestamp(self, timestring):
         dt = datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S.%f')
@@ -43,10 +95,11 @@ class MonocleWrapper:
             return []
         cursor = connection.cursor()
 
-        dbTimeToCheck = self.dbTimeStringToUnixTimestamp(
-            str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
+        # dbTimeToCheck = self.dbTimeStringToUnixTimestamp(
+        #    str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
+        dbTimeToCheck = time.time()
         query = (' SELECT time_battle, lat, lon FROM raids LEFT JOIN forts ' +
-                 'ON raids.external_id = forts.external_id WHERE raids.time_end > \'%s\' ' % str(dbTimeToCheck) +
+                 'ON raids.fort_id = forts.id WHERE raids.time_end > \'%s\' ' % str(dbTimeToCheck) +
                  'AND raids.pokemon_id IS NULL')
         # print(query)
         # data = (datetime.datetime.now())
@@ -171,16 +224,50 @@ class MonocleWrapper:
         connection.commit()
         return True
 
+    # apparently external_id in raids won't always match the one in forts. Great....
+    def __getFortIdWithExternalId(self, externalId):
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+
+        log.error("__getFortIdWithExternalId: Trying to retrieve ID of '%s'" % str(externalId))
+        query = "SELECT id FROM `forts` WHERE external_id='%s'" % str(externalId)
+        cursor = connection.cursor()
+        log.debug("__getFortIdWithExternalId: Executing query: %s " % str(query))
+
+        cursor.execute(query)
+        idList = cursor.fetchall()
+        if len(idList) == 0:
+            log.error("__getFortIdWithExternalId: Gym does not exist in DB")
+            return None
+        elif len(idList) > 1:
+            log.warning("__getFortIdWithExternalId: Multiple gyms with the same external ID...")
+
+        idEntry = idList[0]
+        log.error(str(idEntry[0]))
+        return idEntry[0]
+
     def submitRaid(self, gym, pkm, lvl, start, end, type, raidNo, captureTime, MonWithNoEgg=False):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Submitting raid')
         zero = datetime.datetime.now()
-        zero = time.mktime(zero.timetuple()) - (self.timezone * 60 * 60)
+        zero = time.mktime(zero.timetuple())  # - (self.timezone * 60 * 60)
 
-        if self.raidExist(gym, type, raidNo):
-            self.refreshTimes(gym, raidNo, captureTime)
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(
-                self.uniqueHash) + ') ] ' + 'submitRaid: %s already submitted - ignoring' % str(type))
-            return False
+        #if end is None and not MonWithNoEgg:
+        #    # nothing to be done except for refreshing scantimes
+        #    log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' +
+        #             'submitRaid: Raid on gym ' + str(gym) + ' previously reported, nothing changed. '
+         #                                                    'Just gonna update last_scanned')
+        #    self.refreshTimes(gym, type, raidNo)
+        #    return False
+        # if self.raidExist(gym, type, raidNo):
+        #    self.refreshTimes(gym, raidNo, captureTime)
+        #    log.debug('[Crop: ' + str(raidNo) + ' (' + str(
+        #        self.uniqueHash) + ') ] ' + 'submitRaid: %s already submitted - ignoring' % str(type))
+        #    return False
 
         try:
             connection = mysql.connector.connect(host=self.host,
@@ -191,59 +278,105 @@ class MonocleWrapper:
             return False
 
         wh_send = False
-
+        eggHatched = False
         cursor = connection.cursor()
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(
             self.uniqueHash) + ') ] ' + 'submitRaid: Submitting something of type %s' % type)
-        if type == 'EGG':
-            log.info("Submitting Egg. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s" % (gym, lvl, start, end))
-            query = (' INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, pokemon_id, cp, move_1, ' +
-                     'move_2) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE level = %s, ' +
-                     'time_spawn=%s, time_battle=%s, time_end=%s, ' +
-                     'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s')
-            data = (gym, lvl, start, end, "0", "0", "999", "1", "1",  # TODO: check None vs null?
-                    lvl, start, end, "0", "0", "999", "1", "1")
 
-            cursor.execute(query, data)
+        log.info("Submitting. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, Mon: %s" % (gym, lvl, start, end, pkm))
+
+        # always insert timestamp to time_spawn to have rows change if raid has been reported before
+        updateStr = 'UPDATE raids '
+        whereStr = 'WHERE fort_id = %s AND time_end >= %s' % (str(gym), str(int(time.time())))
+        if MonWithNoEgg:
+            # submit mon without egg info -> we have an endtime
+            start = end - 45 * 60
+            log.info("Updating mon without egg")
+
+            if self.lastUpdatedPresent:
+                setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, ' \
+                         'pokemon_id = %s, ' + self.timestampColumn + ' = %s '
+                data = (lvl, captureTime, start, end, pkm, int(time.time()))
+            else:
+                setStr = 'SET level= %s, time_spawn = %s, time_battle = %s, time_end = %s, pokemon_id = %s '
+                data = (lvl, int(time.time()), start, end, pkm)
+
+        elif end is None or start is None:
+            # no end or start time given, just update the other stuff
+            # TODO: consider skipping UPDATING/INSERTING
+            # TODO: this will be an update of a hatched egg to a boss!
+            log.info("Updating without endtime or starttime - we should've seen an egg before then")
+            setStr = 'SET level = %s, pokemon_id = %s, ' + self.timestampColumn + ' = %s '
+            data = (lvl, pkm, int(time.time()))
+
+            foundEndTime, EndTime = self.getRaidEndtime(gym, raidNo)
+
+            if foundEndTime:
+                wh_send = True
+                wh_start = int(EndTime) - 2700
+                wh_end = EndTime
+                eggHatched = True
+            else:
+                wh_send = False
+
+            # TODO: check for start/end
+        else:
+            log.info("Updating everything")
+            # we have start and end, mon is either with egg or we're submitting an egg
+            if self.lastUpdatedPresent:
+                setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, pokemon_id = %s, ' \
+                         'last_updated = %s '
+                data = (lvl, captureTime, start, end, pkm, int(time.time()))
+            else:
+                setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, pokemon_id = %s, ' \
+                         'last_updated = %s '
+                data = (lvl, int(time.time()), start, end, pkm)
+
+        query = updateStr + setStr + whereStr
+        log.debug(query % data)
+        cursor.execute(query, data)
+        affectedRows = cursor.rowcount
+        connection.commit()
+        cursor.close()
+        if affectedRows == 0 and not eggHatched:
+            # we need to insert the raid...
+            log.info("Gotta insert")
+            if MonWithNoEgg:
+                # submit mon without egg info -> we have an endtime
+                log.info("Inserting mon without egg")
+                start = end - 45 * 60
+                query = (
+                    'INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, pokemon_id) '
+                    'VALUES (%s, %s, %s, %s, %s, %s)')
+                data = (gym, lvl, captureTime, start, end, pkm)
+            elif end is None or start is None:
+                log.info("Inserting without end or start")
+                # no end or start time given, just inserting won't help much...
+                log.warning("Useless to insert without endtime...")
+                return False
+            else:
+                # we have start and end, mon is either with egg or we're submitting an egg
+                log.info("Inserting everything")
+                query = (
+                    'INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, pokemon_id) '
+                    'VALUES (%s, %s, %s, %s, %s, %s)')
+                data = (gym, lvl, captureTime, start, end, pkm)
+
+            cursorIns = connection.cursor()
+            log.debug(query % data)
+            cursorIns.execute(query, data)
+            connection.commit()
+            cursorIns.close()
 
             wh_send = True
-            wh_start = start
-            wh_end = end
-            pkm = 0
-
-        else:
-            log.info('[Crop: ' + str(raidNo) + ' (' + str(
-                self.uniqueHash) + ') ] ' + 'submitRaid: Submitting mon. PokemonID %s, Lv %s, gymID %s' % (
-                         pkm, lvl, gym))
-            if not MonWithNoEgg:
-                query = " UPDATE raids SET pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, time_end = %s WHERE fort_id = %s "
-                data = (pkm, "999", "1", "1", end, gym)
-
-                foundEndTime, EndTime = self.getRaidEndtime(gym, raidNo)
-
-                if foundEndTime:
-                    wh_send = True
-                    wh_start = int(EndTime) - 2700
-                    wh_end = EndTime
-                else:
-                    wh_send = False
-            else:
-                query = (
-                        ' INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, pokemon_id, cp, move_1, ' +
-                        'move_2) VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE level = %s, ' +
-                        'time_spawn=%s, time_battle=%s, time_end=%s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s')
-                data = (
-                    gym, lvl, int(zero) - 10000, int(zero) - 10000, end, pkm, "999", "1", "1",
-                    # TODO: check None vs null?
-                    lvl, int(zero) - 10000, int(zero) - 10000, end, pkm, "999", "1", "1")
-
-                wh_send = True
+            if MonWithNoEgg:
                 wh_start = int(end) - 2700
-                wh_end = end
+            else:
+                wh_start = start
+            wh_end = end
+            if pkm is None:
+                pkm = 0
 
-            cursor.execute(query, data)
-
-        connection.commit()
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Submit finished')
         self.refreshTimes(gym, raidNo, captureTime)
 
@@ -256,7 +389,8 @@ class MonocleWrapper:
     def readRaidEndtime(self, gym, raidNo):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(
             self.uniqueHash) + ') ] ' + 'readRaidEndtime: Check DB for existing mon')
-        now = self.dbTimeStringToUnixTimestamp(str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
+        # now = self.dbTimeStringToUnixTimestamp(str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
+        now = time.time()
         try:
             connection = mysql.connector.connect(host=self.host,
                                                  user=self.user, port=self.port, passwd=self.password,
@@ -286,7 +420,8 @@ class MonocleWrapper:
     def getRaidEndtime(self, gym, raidNo):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(
             self.uniqueHash) + ') ] ' + 'getRaidEndtime: Check DB for existing mon')
-        now = self.dbTimeStringToUnixTimestamp(str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
+        # now = self.dbTimeStringToUnixTimestamp(str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
+        now = time.time()
         try:
             connection = mysql.connector.connect(host=self.host,
                                                  user=self.user, port=self.port, passwd=self.password,
@@ -318,7 +453,8 @@ class MonocleWrapper:
     def raidExist(self, gym, type, raidNo):
         log.debug(
             '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'raidExist: Check DB for existing entry')
-        now = self.dbTimeStringToUnixTimestamp(str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
+        # now = self.dbTimeStringToUnixTimestamp(str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
+        now = time.time()
         try:
             connection = mysql.connector.connect(host=self.host,
                                                  user=self.user, port=self.port, passwd=self.password,
@@ -371,8 +507,8 @@ class MonocleWrapper:
     def refreshTimes(self, gym, raidNo, captureTime):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'Refresh Gym Times')
 
-        now = self.dbTimeStringToUnixTimestamp(str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
-
+        # now = self.dbTimeStringToUnixTimestamp(str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
+        now = time.time()
         try:
             connection = mysql.connector.connect(host=self.host,
                                                  user=self.user, port=self.port, passwd=self.password,
