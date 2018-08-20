@@ -102,20 +102,12 @@ class RmWrapper:
             return None
         cursor = connection.cursor()
 
-        query = (' SELECT  id, BIT_COUNT( ' +
-                 ' CONV(hash, 16, 10) ^ CONV(\'' + str(imghash) + '\', 16, 10) ' +
-                 ' ) as hamming_distance, type ' +
-                 ' FROM trshash ' +
-                 ' HAVING hamming_distance < 4 and type = \'' + str(type) + '\'' +
-                 ' ORDER BY hamming_distance ASC')
-
-        # query = (' SELECT  id, type ' +
-        #         ' FROM trshash ' +
-        #         ' where hash = \'' + str(imghash) + '\' and type = \'' + str(type) + '\'')       
-
-        # query = (' SELECT id FROM trshash ' +
-        # 'WHERE type = \'%s\' and hash = \'%s\''
-        # % (str(type), str(hash)))
+        query = ('SELECT id, BIT_COUNT( '
+                 'CONVERT((CONV(hash, 16, 10)), SIGNED) '
+                 '^ CONVERT((CONV(\'' + str(imghash) + '\', 16, 10)), SIGNED)) as hamming_distance, '
+                                                       'type FROM trshash '
+                                                       'HAVING hamming_distance < 4 and type = \'' + str(type) + '\' '
+                                                                                                                 'ORDER BY hamming_distance ASC')
 
         cursor.execute(query)
         id = None
