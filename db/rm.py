@@ -208,6 +208,8 @@ class RmWrapper:
             return False
 
         wh_send = False
+        wh_start = 0
+        wh_end = 0
 
         if start is not None:
             start = start - self.timezone * 60 * 60
@@ -280,6 +282,10 @@ class RmWrapper:
 
         if args.webhook and wh_send:
             log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Send webhook')
+            if wh_start:
+                wh_start += (self.timezone * 60 * 60)
+            if wh_end:
+                wh_end += (self.timezone * 60 * 60)
             send_webhook(gym, 'RAID', wh_start, wh_end, lvl, pkm)
 
         return True
