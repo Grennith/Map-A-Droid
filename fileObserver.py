@@ -41,6 +41,8 @@ class checkScreenshot(PatternMatchingEventHandler):
         raidCropFilepath = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) + ".jpg"
         log.debug("dispatchAnalysis: Scanning bounds %s" % str(bounds))
         raidCrop = screenshot[bounds.top : bounds.bottom, bounds.left : bounds.right]
+        if raidCrop is None:
+            return None
         cv2.imwrite(raidCropFilepath, raidCrop)
         p = None
         if args.ocr_multitask:
@@ -82,25 +84,27 @@ class checkScreenshot(PatternMatchingEventHandler):
             boundsOfSingleRaid = self.resolutionCalculator.getRaidBoundsSingle()
             log.debug(boundsOfSingleRaid)
             p = self.prepareAnalysis(1, boundsOfSingleRaid, raidPic, captureTime, captureLat, captureLng, event.src_path)
-            processes.append(p)
-            p.daemon = True
-            p.start()
+            if p is not None:
+                processes.append(p)
+                p.daemon = True
+                p.start()
         elif amountOfRaids == 2:
             bounds.append(self.resolutionCalculator.getRaidBoundsTwo(1))
             bounds.append(self.resolutionCalculator.getRaidBoundsTwo(2))
         else:
             if amountOfRaids is None or amountOfRaids > 6:
-                amountOfRaids = 6 #ignore any more raids, shouldn't be the case all too often
-            for i in range(amountOfRaids): #0 to 5....
+                amountOfRaids = 6 # ignore any more raids, shouldn't be the case all too often
+            for i in range(amountOfRaids): # 0 to 5....
                 bounds.append(self.resolutionCalculator.getRaidBounds(i + 1))
         log.debug(bounds)
         for i in range(len(bounds)):
             p = self.prepareAnalysis(i + 1, bounds[i], raidPic, captureTime, captureLat, captureLng, event.src_path)
-            processes.append(p)
-            p.daemon = True
-            p.start()
+            if p is not None:
+                processes.append(p)
+                p.daemon = True
+                p.start()
 
-        #TODO: join threads/processes
+        # TODO: join threads/processes
         log.debug("process: Done starting off processes")
 
     patterns = ['*.png']
@@ -112,4 +116,4 @@ class checkScreenshot(PatternMatchingEventHandler):
         t = Thread(target=self.process(event), name='OCR-processing')
         t.daemon = True
         t.start()
-        #TODO: code this better....
+        # TODO: code this better....
