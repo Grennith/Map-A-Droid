@@ -185,19 +185,6 @@ class RmWrapper:
 
     def submitRaid(self, gym, pkm, lvl, start, end, type, raidNo, captureTime, MonWithNoEgg=False):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Submitting raid')
-        zero = datetime.datetime.now()
-        zero = time.mktime(zero.timetuple()) - (self.timezone * 60 * 60)
-        now_timezone = datetime.datetime.fromtimestamp(float(captureTime))
-        now_timezone = time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
-        now = datetime.datetime.now()
-        date1 = str(now.year) + "-0" + str(now.month) + "-" + str(now.day)
-        today1 = date1 + " " + str(now.hour - (self.timezone)) + ":" + str(now.minute) + ":" + str(now.second)
-
-        if self.raidExist(gym, type, raidNo, pkm):
-            self.refreshTimes(gym, raidNo, captureTime)
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(
-                self.uniqueHash) + ') ] ' + 'submitRaid: %s already submitted - ignoring' % str(type))
-            return False
 
         try:
             connection = mysql.connector.connect(host=self.host,
@@ -207,76 +194,100 @@ class RmWrapper:
             log.error("Could not connect to the SQL database")
             return False
 
+        if start is not None:
+            start -= self.timezone * 60 * 60
+
+        if end is not None:
+            end -= self.timezone * 60 * 60
         wh_send = False
         wh_start = 0
         wh_end = 0
-
-        if start is not None:
-            start = start - self.timezone * 60 * 60
-        if end is not None:
-            end = end - self.timezone * 60 * 60
+        eggHatched = False
 
         cursor = connection.cursor()
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(
             self.uniqueHash) + ') ] ' + 'submitRaid: Submitting something of type %s' % type)
-        if type == 'EGG':
-            # query = " UPDATE raid SET level = %s, spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s),
-            # end=FROM_UNIXTIME(%s), pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = %s WHERE
-            # gym_id = %s " data = (lvl, start, start, end, monegg[int(lvl) - 1], "999", "1", "1",  today1, guid)
-            log.info("Submitting Egg. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, last_scanned: %s" % (
-            gym, lvl, start, end, today1))
-            query = (' INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, ' +
-                     'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
-                     'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
-                     'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
-                     'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
-            data = (gym, lvl, start, start, end, None, "999", "1", "1", now_timezone,  # TODO: check None vs null?
-                    lvl, start, start, end, None, "999", "1", "1", now_timezone)
 
-            cursor.execute(query, data)
+        log.info("Submitting. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, Mon: %s" % (gym, lvl, start, end, pkm))
 
-            wh_send = True
-            wh_start = start
-            wh_end = end
-            pkm = 0
+        # always insert timestamp to last_scanned to have rows change if raid has been reported before
+        updateStr = 'UPDATE raid '
+        whereStr = 'WHERE gym_id = \'%s\' ' % str(gym)
+        if MonWithNoEgg:
+            # submit mon without egginfo -> we have an endtime
+            start = end - 45 * 60
+            log.info("Updating mon without egg")
+            setStr = 'SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), ' \
+                     'pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s) '
+            data = (lvl, captureTime, start, end, pkm, int(time.time()))
+        elif end is None or start is None:
+            # no end or start time given, just update anything there is
+            log.info("Updating without end- or starttime - we should've seen the egg before")
+            setStr = 'SET level = %s, pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s) '
+            data = (lvl, pkm, int(time.time()))
 
-        else:
-            log.info('[Crop: ' + str(raidNo) + ' (' + str(
-                self.uniqueHash) + ') ] ' + 'submitRaid: Submitting mon. PokemonID %s, Lv %s, last_scanned %s, gymID %s' % (
-                     pkm, lvl, today1, gym))
-            if not MonWithNoEgg:
-                query = " UPDATE raid SET level = %s, pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s) WHERE gym_id = %s "
-                data = (lvl, pkm, "999", "1", "1", now_timezone, gym)
-
-                foundEndTime, EndTime = self.getRaidEndtime(gym, raidNo)
-
-                if foundEndTime:
-                    wh_send = True
-                    wh_start = int(EndTime) - 2700
-                    wh_end = EndTime
-                else:
-                    wh_send = False
-
-            else:
-                query = (' INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, ' +
-                         'move_2, last_scanned) VALUES(%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), ' +
-                         'FROM_UNIXTIME(%s), %s, %s, %s, %s, FROM_UNIXTIME(%s)) ON DUPLICATE KEY UPDATE level = %s, ' +
-                         'spawn=FROM_UNIXTIME(%s), start=FROM_UNIXTIME(%s), end=FROM_UNIXTIME(%s), ' +
-                         'pokemon_id = %s, cp = %s, move_1 = %s, move_2 = %s, last_scanned = FROM_UNIXTIME(%s)')
-                data = (gym, lvl, int(zero) - 10000, int(zero) - 10000, end, pkm, "999", "1", "1", now_timezone,
-                        # TODO: check None vs null?
-                        lvl, int(zero) - 10000, int(zero) - 10000, end, pkm, "999", "1", "1", now_timezone)
-
+            foundEndTime, EndTime = self.getRaidEndtime(gym, raidNo)
+            if foundEndTime:
                 wh_send = True
-                wh_start = int(end) - 2700
-                wh_end = end
+                wh_start = int(EndTime) - 2700
+                wh_end = EndTime
+                eggHatched = True
+            else:
+                wh_send = False
+        else:
+            log.info("Updating everything")
+            # we have start and end, mon is either with egg or we're submitting an egg
+            setStr = 'SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), ' \
+                     'pokemon_id = %s, ' \
+                     'last_scanned = FROM_UNIXTIME(%s) '
+            data = (lvl, captureTime, start, end, pkm, int(time.time()))
 
-            cursor.execute(query, data)
-
+        query = updateStr + setStr + whereStr
+        log.debug(query % data)
+        cursor.execute(query, data)
+        affectedRows = cursor.rowcount
         connection.commit()
         cursor.close()
-        connection.close()
+        if affectedRows == 0 and not eggHatched:
+            # we need to insert the raid...
+            log.info("Gotta insert")
+            if MonWithNoEgg:
+                # submit mon without egg info -> we have an endtime
+                log.info("Inserting mon without egg")
+                start = end - 45 * 60
+                query = (
+                    'INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned) '
+                    'VALUES (%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), %s, FROM_UNIXTIME(%s))')
+                data = (gym, lvl, captureTime, start, end, pkm, int(time.time()))
+            elif end is None or start is None:
+                log.info("Inserting without end or start")
+                # no end or start time given, just inserting won't help much...
+                log.warning("Useless to insert without endtime...")
+                return False
+            else:
+                # we have start and end, mon is either with egg or we're submitting an egg
+                log.info("Inserting everything")
+                query = (
+                    'INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned) '
+                    'VALUES (%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), %s, FROM_UNIXTIME(%s))')
+                data = (gym, lvl, captureTime, start, end, pkm, int(time.time()))
 
+            cursorIns = connection.cursor()
+            log.debug(query % data)
+            cursorIns.execute(query, data)
+            connection.commit()
+            cursorIns.close()
+
+            wh_send = True
+            if MonWithNoEgg:
+                wh_start = int(end) - 2700
+            else:
+                wh_start = start
+            wh_end = end
+            if pkm is None:
+                pkm = 0
+
+        connection.close()
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Submit finished')
         self.refreshTimes(gym, raidNo, captureTime)
 

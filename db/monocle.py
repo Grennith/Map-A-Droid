@@ -249,21 +249,6 @@ class MonocleWrapper:
 
     def submitRaid(self, gym, pkm, lvl, start, end, type, raidNo, captureTime, MonWithNoEgg=False):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Submitting raid')
-        zero = datetime.datetime.now()
-        zero = time.mktime(zero.timetuple())  # - (self.timezone * 60 * 60)
-
-        #if end is None and not MonWithNoEgg:
-        #    # nothing to be done except for refreshing scantimes
-        #    log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' +
-        #             'submitRaid: Raid on gym ' + str(gym) + ' previously reported, nothing changed. '
-         #                                                    'Just gonna update last_scanned')
-        #    self.refreshTimes(gym, type, raidNo)
-        #    return False
-        # if self.raidExist(gym, type, raidNo):
-        #    self.refreshTimes(gym, raidNo, captureTime)
-        #    log.debug('[Crop: ' + str(raidNo) + ' (' + str(
-        #        self.uniqueHash) + ') ] ' + 'submitRaid: %s already submitted - ignoring' % str(type))
-        #    return False
 
         try:
             connection = mysql.connector.connect(host=self.host,
@@ -279,7 +264,8 @@ class MonocleWrapper:
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(
             self.uniqueHash) + ') ] ' + 'submitRaid: Submitting something of type %s' % type)
 
-        log.info("Submitting. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, Mon: %s" % (gym, lvl, start, end, pkm))
+        log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' +
+                 "Submitting. Gym: %s, Lv: %s, Start and Spawn: %s, End: %s, Mon: %s" % (gym, lvl, start, end, pkm))
 
         # always insert timestamp to time_spawn to have rows change if raid has been reported before
         updateStr = 'UPDATE raids '
@@ -287,17 +273,19 @@ class MonocleWrapper:
         if MonWithNoEgg:
             # submit mon without egg info -> we have an endtime
             start = end - 45 * 60
-            log.info("Updating mon without egg")
+            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + "Updating mon without egg")
 
             setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, ' \
-                    'pokemon_id = %s, last_updated = %s '
+                     'pokemon_id = %s, last_updated = %s '
             data = (lvl, captureTime, start, end, pkm, int(time.time()))
 
         elif end is None or start is None:
             # no end or start time given, just update the other stuff
             # TODO: consider skipping UPDATING/INSERTING
             # TODO: this will be an update of a hatched egg to a boss!
-            log.info("Updating without endtime or starttime - we should've seen an egg before then")
+            log.info('[Crop: ' + str(raidNo) + ' (' + str(
+                self.uniqueHash) + ') ] ' + "Updating without endtime or starttime - we should've seen an egg before "
+                                            "then")
             setStr = 'SET level = %s, pokemon_id = %s, last_updated = %s '
             data = (lvl, pkm, int(time.time()))
 
@@ -313,7 +301,7 @@ class MonocleWrapper:
 
             # TODO: check for start/end
         else:
-            log.info("Updating everything")
+            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + "Updating everything")
             # we have start and end, mon is either with egg or we're submitting an egg
             setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, pokemon_id = %s, ' \
                      'last_updated = %s '
@@ -327,30 +315,31 @@ class MonocleWrapper:
         cursor.close()
         if affectedRows == 0 and not eggHatched:
             # we need to insert the raid...
-            log.info("Gotta insert")
+            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + "Gotta insert")
             if MonWithNoEgg:
                 # submit mon without egg info -> we have an endtime
-                log.info("Inserting mon without egg")
+                log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + "Inserting mon without egg")
                 start = end - 45 * 60
                 query = (
                     'INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, pokemon_id) '
                     'VALUES (%s, %s, %s, %s, %s, %s)')
                 data = (gym, lvl, captureTime, start, end, pkm)
             elif end is None or start is None:
-                log.info("Inserting without end or start")
+                log.info(
+                    '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + "Inserting without end or start")
                 # no end or start time given, just inserting won't help much...
                 log.warning("Useless to insert without endtime...")
                 return False
             else:
                 # we have start and end, mon is either with egg or we're submitting an egg
-                log.info("Inserting everything")
+                log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + "Inserting everything")
                 query = (
                     'INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, pokemon_id) '
                     'VALUES (%s, %s, %s, %s, %s, %s)')
                 data = (gym, lvl, captureTime, start, end, pkm)
 
             cursorIns = connection.cursor()
-            log.debug(query % data)
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + query % data)
             cursorIns.execute(query, data)
             connection.commit()
             cursorIns.close()
@@ -364,6 +353,7 @@ class MonocleWrapper:
             if pkm is None:
                 pkm = 0
 
+        connection.close()
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Submit finished')
         self.refreshTimes(gym, raidNo, captureTime)
 
