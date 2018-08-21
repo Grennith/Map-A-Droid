@@ -77,7 +77,7 @@ brew install tesseract --all-languages
 
 3. Install RemoteGPSController (RGC) [here](http://www.github.com/Grennith/Map-A-Droid/blob/master/APKs/RemoteGpsController.apk) located in the `APKs` github folder.
 
-4. Install [Link2SD] and ensure that RemoteGPSController is converted to a System Apps.
+4. Install [Link2SD](https://play.google.com/store/apps/details?id=com.buak.Link2SD&hl=en_GB) and ensure that RemoteGPSController is converted to a System Apps.
 
 5. To help with rubberbanding when teleporting do the following
     *  Disable **background** data of Google Play Services
