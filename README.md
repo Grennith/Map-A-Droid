@@ -34,20 +34,40 @@ Start droidVNC, start Server, switch out of app and go to System Settings -> App
 3) Teleporting from location to location takes the game to load images. Faster phones may handle it better. We are testing on low end specs (Redmi 5A for 75 bucks). We will likely add a parameter to set the delays inbetween teleports and screenshots.
 4) Sometimes mons do not get reported to the DB. We are in the process of debugging. It can help to remove the files in the hash-folder however.
 
-# Installation
-Install python according to docs for your platform.
+# Installation on Server/Desktop
+1) Install python according to docs for your platform.
 
-Having installed python, do get yourself python pip and run
-`pip install -r requirements.txt`
+  Having installed python, do get yourself python pip and run
+  `pip install -r requirements.txt`
 
-Depending on your OS, you probably need to install some more stuff.
-E.g. Ubuntu/Debian requires you to run
-```bash
-sudo apt update
-sudo apt install tesseract-ocr python-opencv
-```
+  Depending on your OS, you probably need to install some more stuff.
+  E.g. Ubuntu/Debian requires you to run
+  ```bash
+  sudo apt update
+  sudo apt install tesseract-ocr python-opencv
+  ```
+2) Create a .csv with coords of gyms (one coord per line in format 'lat,lng'):
+  ```bash
+  lat1,lng1
+  lat2,lng2
+  ...etc
+  ```
+  You can also try to download the coords of gyms from your existing RM DB (downloadDBCords.py)
+3) Insert gym images into gym_img folder. Either manually (e.g. from Ingress) or
+  try the downloadfortimg.py
+4) Configure config.ini as needed. See `config.ini.example` for params and info
+5) Start TRM by calling `python startWalker.py`
 
-#WE DO NOT GUARANTEE FOR THE ENTIRE THING TO BE RUNNING PERFECTLY FINE
+For performance it might be worth giving ocr_multitask a chance and/or calling
+startWalker.py with `-os` in one console and `-oo` in another.
+
+
+# Steps on Android device
+1) Install Pogo, droidVNC, RemoteGpsController, systemizer
+2) Systemize RGC (Oreo requires it to be systemized as a priv-app)
+3) Start VNC as noted above, start RGC
+
+# WE DO NOT GUARANTEE FOR THE ENTIRE THING TO BE RUNNING PERFECTLY FINE
 
 ### Todos
 
@@ -57,7 +77,7 @@ sudo apt install tesseract-ocr python-opencv
  - Improve errorhandling
  - Support more/all resolutions
 
-#Discord
+# Discord
 For minor help, reporting resolutions (instructions on how to do so will be given sometime in the future), bugreports
 [Join the discord server](https://discord.gg/MC3vAH9)
 

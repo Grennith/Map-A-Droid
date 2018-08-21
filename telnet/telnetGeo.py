@@ -8,18 +8,20 @@ log = logging.getLogger()
 
 class TelnetGeo:
     UPDATE_INTERVAL = 0.4
-    def __init__(self, ip, port, password):
-        #Throws ValueError if unable to connect!
-        #catch in code using this class
-        self.telnetClient = TelnetClient(ip, port, password)
+
+    def __init__(self, ip, port, password, commandTimeout, socketTimeout):
+        # Throws ValueError if unable to connect!
+        # catch in code using this class
+        self.telnetClient = TelnetClient(ip, port, password, socketTimeout)
+        self.__commandTimeout = commandTimeout
 
     def setLocation(self, lat, lng, alt):
-        return self.telnetClient.sendCommand("geo fix %s %s %s\r\n" % (lat, lng, alt))
+        return self.telnetClient.sendCommand("geo fix %s %s %s\r\n" % (lat, lng, alt), self.__commandTimeout)
 
-    #coords need to be float values
-    #speed integer with km/h
+    # coords need to be float values
+    # speed integer with km/h
     #######
-    ### This blocks!
+    # This blocks!
     #######
     def walkFromTo(self, startLat, startLng, destLat, destLng, speed):
         startLat = float(startLat)
@@ -35,7 +37,7 @@ class TelnetGeo:
         log.debug("walkFromTo: calling __walkTrackSpeed")
         self.__walkTrackSpeed(start, t_speed, dest)
 
-    #TODO: errorhandling, return value
+    # TODO: errorhandling, return value
     def __walkTrackSpeed(self, start, speed, dest):
         log.debug("__walkTrackSpeed: called, calculating distance and travel_time")
         distance = start.distance(dest)
@@ -61,4 +63,3 @@ class TelnetGeo:
             log.debug("__walkTrackSpeed: sending location")
             self.setLocation(repr(startLat), repr(startLng), "")
             log.debug("__walkTrackSpeed: done sending location")
-        #print("Done")

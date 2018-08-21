@@ -4,19 +4,21 @@ import cv2
 import numpy as np
 import logging
 from PIL import Image
-#import pytesseract
+# import pytesseract
 from pytesseract import image_to_string
 from resolutionCalculator import *
-
+import os
 import os.path
 import sys
+
 sys.path.insert(0, '../')
-from vnc.vncWrapper import VncWrapper
+from screenWrapper import ScreenWrapper
 import collections
 import re
 import time
 
 import sys
+
 reload(sys)
 sys.setdefaultencoding('utf8')
 
@@ -28,17 +30,19 @@ log = logging.getLogger(__name__)
 
 
 class PogoWindows:
-    def __init__(self, vncIp, vncScreen, vncPort, vncPassword, width, height, tempDirPath):
-        self.vncWrapper = VncWrapper(str(vncIp), vncScreen, vncPort, vncPassword)
+    def __init__(self, screenWrapper, width, height, tempDirPath):
+        self.screenWrapper = screenWrapper
         self.resolutionCalculator = ResolutionCalc(width, height)
         if not os.path.exists(tempDirPath):
             os.makedirs(tempDirPath)
             log.info('PogoWindows: Temp directory created')
         self.tempDirPath = tempDirPath
+        self.width = width
+        self.height = height
 
     def __mostPresentColour(self, filename, maxColours):
         img = Image.open(filename)
-        colors = img.getcolors(maxColours) #put a higher value if there are many colors in your image
+        colors = img.getcolors(maxColours)  # put a higher value if there are many colors in your image
         max_occurence, most_present = 0, 0
         try:
             for c in colors:
@@ -48,141 +52,239 @@ class PogoWindows:
         except TypeError:
             return None
 
-    def __checkPostLoginOkButton(self, filename, hash, type):
+    def __checkPostLoginOkButton(self, filename, hash, type, ratio):
         if not os.path.isfile(filename):
             return False
         log.debug('checkPostLoginOkButton: Checking for post-login ok button of type %s...' % type)
+        pos = None
+        if type == 'post_login_ok_driving':
+            pos = self.resolutionCalculator.getPostLoginOkDrivingClick()
+        else:
+            pos = self.resolutionCalculator.getPostLoginOkPrivatePropertyClick()
+
+        if not self.__lookForButton(filename, 2.20, pos.y):
+            log.debug('checkPostLoginOkButton: Could not find OK button')
+            return False
+        else:
+            log.debug('checkPostLoginOkButton: Found post login OK button - closing ...')
+
+            self.screenWrapper.click(pos.x, pos.y)
+            return True
+
+    def isGpsSignalLost(self, filename, hash):
+        if not os.path.isfile(filename):
+            log.error("isGpsSignalLost: %s does not exist" % str(filename))
+            return None
+
+        log.debug("isGpsSignalLost: checking for red bar")
         col = cv2.imread(filename)
         bounds = None
-        if type == 'post_login_ok_driving':
-            bounds = self.resolutionCalculator.getPostLoginOkDrivingBounds()
-        else:
-            bounds = self.resolutionCalculator.getPostLoginOkPrivatePropertyBounds()
+        bounds = self.resolutionCalculator.getGpsErrorBounds()
 
-        okFont = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        log.debug('checkPostLoginOkButton: bounds of okFont: %s' % str(bounds))
+        gpsError = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
+        log.debug('isGpsSignalLost: bounds of gpsError: %s' % str(bounds))
 
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_login.png"
-        cv2.imwrite(tempPathColoured, okFont)
+        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_gpsError.png"
+        cv2.imwrite(tempPathColoured, gpsError)
 
         col = Image.open(tempPathColoured)
         width, height = col.size
 
-        #check for the colour of the button that says "show all"
-        if (self.__mostPresentColour(tempPathColoured, width * height) != (144, 217, 152)):
-            return False
-
-        gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.png")
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.png"),config='--oem 3 --psm 7')
-
-        #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_login.png")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_login_bw.png")
-
-        log.debug("checkPostLoginOkButton: Checking for post-login OK button found: %s" % text)
-        #if 'O. K.' in text:
-        if re.match(r'.*[o|O|0].*[k|K].*', text):
-            log.debug('checkPostLoginOkButton: Found post login OK button - closing ...')
-            pos = None
-            if type == 'post_login_ok_driving':
-                pos = self.resolutionCalculator.getPostLoginOkDrivingClick()
-            else:
-                pos = self.resolutionCalculator.getPostLoginOkPrivatePropertyClick()
-            self.vncWrapper.clickVnc(pos.x, pos.y)
+        # check for the colour of the GPS error
+        if self.__mostPresentColour(tempPathColoured, width * height) == (240, 75, 95):
             return True
         else:
-            log.debug('checkPostLoginOkButton: Could not find OK button')
             return False
 
     def checkPostLoginOkButton(self, filename, hash):
-        return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving')
-            or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property'))
+        log.debug('checkPostLoginOkButton: Starting check')
+        return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving', 26)
+                or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property', 17))
 
-    def readAmountOfRaids(self, filename, hash):
+    def __readCircleCount(self,filename,hash,ratio, xcord = False, crop = False):
+        log.debug("__readCircleCount: Reading circles")
+
+        screenshotRead = cv2.imread(filename)
+        height, width, _ = screenshotRead.shape
+        
+        if crop:
+            screenshotRead = screenshotRead[int(height)-int(height/4.5):int(height),int(width)/2-int(width)/8:int(width)/2+int(width)/8]
+
+        log.debug("__readCircleCount: Determined screenshot scale: " + str(height) + " x " + str(width))
+        gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        # detect circles in the image
+
+        radMin = int((width / float(ratio) - 3) / 2)
+        radMax = int((width / float(ratio) + 3) / 2)
+        log.debug("__readCircleCount: Detect radius of circle: Min " + str(radMin) + " Max " + str(radMax))
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin,
+                                   maxRadius=radMax)
+        circle = 0
+        # ensure at least some circles were found
+        if circles is not None:
+            # convert the (x, y) coordinates and radius of the circles to integers
+            circles = np.round(circles[0, :]).astype("int")
+            # loop over the (x, y) coordinates and radius of the circles
+            for (x, y, r) in circles:
+                if not xcord:
+                    circle += 1
+                else:
+                    if x >= (width / 2) - 100 and x <= (width / 2) + 100 and y >= (height - (height / 3)):
+                        circle += 1
+
+            log.debug("__readCircleCount: Determined screenshot to have " + str(circle) + " Circle.")
+            return circle
+        else:
+            log.debug("__readCircleCount: Determined screenshot to have 0 Circle")
+            return -1
+
+    def readRaidCircles(self, filename, hash):
+        log.debug("readCircles: Reading circles")
+        if not self.readAmountOfRaidsCircle(filename, hash):
+            # no raidcount (orange circle) present...
+            return 0
+
+        circle = self.__readCircleCount(filename, hash, 4.7)
+
+        if circle > 6:
+            circle = 6
+
+        if circle > 0:
+            log.debug("readCircles: Determined screenshot to have " + str(circle) + " Circle.")
+            return circle
+
+        log.debug("readCircles: Determined screenshot to not contain raidcircles, but a raidcount!")
+        return -1
+
+    def __lookForButton(self, filename, ratio, minmiddledist=False, max=False):
+        log.debug("lookForButton: Reading lines")
+        disToMiddleMin = None
+        screenshotRead = cv2.imread(filename)
+        gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        height, width, _ = screenshotRead.shape
+        log.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
+        gray = cv2.GaussianBlur(gray, (5, 5), 0)
+        edges = cv2.Canny(gray, 100, 200, apertureSize=3)
+        maxLineLength = width / ratio + 15
+        log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
+        minLineLength = width / ratio - 25
+        log.debug("lookForButton: MinLineLength:" + str(minLineLength))
+        maxLineGap = 50
+        lineCount = 0
+        lines = []
+        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 160, maxLineGap, minLineLength)
+        if lines is None:
+            return False
+
+        for line in lines:
+            for x1, y1, x2, y2 in line:
+                if y1 == y2 and (x2 - x1 <= maxLineLength) and (x2 - x1 >= minLineLength) and y1 > height / 2:
+                    lineCount += 1
+                    disToMiddle = y1
+
+                    if not max:
+                        if disToMiddleMin is None or disToMiddle < disToMiddleMin:
+                            disToMiddleMin = disToMiddle
+                    else:
+                        if disToMiddleMin is None or disToMiddle > disToMiddleMin:
+                            disToMiddleMin = disToMiddle
+
+                    log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
+                        x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
+
+        if lineCount >= 1:
+            log.debug("lookForButton: disToMiddleMin: " + str(disToMiddleMin))
+            log.debug("lookForButton: minmiddledist: " + str(minmiddledist))
+            if minmiddledist:
+                log.debug("lookForButton: Check Y-cord of button")
+                if disToMiddleMin - ((height / 25) - 5) < minmiddledist < disToMiddleMin + (
+                        (height / 25) + 5):
+                    log.debug("lookForButton: Button found")
+                    return True
+                else:
+                    log.debug("lookForButton: Button not found")
+                    return False
+            else:
+                log.debug("lookForButton: Button found")
+                return True
+
+        log.debug("lookForButton: Button not found")
+        return False
+
+    def __checkRaidLine(self, filename, hash, leftSide=False):
+        log.debug("__checkRaidLine: Reading lines")
+        if leftSide:
+            log.debug("__checkRaidLine: Check nearby open ")
+        screenshotRead = cv2.imread(filename)
+        height, width, _ = screenshotRead.shape
+        screenshotRead = screenshotRead[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
+                         int(0):int(width)]
+        gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        gray = cv2.GaussianBlur(gray, (5, 5), 0)
+        log.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
+        edges = cv2.Canny(gray, 50, 150, apertureSize=3)
+        maxLineLength = width / 3.30 + 30
+        log.debug("__checkRaidLine: MaxLineLength:" + str(maxLineLength))
+        minLineLength = width / 3.30 - 30
+        log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
+        maxLineGap = 50
+        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, minLineLength, maxLineGap)
+        if lines is None:
+            return False
+        for line in lines:
+            for x1, y1, x2, y2 in line:
+                if not leftSide:
+                    if y1 == y2 and (x2 - x1 <= maxLineLength) and (
+                            x2 - x1 >= minLineLength) and x1 > width / 2 and y1 < (height / 2):
+                        log.debug("__checkRaidLine: Raid-tab is active - Line lenght: " + str(
+                            x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
+                        return True
+                    # else: log.debug("__checkRaidLine: Raid-tab is not active - Line lenght: " + str(x2-x1) + "px
+                    # Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2)) return False
+                else:
+                    if y1 == y2 and (x2 - x1 <= maxLineLength) and (
+                            x2 - x1 >= minLineLength) and x1 < width / 2 and y1 < (height / 2):
+                        log.debug("__checkRaidLine: Nearby is active - but not Raid-tab")
+                        return True
+                    # else:
+                    # log.debug("__checkRaidLine: Nearby not active - but maybe Raid-tab")
+                    # return False
+        log.debug("__checkRaidLine: Not active")
+        return False
+
+    def readAmountOfRaidsCircle(self, filename, hash):
         if not os.path.isfile(filename):
             return None
 
-        log.debug("readAmountOfRaids: Cropping the number inside the circle showing raidcount")
-        screenshotRead = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getRaidcountBounds()
-        log.debug("readAmountOfRaids: bounds are %s" % str(bounds))
-        raidCount = screenshotRead[bounds.top : bounds.bottom, bounds.left : bounds.right]
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_raidcount.png"
-        cv2.imwrite(tempPathColoured, raidCount)
+        log.debug("readAmountOfRaidsCircle: Cropping circle")
 
-        raidCountColoured = Image.open(tempPathColoured)
-        width, height = raidCountColoured.size
+        image = cv2.imread(filename)
+        height, width, _ = image.shape
+        image = image[int(height / 2 - (height / 3)):int(height / 2 + (height / 3)), 0:int(width)]
+        cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), image)
 
-        #check for most present colours... if there's no orange, we can stop immediately
-        mostPresentColour = self.__mostPresentColour(tempPathColoured, width * height)
-        if (mostPresentColour != (255, 120, 55)):
-            log.info("readAmountOfRaids: No raidcount found, assuming no raids nearby")
-            #cv2.imwrite(str(hash) + "_derp.png", raidCount)
-            return 0
-
-        tempPathBw = self.tempDirPath + "/" + str(hash) + "_raidcount_bw.png"
-        gray = raidCountColoured.convert('L')
-        bw = gray.point(lambda x: 0 if x<200 else 255, '1')
-        bw.save(tempPathBw)
-        text = image_to_string(Image.open(tempPathBw),config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','').replace('.','').replace(',','').replace('‘','')
-
-        count = None
-        try:
-            count = int(text)
-        except ValueError:
-            #Handle exception when tesseract read bullshit...
-            log.info("readAmountOfRaids: could not read a number... " +
-                "Text read: %s. Fallback to 6" % text)
-            return 6 #we do read 1 and 2 pretty good... 3 gives us trouble, just assume 6 to be good to go
-
-        log.debug("readAmountOfRaids: read raidcount of %s" % str(count))
-
-        return count
-
+        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), hash, 18.95) > 0:
+            log.info("readAmountOfRaidsCircle: Raidcircle found, assuming raids nearby")
+            os.remove(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'))
+            return True
+        else:
+            log.info("readAmountOfRaidsCircle: No raidcircle found, assuming no raids nearby")
+            os.remove(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'))
+            return False
 
     def checkPostLoginNewsMessage(self, filename, hash):
         if not os.path.isfile(filename):
             return False
 
         log.debug('checkPostLoginNewsMessage: Checking for small news popup ...')
-        col = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getPostLoginNewsMessageBounds()
-        log.debug('checkPostLoginNewsMessage: bounds are %s' % str(bounds))
-        raidtimer = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_message.png"
-        cv2.imwrite(tempPathColoured, raidtimer)
 
-
-        col = Image.open(tempPathColoured)
-        width, height = col.size
-
-        #check for the colour of the button that says "show all"
-        if (self.__mostPresentColour(tempPathColoured, width * height) != (241, 255, 237)):
-            return False
-
-
-        gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png")
-
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png"),config='--psm 7')
-
-        #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_message.png")
-
-        log.debug("checkPostLoginNewsMessage: found the following text: %s " % text)
-        if len(text) > 1:
-            log.debug('checkPostLoginNewsMessage: found popup - closing ...')
-            self.vncWrapper.rightClickVnc()
-            #os.remove(filename)
-            return True
-        else:
+        if not self.__lookForButton(filename, 3.01):
             log.debug('checkPostLoginNewsMessage: no popup found')
             return False
-
+        else:
+            log.debug('checkPostLoginNewsMessage: found popup - closing ...')
+            self.screenWrapper.backButton()
+            return True
 
     def __checkRaidTabOnScreen(self, filename, hash):
         if not os.path.isfile(filename):
@@ -193,17 +295,18 @@ class PogoWindows:
         bounds = self.resolutionCalculator.getNearbyRaidTabBounds()
         log.debug("__checkRaidTabOnScreen: Bounds %s" % str(bounds))
         raidtimer = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_message.png", raidtimer)
-        col = Image.open(self.tempDirPath + "/" + str(hash) + "_message.png")
+        cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_message.jpg", raidtimer)
+        col = Image.open(self.tempDirPath + "/" + str(hash) + "_message.jpg")
         gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png")
+        bw = gray.point(lambda x: 0 if x < 210 else 255, '1')
+        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg")
 
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.png"), config='-c tessedit_char_whitelist=RAID -psm 7')
+        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg"),
+                               config='-c tessedit_char_whitelist=RAID -psm 7')
         log.debug("__checkRaidTabOnScreen: Check for raidtab present resulted in text: %s" % text)
 
-        os.remove('temp/' + str(hash) + '_cropped_message_bw.png')
-        os.remove('temp/' + str(hash) + '_message.png')
+        os.remove('temp/' + str(hash) + '_cropped_message_bw.jpg')
+        os.remove('temp/' + str(hash) + '_message.jpg')
         if 'RAID' in text:
             log.debug("__checkRaidTabOnScreen: Found raidtab")
             return True
@@ -211,147 +314,113 @@ class PogoWindows:
             log.debug("__checkRaidTabOnScreen: Could not find raidtab")
             return False
 
-    #assumes we are on the general view of the game
+    # assumes we are on the general view of the game
     def checkRaidscreen(self, filename, hash):
         log.debug("checkRaidscreen: Checking if RAID is present (nearby tab)")
-        if self.__checkRaidTabOnScreen(filename, hash):
-            #RAID Tab visible
-            pos = self.resolutionCalculator.getNearbyRaidTabClick()
-            self.vncWrapper.clickVnc(pos.x, pos.y)
-            #self.vncWrapper.clickVnc(500, 370) #TODO: adaptive to resolution
+
+        if self.__checkRaidLine(filename, hash):
             log.debug('checkRaidscreen: RAID-tab found')
             return True
-        else:
-            log.warning('checkRaidscreen: Could not locate RAID-tab')
+        if self.__checkRaidLine(filename, hash, True):
+            # RAID Tab not active
+            log.debug('checkRaidscreen: RAID-tab not activated')
+            # pos = self.resolutionCalculator.getNearbyRaidTabClick()
+            # self.screenWrapper.click(pos.x, pos.y)
+            # time.sleep(.5)
+            # log.debug('checkRaidscreen: RAID-tab clicked')
             return False
 
+        log.debug('checkRaidscreen: nearby not found')
+        # log.warning('checkRaidscreen: Could not locate RAID-tab')
+        return False
+
     def checkNearby(self, filename, hash):
-        if not self.__checkRaidTabOnScreen(filename, hash):
-            #RAID Tab not visible => not on Nearby screen
-            log.info('Raidscreen not running...')
-            posNearby = self.resolutionCalculator.getNearbyClick()
-            self.vncWrapper.clickVnc(posNearby.x, posNearby.y)
-            posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
-            self.vncWrapper.clickVnc(posRaids.x, posRaids.y)
-            return False
-        else:
+        if self.__checkRaidLine(filename, hash):
             log.info('Nearby already open')
             return True
+
+        if self.__checkRaidLine(filename, hash, True):
+            log.info('Raidscreen not running but nearby open')
+            posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
+            self.screenWrapper.click(posRaids.x, posRaids.y)
+            time.sleep(.5)
+            return False
+
+        log.info('Raidscreen not running...')
+        posNearby = self.resolutionCalculator.getNearbyClick()
+        self.screenWrapper.click(posNearby.x, posNearby.y)
+        time.sleep(.5)
+        posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
+        self.screenWrapper.click(posRaids.x, posRaids.y)
+        time.sleep(.5)
+        return False
 
     def checkGameQuitPopup(self, filename, hash):
         if not os.path.isfile(filename):
             return False
 
         log.debug('checkGameQuitPopup: Checking for quit-game popup ...')
-        col = cv2.imread(filename)
+        pos = None
+        pos = self.resolutionCalculator.getquitGameClick()
         bounds = self.resolutionCalculator.getQuitGamePopupBounds()
-        quitGameCrop = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = 'temp/' + str(hash) + '_quitbutton.png'
-        cv2.imwrite(tempPath, quitGameCrop)
-
-        col = Image.open(tempPath)
-        width, height = col.size
-
-        mostPresentColour = self.__mostPresentColour(tempPath, width * height)
-        log.debug('checkGameQuitPopup: most present colour is %s' % str(mostPresentColour))
-        #just gonna check the most occuring colours on that button...
-        if (mostPresentColour != (255, 255, 255)):
-            return False
-
-        gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.png")
-
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.png"),config='-c tessedit_char_whitelist=X -psm 7')
-
-        #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_quitmessage_bw.png")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_quitbutton.png")
-
-        log.debug("checkGameQuitPopup: Found text: %s " % text)
-        if len(text) > 1:
-            log.info('checkGameQuitPopup: Found quit popup - aborting quit ...')
-            self.vncWrapper.rightClickVnc()
-            return True
-        else:
+        if not self.__lookForButton(filename, 2.20, bounds.top):
             log.debug('checkGameQuitPopup: Could not find quit popup')
             return False
+        else:
+            log.info('checkGameQuitPopup: Found quit popup - aborting quit ...')
+            self.screenWrapper.backButton()
+            return True
 
     def checkSpeedwarning(self, filename, hash):
         if not os.path.isfile(filename):
             return False
 
         log.debug('checkSpeedwarning: Checking for speed-warning ...')
-        col = cv2.imread(filename)
         bounds = self.resolutionCalculator.getSpeedwarningBounds()
-        log.debug('checkSpeedwarning: got bounds %s' % str(bounds))
-        cropOfSpeedwarning = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = self.tempDirPath + "/" + str(hash) + "_speedmessage.png"
-        cv2.imwrite(tempPath, cropOfSpeedwarning)
 
-        col = Image.open(tempPath)
-        width, height = col.size
-
-        mostPresentColour = self.__mostPresentColour(tempPath, width * height)
-        log.debug('checkSpeedwarning: most present colour is %s' % str(mostPresentColour))
-        #just gonna check the most occuring colours on that button...
-        if (mostPresentColour != (144, 217, 152)
-            and mostPresentColour != (146, 217, 152)
-            and mostPresentColour != (152, 218, 151)
-            and mostPresentColour != (153, 218, 151)
-            and mostPresentColour != (151, 218, 151)
-            and mostPresentColour != (77, 209, 163)
-            and mostPresentColour != (255, 255, 255)):
+        if not self.__lookForButton(filename, 1.60, bounds.bottom, True):
+            log.debug('checkSpeedwarning: No speedmessage found')
             return False
-
-        gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x<210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.png")
-
-        passengerString = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.png"),config='-psm 7')
-
-        #cleanup
-        os.remove(self.tempDirPath + "/" + str(hash) + "_cropped_speedmessage_bw.png")
-        os.remove(self.tempDirPath + "/" + str(hash) + "_speedmessage.png")
-
-        log.debug("checkSpeedwarning: Found text: %s " % passengerString)
-        if len(passengerString) > 4:
+        else:
             log.debug('checkSpeedwarning: Found Speedmessage - closing ...')
             posPassenger = self.resolutionCalculator.getSpeedwarningClick()
             log.debug("checkSpeedwarning: Clicking %s" % str(posPassenger))
-            self.vncWrapper.clickVnc(posPassenger.x, posPassenger.y)
+            self.screenWrapper.click(posPassenger.x, posPassenger.y)
             return True
-        else:
-            log.debug('checkSpeedwarning: No speedmessage found')
-            return False
 
-    def __checkClosePresent(self, filename, hash, windowsToCheck):
+    def checkWeatherWarning(self, filename, hash):
         if not os.path.isfile(filename):
             return False
 
-        bounds = None
-        col = cv2.imread(filename)
-        if (windowsToCheck == 'news_or_quest'):
-            log.debug('__checkClosePresent: Checking for news or quest close button')
-            bounds = self.resolutionCalculator.getNewsQuestCloseButtonBounds()
+        log.debug('checkWeatherwarning: Checking for weatherwarning ...')
+
+        if not self.__lookForButton(filename, 1.05):
+            log.debug('checkWeatherwarning: No weatherwarning found')
+            return False
         else:
-            log.debug('__checkClosePresent: Checking for menu or raids close button')
-            bounds = self.resolutionCalculator.getMenuRaidsCloseButtonBounds()
+            log.debug('checkWeatherwarning: Found weather warning - closing ...')
+            posPassenger = self.resolutionCalculator.getWeatherWarningFirstClick()
+            log.debug("checkWeatherwarning: Clicking %s" % str(posPassenger))
+            self.screenWrapper.click(posPassenger.x, posPassenger.y)
+            time.sleep(1)
+            log.debug('checkWeatherwarning: Also closing the weather info ...')
+            posPassenger = self.resolutionCalculator.getWeatherWarningSecondClick()
+            log.debug("checkWeatherwarning: Clicking %s" % str(posPassenger))
+            self.screenWrapper.click(posPassenger.x, posPassenger.y)
+            return True
 
-        log.debug('__checkClosePresent: checking bounds %s' % str(bounds))
-        closeButton = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        tempPath = self.tempDirPath + "/" + str(hash) + "_xbutton.png"
-        log.debug("TempPath: %s" % tempPath)
-        cv2.imwrite(tempPath, closeButton)
+    def __checkClosePresent(self, filename, hash, windowsToCheck, radiusratio=12, Xcord=True):
+        if not os.path.isfile(filename):
+            log.warning("__checkClosePresent: %s does not exist" % str(filename))
+            return False
 
-        im = Image.open(tempPath)
-        width, height = im.size
-
-        mostPresentColour = self.__mostPresentColour(tempPath, width * height)
-
-        os.remove(self.tempDirPath + "/" + str(hash) + "_xbutton.png")
-        return ((mostPresentColour == (28, 135, 150))
-            or (mostPresentColour == (236, 252, 235)))
+        image = cv2.imread(filename)
+        height, width, _ = image.shape
+        
+        cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), image)
+             
+        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash, float(radiusratio), Xcord, True) > 0:
+            return True
 
     def isNewsQuestCloseButtonPresent(self, filename, hash):
         return self.__checkClosePresent(filename, hash, 'news_or_quest')
@@ -362,19 +431,29 @@ class PogoWindows:
 
     #checks for X button on any screen... could kill raidscreen, handle properly
     def checkCloseExceptNearbyButton(self, filename, hash):
-        if (not os.path.isfile(filename)
-            or self.__checkRaidTabOnScreen(filename, hash)):
+        if (not os.path.isfile(filename) 
+            or self.__checkRaidLine(filename, hash)
+            or self.__checkRaidLine(filename, hash, True)):
             #file not found or raid tab present
-            log.debug("Not checking for close button (X). Input wrong OR nearby window open")
-            return False
+            log.debug("checkCloseExceptNearbyButton: Not checking for close button (X). Input wrong OR nearby window open")
+            return False 
+            
+        log.debug("checkCloseExceptNearbyButton: Checking for close button (X). Input wrong OR nearby window open")   
 
-        #we are not on the nearby window, check for X
-        #self.isNewsQuestCloseButtonPresent(filename, hash)
-            #or
-        if (self.isOtherCloseButtonPresent(filename, hash)):
-            #X button found and not on nearby (we checked that earlier)
-            log.debug("Found close button (X). Closing the window")
-            self.vncWrapper.rightClickVnc()
+        if (self.__checkClosePresent(filename, hash, 'gym', 12, False)):
+            log.debug("Found close button (X). Closing the window - Ratio: 12")
+            self.screenWrapper.backButton()
+            time.sleep(1.5)
+            return True
+        if (self.__checkClosePresent(filename, hash, 'gym', 14, False)):
+            log.debug("Found close button (X). Closing the window - Ratio: 14")
+            self.screenWrapper.backButton()
+            time.sleep(1.5)
+            return True
+        if (self.__checkClosePresent(filename, hash, 'gym', 13, False)):
+            log.debug("Found close button (X). Closing the window - Ratio: 13")
+            self.screenWrapper.backButton()
+            time.sleep(1.5)
             return True
         else:
             log.debug("Could not find close button (X).")
