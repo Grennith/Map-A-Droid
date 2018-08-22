@@ -72,8 +72,8 @@ brew install tesseract --all-languages
 // TODO
 ```
 ### Prerequisites - Mobile
-1. Ensure your phone has an unlocked bootloader and it able to support root. Lineage OS is a good place to start for a custom ROM and they have good installation instruciton for each device.
-2. Install [Magisk](https://forum.xda-developers.com/apps/magisk/official-magisk-v7-universal-systemless-t3473445) and [Terminal App Systemizer](https://forum.xda-developers.com/apps/magisk/module-terminal-app-systemizer-ui-t3585851) by flashing ([App Installs/ROM Feature Installs via Flashing](https://forum.xda-developers.com/wiki/Flashing_Guide_-_Android)).  
+1. Ensure your phone has an unlocked bootloader and it able to support root. Lineage OS is a good place to start for a custom ROM and they have good installation instruction for each device.
+2. Install [Magisk](https://forum.xda-developers.com/apps/magisk/official-magisk-v7-universal-systemless-t3473445) by flashing ([App Installs/ROM Feature Installs via Flashing](https://forum.xda-developers.com/wiki/Flashing_Guide_-_Android)).  
 
 3. Install RemoteGPSController (RGC) [here](http://www.github.com/Grennith/Map-A-Droid/blob/master/APKs/RemoteGpsController.apk) located in the `APKs` github folder.
 
