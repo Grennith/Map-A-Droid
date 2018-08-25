@@ -1,88 +1,162 @@
-# The Raid Mapper
+# Map'A'Droid
+![Python 2.7](https://img.shields.io/badge/python-2.7-blue.svg)  
 
-The Raid Mapper is a raid scanner for Pokemon GO based on Android devices.
-It consists of two parts:
-1) OCR
-2) Scan
+![MAD-Banner](examples/banner_small_web.png)
 
-The result is a map (RocketMap to be precise) filled with Raidbosses or Eggs with their Name and Tier.
-Example screen #TODO
+The Raid Mapper is a Raid scanner for Pokemon GO, based on Android devices and OCR.  
 
-# Requirements
-#### General
-1) A computer (RaspberryPI likely is sufficient as well)
-2) A RM DB with gymdetails for the gyms you intend to scan (you can download the gym images with those details...). Alternative: Get the ingress images of the gyms you want to scan...
+<img src="https://raw.githubusercontent.com/Grennith/Map-A-Droid/master/examples/example_map.PNG" width="500" height="500">
 
-#### OCR
-The OCR part requires screenshots to come in. If you already have RDRM (Real Device Raid Mapper) running, you could use the OCR part to send information to RM.
-1) [PoGoAssets](https://github.com/ZeChrales/PogoAssets)
-2) Mons need to not have been seen. Get yourself a fresh account without even T1 mons
+## Information
+*  [Discord](https://discord.gg/MC3vAH9) - For general support  
+*  [Github Issues](https://github.com/Grennith/Map-A-Droid/issues) - For reporting bugs (not for support!)  
 
-#### Scan
-1) Android 8.0 (API 26) or higher
-2) Root privileges (Magisk) and flashing [Terminal APP Systemizer](https://forum.xda-developers.com/apps/magisk/module-terminal-app-systemizer-ui-t3585851)
-3) VNC app and RemoteGpsController.apk (the latter requires System privileges)
+## Requirements  
+* [PogoAssets](https://github.com/ZeChrales/PogoAssets)  
+* Google or PTC account with minimum level 5 and no Raid-bosses in the dex  
+* Mobile with Android 6 or higher
+* Root privileges [Magisk](https://forum.xda-developers.com/apps/magisk/official-magisk-v7-universal-systemless-t3473445) 
+* [Remote GPS Controller](https://github.com/Grennith/Map-A-Droid/blob/master/APKs/RemoteGpsController.apk)  
 
-We provide a VNC app which is based on [droidVNC](https://github.com/oNaiPs/droidVncServer).
-> The app is not stable. We had it running for weeks and it would just give up for a whole day. We are planning on releasing our very own app.
-As Stupid as it may sound, an apparent workaround might be:
-Start droidVNC, start Server, switch out of app and go to System Settings -> Apps -> droidVNC -> Force stop. The server itself should continue running.
+## Current limitations
+* The only supported aspect ratio is 16:9. If you have a softkey bar, disable it for PoGO.  
+  * To do this for phones without the option run the following in a terminal on the phone
+    `settings put global policy_control immersive.navigation=*z`
+* It takes time to load when you teleport between different locations. So faster phones may handle the loading better. We are testing on low end specs like [Redmi 5A](https://www.mi.com/in/redmi-5a/) for $75. A parameter to adjust the delays in between teleports and screenshots will most likely be added.   
+* Sometimes the Raids won't get reported to the DB and we are in the process of debugging it. A potential help is removing the files inside the hash-folder.  
+* RemoteGPSController (RGC) is know to sometimes crash follow the below options:
+  * Disable Battery Optimization in Settings-> Apps -> RGC -> Battery
+  * Go to RGC-Settings (within RGC) and enable OOM Overwrite
 
-### Current limitations
-1) For the moment: 9:16 aspect ratio Smartphones only. If you got a softkey bar, disable it for pogo.
-2) VNC app apparently can have hick-ups....
-3) Teleporting from location to location takes the game to load images. Faster phones may handle it better. We are testing on low end specs (Redmi 5A for 75 bucks). We will likely add a parameter to set the delays inbetween teleports and screenshots.
-4) Sometimes mons do not get reported to the DB. We are in the process of debugging. It can help to remove the files in the hash-folder however.
+## Some (but not limiting) examples of phones working with the project:
+* Redmi 5A (annoying to setup) running LineageOS 15.1
+* Samsung S5 running LOS 15.1
+* Motorola G4
+* HTC One M7 running LOS 14.1
+* Samsung XCover 4 running stock Android 7.1.2
 
-# Installation on Server/Desktop
-1) Install python according to docs for your platform.
+## Installation
+### Prerequisites - Computer
+Install `Python 2.7` according to docs for your platform.  
 
-  Having installed python, do get yourself python pip and run
-  `pip install -r requirements.txt`
+Once Python is installed, ensure that `pip` and `Python` is installed correctly by running:  
+* `python --version` - should return `2.7.X`  
+* `pip --version` - If it returns a version, it is working. If not, [visit here](https://packaging.python.org/tutorials/installing-packages/#ensure-you-can-run-pip-from-the-command-line)  
 
-  Depending on your OS, you probably need to install some more stuff.
-  E.g. Ubuntu/Debian requires you to run
-  ```bash
-  sudo apt update
-  sudo apt install tesseract-ocr python-opencv
-  ```
-2) Create a .csv with coords of gyms (one coord per line in format 'lat,lng'):
-  ```bash
-  lat1,lng1
-  lat2,lng2
-  ...etc
-  ```
-  You can also try to download the coords of gyms from your existing RM DB (downloadDBCords.py)
-3) Insert gym images into gym_img folder. Either manually (e.g. from Ingress) or
-  try the downloadfortimg.py
-4) Configure config.ini as needed. See `config.ini.example` for params and info
-5) Start TRM by calling `python startWalker.py`
+Clone this repository:  
+`git clone https://github.com/Grennith/Map-A-Droid.git`  
 
-For performance it might be worth giving ocr_multitask a chance and/or calling
-startWalker.py with `-os` in one console and `-oo` in another.
+Make sure you're in the directory of Map-A-Droid and run:  
+`pip install -r requirements.txt`
+
+*Depending on your OS, you may need to install the following:*
+#### Ubuntu/Debian
+Run the shell from [here](https://github.com/milq/milq/blob/master/scripts/bash/install-opencv.sh)
+
+> If face issues with the shell sceript ensure that Open JDK has installed correctly and try and running lines 57-70 individually and on line 67 run just `cmake` without the paramters.
+
+All other parts are installed from the requirements.txt
+
+#### MacOS (Using Brew ([How to Install Brew](https://brew.sh/)))
+Run the shell from [here](https://github.com/milq/milq/blob/master/scripts/bash/install-opencv.sh)
+
+> If face issues with the shell sceript ensure that Open JDK has installed correctly and try and running lines 57-70 individually and on line 67 run just `cmake` without the paramters.
+
+```bash
+brew install imagemagick
+brew install tesseract --all-languages
+```
+ 
+#### Windows
+```bash
+// TODO
+```
+### Prerequisites - Mobile
+1. Ensure your phone has an unlocked bootloader and it able to support root. Lineage OS is a good place to start for a custom ROM and they have good installation instruction for each device.
+2. Install [Magisk](https://forum.xda-developers.com/apps/magisk/official-magisk-v7-universal-systemless-t3473445) by flashing ([App Installs/ROM Feature Installs via Flashing](https://forum.xda-developers.com/wiki/Flashing_Guide_-_Android)).  
+
+3. Install RemoteGPSController (RGC) [here](http://www.github.com/Grennith/Map-A-Droid/blob/master/APKs/RemoteGpsController.apk) located in the `APKs` github folder.
+
+4. Install [Link2SD](https://play.google.com/store/apps/details?id=com.buak.Link2SD&hl=en_GB) and ensure that RemoteGPSController is converted to a System Apps.
+
+5. To help with rubberbanding when teleporting do the following
+    *  Disable **background** data of Google Play Services
+    *  Check the GMS option within RGC settings
 
 
-# Steps on Android device
-1) Install Pogo, droidVNC, RemoteGpsController, systemizer
-2) Systemize RGC (Oreo requires it to be systemized as a priv-app)
-3) Start VNC as noted above, start RGC
+### MySQL - Database  
+You will need a MySQL server installed:  
+* (Tutorial from RocketMap) [Installing MySQL](https://rocketmap.readthedocs.io/en/develop/basic-install/mysql.html) 
 
-# WE DO NOT GUARANTEE FOR THE ENTIRE THING TO BE RUNNING PERFECTLY FINE
+### Configuration
+1. Rename `config.ini.example` to `config.ini` and fill out:
+    - Screen Method (Set it to 0)
+    - MySQL Settings (RM or Moncole Database)  
+    - Device Specifics (Width and Height resolutions)
+    - Path Settings (pogoasset only)  
+    - Timezone Settings  
+    - Coords CSV (Create a blank "coords.csv" file and set `file: coords.csv`)  
 
-### Todos
+</br>
 
- - Write tests
- - Write VNC app
- - Improve scans
- - Improve errorhandling
- - Support more/all resolutions
+2) We need gym images and there are two solutions:  
+    - If you have a RocketMap/Monocle database with old gym-details, run `downloadfortimg.py`  
+    - Or, grab the images from [Ingress Intel Map](https://www.ingress.com/intel)  
 
-# Discord
-For minor help, reporting resolutions (instructions on how to do so will be given sometime in the future), bugreports
-[Join the discord server](https://discord.gg/MC3vAH9)
+(The images should be located in `gym_img` folder)
 
+</br> 
+
+3) We also need gym locations and there are two solutions:
+    - If you have a RocketMap/Monocle database with old gym-details, run `downloadDBCords.py`  
+    - Or, grab the locations from [Ingress Intel Map](https://www.ingress.com/intel)  
+
+(The coords should be located in `coords.csv` if you followed the last step in 1.)
+
+</br>
+
+4) Fill out the rest of the `config.ini`, the important parts are:  
+    - Telnet Settings (RemoteGpsController)
+
+### Running
+1. Mobile - Start Remote GPS Controller.
+    * Select Start within the app to start GPS
+    * Select MediaProjection to allow touch commands  
+    * 
+</br>
+
+4. PC - Make sure you're in the directory of Map-A-Droid and run the following 2 commands 
+
+To start the GPS walking around
+`python startWalker.py -os`
+
+To start the processing of the screenshot that have been taken
+`python startWalker.py -oo`
+
+
+>Note if running via ssh you may face issues around "no screen available" to get around the prefix your commands with `MPLBACKEND=Agg`
+
+<br>
+
+## Updating the application
+Make sure you're in the directory of Map-A-Droid and run:  
+```
+git pull
+pip install -r requirements.txt 
+```
+>If there are changes to OCR that require OCR hashing to be cleared it will likely be announced in Discord. But the argument you add to your `-oo` command is `-chd`
+The command will look like this:
+`python startWalker.py -oo -chd`
+
+**WE DO NOT GUARANTEE IT WILL BE RUNNING PERFECTLY FINE, AS THE PROJECT IS IN ONGOING DEVELOPMENT**
+
+## TODO
+* Write tests  
+* Improve scans  
+* Improve error handling  
+* Support more/all resolutions  
 
 License
 ----
 
-GNU GPL
+See [LICENSE - GNU GENERAL PUBLIC LICENSE](https://github.com/Grennith/Map-A-Droid/blob/master/LICENSE).
