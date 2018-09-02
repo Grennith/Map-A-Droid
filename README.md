@@ -21,7 +21,8 @@ The Raid Mapper is a Raid scanner for Pokemon GO, based on Android devices and O
 ## Current limitations
 * The only supported aspect ratio is 16:9. If you have a softkey bar, disable it for PoGO.  
   * To do this for phones without the option run the following in a terminal on the phone
-    `settings put global policy_control immersive.navigation=*z`
+    `settings put global policy_control immersive.navigation=*`
+  * You can do this using `adb shell` commands.
 * It takes time to load when you teleport between different locations. So faster phones may handle the loading better. We are testing on low end specs like [Redmi 5A](https://www.mi.com/in/redmi-5a/) for $75. A parameter to adjust the delays in between teleports and screenshots will most likely be added.   
 * Sometimes the Raids won't get reported to the DB and we are in the process of debugging it. A potential help is removing the files inside the hash-folder.  
 * RemoteGPSController (RGC) is know to sometimes crash follow the below options:
@@ -88,11 +89,25 @@ brew install tesseract --all-languages
 You will need a MySQL server installed:  
 * (Tutorial from RocketMap) [Installing MySQL](https://rocketmap.readthedocs.io/en/develop/basic-install/mysql.html) 
 
+You will also need to create the `trshash` table using the following query
+```sql
+Create table if not exists trshash ( 
+hashid MEDIUMINT NOT NULL AUTO_INCREMENT,
+hash VARCHAR(255) NOT NULL,
+type VARCHAR(10) NOT NULL,
+id VARCHAR(255) NOT NULL,
+count INT(10) NOT NULL DEFAULT 1,
+PRIMARY KEY (hashid));
+```
+
+Remember: The account you use for Map-A-Droid has to have CREATE/DROP permissions as well as 
+INSERT, UPDATE, DELETE, and SELECT!
+
 ### Configuration
 1. Rename `config.ini.example` to `config.ini` and fill out:
     - Screen Method (Set it to 0)
     - MySQL Settings (RM or Moncole Database)  
-    - Device Specifics (Width and Height resolutions)
+    - Device Specifics (Width and Height resolutions in pixels)
     - Path Settings (pogoasset only)  
     - Timezone Settings  
     - Coords CSV (Create a blank "coords.csv" file and set `file: coords.csv`)  

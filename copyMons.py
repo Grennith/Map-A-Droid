@@ -59,7 +59,7 @@ class MonRaidImages(object):
 
                 if not os.path.isfile(monFile):
 
-                    monFileAsset = assetPath + 'decrypted_assets/pokemon_icon_' + str(mon) + '_' + frmadd + '.png'
+                    monFileAsset = assetPath + '/pokemon_icons/pokemon_icon_' + str(mon) + '_' + frmadd + '.png'
 
                     if not os.path.isfile(monFileAsset):
                         log.error('File ' + str(monFileAsset) + ' not found')
