@@ -571,10 +571,19 @@ class MonocleWrapper:
         log.info('Downloading finished.')
         return True
 
-    def __encodeHashJson(self, team_id, latitude, longitude, name, url):
-        return (
-            {'team_id': team_id, 'latitude': latitude, 'longitude': longitude, 'name': name, 'description': '',
-             'url': url})
+    def __encodeHashJson(self, team_id, latitude, longitude, name, url, park, sponsor):
+
+        gymJson = {'team_id': team_id, 'latitude': latitude, 'longitude': longitude, 'name': name, 'description': '',
+                   'url': url}
+
+        if park != "unknown":
+            gymJson['park'] = park
+        if sponsor is not 0:
+            gymJson['sponsor'] = sponsor
+
+        log.debug(gymJson)
+
+        return gymJson
 
     def __download_img(self, url, file_name):
         retry = 1
@@ -615,16 +624,17 @@ class MonocleWrapper:
         if not os.path.exists(file_path):
             os.makedirs(file_path)
 
-        query = "SELECT forts.id, forts.lat, forts.lon, forts.name, forts.url FROM forts"
+        query = ("SELECT forts.id, forts.lat, forts.lon, forts.name, forts.url, IFNULL(forts.park, 'unknown'), forts.sponsor FROM forts")
         cursor = connection.cursor()
         cursor.execute(query)
 
-        for (id, lat, lon, name, url) in cursor:
+        for (id, lat, lon, name, url, park, sponsor) in cursor:
             if url is not None:
                 filename = url_image_path + '_' + str(id) + '_.jpg'
                 print('Downloading', filename)
                 self.__download_img(str(url), str(filename))
-                gyminfo[id] = self.__encodeHashJson('0', lat, lon, name, url)
+                gyminfo[id] = self.__encodeHashJson('0', lat, lon, name, url, park, sponsor)
+
         cursor.close()
         connection.close()
         with io.open('gym_info.json', 'w', encoding='UTF-8') as outfile:
