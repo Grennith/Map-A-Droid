@@ -142,7 +142,7 @@ def parseArgs():
     parser.add_argument('-clnupa', '--cleanup_age', default='1440',
                         help='Delete Screenshots older than X minutes. Default: 1440')
 
-    parser.add_argument('-gdv', '--gym_detection_value', default='0.85', type=float,
+    parser.add_argument('-gdv', '--gym_detection_value', default='0.75', type=float,
                         help=(
                             'Value of gym detection. The higher the more accurate is checked. 0.65 maybe generate '
                             'more false positive. Default: 0.85'))
