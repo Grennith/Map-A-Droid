@@ -16,6 +16,7 @@ from screenWrapper import ScreenWrapper
 import collections
 import re
 import time
+import math
 
 import sys
 
@@ -340,7 +341,7 @@ class PogoWindows:
         log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
         maxLineGap = 50
         
-        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 50, 100, minLineLength, maxLineGap)
+        lines = cv2.HoughLinesP(edges, rho = 1, theta = math.pi / 180, threshold = 70, minLineLength = minLineLength, maxLineGap = 2)
         if lines is None:
             return False
         for line in lines:
