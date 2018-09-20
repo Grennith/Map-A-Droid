@@ -32,7 +32,6 @@ log = logging.getLogger(__name__)
 class PogoWindows:
     def __init__(self, screenWrapper, width, height, tempDirPath):
         self.screenWrapper = screenWrapper
-        self.resolutionCalculator = ResolutionCalc(width, height)
         if not os.path.exists(tempDirPath):
             os.makedirs(tempDirPath)
             log.info('PogoWindows: Temp directory created')
@@ -77,12 +76,19 @@ class PogoWindows:
             return None
 
         log.debug("isGpsSignalLost: checking for red bar")
-        col = cv2.imread(filename)
-        bounds = None
-        bounds = self.resolutionCalculator.getGpsErrorBounds()
+        try:
+            col = cv2.imread(filename)
+        except:
+            log.error("Screenshot corrupted :(")
+            return True
 
-        gpsError = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        log.debug('isGpsSignalLost: bounds of gpsError: %s' % str(bounds))
+        if col is None:
+            log.error("Screenshot corrupted :(")
+            return True
+        
+        width, height,_ = col.shape    
+        
+        gpsError = col[0:height/7,0:width]
 
         tempPathColoured = self.tempDirPath + "/" + str(hash) + "_gpsError.png"
         cv2.imwrite(tempPathColoured, gpsError)
@@ -101,10 +107,19 @@ class PogoWindows:
         return (self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_driving', 26)
                 or self.__checkPostLoginOkButton(filename, hash, 'post_login_ok_private_property', 17))
 
-    def __readCircleCount(self,filename,hash,ratio, xcord = False, crop = False):
+    def __readCircleCount(self,filename,hash,ratio, xcord = False, crop = False, click = False, canny=False):
         log.debug("__readCircleCount: Reading circles")
 
-        screenshotRead = cv2.imread(filename)
+        try:
+            screenshotRead = cv2.imread(filename)
+        except:
+            log.error("Screenshot corrupted :(")
+            return -1
+
+        if screenshotRead is None:
+            log.error("Screenshot corrupted :(")
+            return -1
+
         height, width, _ = screenshotRead.shape
         
         if crop:
@@ -116,6 +131,11 @@ class PogoWindows:
 
         radMin = int((width / float(ratio) - 3) / 2)
         radMax = int((width / float(ratio) + 3) / 2)
+        
+        if canny:
+            gray = cv2.GaussianBlur(gray, (3, 3), 0)
+            gray = cv2.Canny(gray, 100, 50, apertureSize=3)
+        
         log.debug("__readCircleCount: Detect radius of circle: Min " + str(radMin) + " Max " + str(radMax))
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin,
                                    maxRadius=radMax)
@@ -126,17 +146,71 @@ class PogoWindows:
             circles = np.round(circles[0, :]).astype("int")
             # loop over the (x, y) coordinates and radius of the circles
             for (x, y, r) in circles:
+
                 if not xcord:
                     circle += 1
+                    if click:
+                        log.debug('__readCircleCount: found Circle - click it')
+                        self.screenWrapper.click(width/2, ((int(height)-int(height/4.5)))+y)
+                        time.sleep(2)
                 else:
                     if x >= (width / 2) - 100 and x <= (width / 2) + 100 and y >= (height - (height / 3)):
                         circle += 1
+                        if click:
+                            log.debug('__readCircleCount: found Circle - click on: it' )
+                            self.screenWrapper.click(width/2, ((int(height)-int(height/4.5)))+y)
+                            time.sleep(2)
 
             log.debug("__readCircleCount: Determined screenshot to have " + str(circle) + " Circle.")
             return circle
         else:
             log.debug("__readCircleCount: Determined screenshot to have 0 Circle")
             return -1
+            
+    def __readCircleCords(self,filename,hash,ratio, crop = False, canny=False):
+        log.debug("__readCircleCords: Reading circlescords")
+
+        try:
+            screenshotRead = cv2.imread(filename)
+        except:
+            log.error("Screenshot corrupted :(")
+            return False
+
+        if screenshotRead is None:
+            log.error("Screenshot corrupted :(")
+            return False
+
+        height, width, _ = screenshotRead.shape
+        
+        if crop:
+            screenshotRead = screenshotRead[int(height)-int(height/5):int(height),int(width)/2-int(width)/8:int(width)/2+int(width)/8]
+
+        log.debug("__readCircleCords: Determined screenshot scale: " + str(height) + " x " + str(width))
+        gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        # detect circles in the image
+
+        radMin = int((width / float(ratio) - 3) / 2)
+        radMax = int((width / float(ratio) + 3) / 2)
+        
+        if canny:
+            gray = cv2.GaussianBlur(gray, (3, 3), 0)
+            gray = cv2.Canny(gray, 100, 50, apertureSize=3)
+        
+        log.debug("__readCircleCords: Detect radius of circle: Min " + str(radMin) + " Max " + str(radMax))
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin,
+                                   maxRadius=radMax)
+        circle = 0
+        # ensure at least some circles were found
+        if circles is not None:
+            # convert the (x, y) coordinates and radius of the circles to integers
+            circles = np.round(circles[0, :]).astype("int")
+            # loop over the (x, y) coordinates and radius of the circles
+            for (x, y, r) in circles:
+                log.debug("__readCircleCords: Found Circle x: %s y: %s" % (str(width/2), str((int(height)-int(height/5))+y)))
+                return True, width/2, (int(height)-int(height/5))+y, height, width
+        else:
+            log.debug("__readCircleCords: Found no Circle")
+            return False, 0, 0, 0, 0
 
     def readRaidCircles(self, filename, hash):
         log.debug("readCircles: Reading circles")
@@ -156,66 +230,107 @@ class PogoWindows:
         log.debug("readCircles: Determined screenshot to not contain raidcircles, but a raidcount!")
         return -1
 
-    def __lookForButton(self, filename, ratio, minmiddledist=False, max=False):
+    def lookForButton(self, filename, ratiomin, ratiomax):
         log.debug("lookForButton: Reading lines")
         disToMiddleMin = None
-        screenshotRead = cv2.imread(filename)
-        gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        try:
+            screenshotRead = cv2.imread(filename)
+            gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        except:
+            log.error("Screenshot corrupted :(")
+            return False
+
+        if screenshotRead is None:
+            log.error("Screenshot corrupted :(")
+            return False
+            
+        allowRatio = [1.60, 1.05, 2.20, 3.01, 2.32]
+
         height, width, _ = screenshotRead.shape
+        _widthold = float(width)
         log.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
-        gray = cv2.GaussianBlur(gray, (5, 5), 0)
+        
+        # resize for better line quality
+        gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
+        height, width = gray.shape
+        faktor =  width / _widthold
+        
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
         edges = cv2.Canny(gray, 100, 200, apertureSize=3)
-        maxLineLength = width / ratio + 15
+        #checking for all possible button lines
+        
+        if _widthold > 1080 or _widthold <=720:
+            maxLineLength = (width / ratiomin) + (width*0.165)
+        else:
+            maxLineLength = (width / ratiomin) + (width*0.02)
+            
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / ratio - 25
+        minLineLength = (width / ratiomax) - (width*0.02)
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
+
+        
+        kernel = np.ones((4,4),np.uint8)
+        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+        
         maxLineGap = 50
         lineCount = 0
         lines = []
+        _x = 0
+        _y = height
         lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 160, maxLineGap, minLineLength)
         if lines is None:
             return False
 
         for line in lines:
             for x1, y1, x2, y2 in line:
+
                 if y1 == y2 and (x2 - x1 <= maxLineLength) and (x2 - x1 >= minLineLength) and y1 > height / 2:
+                        
                     lineCount += 1
-                    disToMiddle = y1
-
-                    if not max:
-                        if disToMiddleMin is None or disToMiddle < disToMiddleMin:
-                            disToMiddleMin = disToMiddle
-                    else:
-                        if disToMiddleMin is None or disToMiddle > disToMiddleMin:
-                            disToMiddleMin = disToMiddle
-
+                    __y = y2
+                    __x1 = x1
+                    __x2 = x2
+                    if __y < _y:
+                        _y = __y
+                        _x1 = __x1
+                        _x2 = __x2
+                    
                     log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
                         x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
 
-        if lineCount >= 1:
-            log.debug("lookForButton: disToMiddleMin: " + str(disToMiddleMin))
-            log.debug("lookForButton: minmiddledist: " + str(minmiddledist))
-            if minmiddledist:
-                log.debug("lookForButton: Check Y-cord of button")
-                if disToMiddleMin - ((height / 25) - 5) < minmiddledist < disToMiddleMin + (
-                        (height / 25) + 5):
-                    log.debug("lookForButton: Button found")
-                    return True
-                else:
-                    log.debug("lookForButton: Button not found")
-                    return False
-            else:
-                log.debug("lookForButton: Button found")
-                return True
-
-        log.debug("lookForButton: Button not found")
+        if lineCount >= 1 and lineCount < 4:
+            
+            #recalculate click area for real resolution
+            click_x = int(((width - _x2) + ((_x2 - _x1) /2)) / round(faktor,2)) 
+            click_y = int(_y / round(faktor,2) + height*0.03)
+            log.debug('lookForButton: found Button - click on it' )
+            self.screenWrapper.click(click_x, click_y)
+            time.sleep(4)
+            return True
+            
+        elif lineCount > 4:
+            log.debug('lookForButton: found to much Buttons :) - close it' )
+            self.screenWrapper.backButton()
+            time.sleep(4)
+                
+            return True
+        
+        log.debug('lookForButton: did not found any Button')
         return False
 
-    def __checkRaidLine(self, filename, hash, leftSide=False):
+
+    def __checkRaidLine(self, filename, hash, leftSide=False, clickinvers=False):
         log.debug("__checkRaidLine: Reading lines")
         if leftSide:
             log.debug("__checkRaidLine: Check nearby open ")
-        screenshotRead = cv2.imread(filename)
+        try:
+            screenshotRead = cv2.imread(filename)
+        except:
+            log.error("Screenshot corrupted :(")
+            return False
+        if screenshotRead is None:
+            log.error("Screenshot corrupted :(")
+            return False
         height, width, _ = screenshotRead.shape
         screenshotRead = screenshotRead[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
                          int(0):int(width)]
@@ -223,12 +338,13 @@ class PogoWindows:
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
         log.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-        maxLineLength = width / 3.30 + 30
+        maxLineLength = width / 3.30 + width * 0.03
         log.debug("__checkRaidLine: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / 3.30 - 30
+        minLineLength = width / 3.30 - width * 0.03
         log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
         maxLineGap = 50
-        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 100, minLineLength, maxLineGap)
+        
+        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 50, 100, minLineLength, maxLineGap)
         if lines is None:
             return False
         for line in lines:
@@ -244,7 +360,13 @@ class PogoWindows:
                 else:
                     if y1 == y2 and (x2 - x1 <= maxLineLength) and (
                             x2 - x1 >= minLineLength) and x1 < width / 2 and y1 < (height / 2):
-                        log.debug("__checkRaidLine: Nearby is active - but not Raid-tab")
+                        log.debug("__checkRaidLine: Nearby is active - but not Raid-Tab")
+                        if clickinvers:
+                            xRaidTab = int(width - (x2-x1))
+                            yRaidTab = int((int(height / 2) - int(height / 3)+y1) * 0.9)
+                            log.debug('__checkRaidLine: open Raid-Tab' )
+                            self.screenWrapper.click(xRaidTab, yRaidTab)
+                            time.sleep(3)
                         return True
                     # else:
                     # log.debug("__checkRaidLine: Nearby not active - but maybe Raid-tab")
@@ -258,7 +380,15 @@ class PogoWindows:
 
         log.debug("readAmountOfRaidsCircle: Cropping circle")
 
-        image = cv2.imread(filename)
+        try:
+            image = cv2.imread(filename)
+        except:
+            log.error("Screenshot corrupted :(")
+            return False
+        if image is None:
+            log.error("Screenshot corrupted :(")
+            return False
+
         height, width, _ = image.shape
         image = image[int(height / 2 - (height / 3)):int(height / 2 + (height / 3)), 0:int(width)]
         cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), image)
@@ -272,47 +402,6 @@ class PogoWindows:
             os.remove(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'))
             return False
 
-    def checkPostLoginNewsMessage(self, filename, hash):
-        if not os.path.isfile(filename):
-            return False
-
-        log.debug('checkPostLoginNewsMessage: Checking for small news popup ...')
-
-        if not self.__lookForButton(filename, 3.01):
-            log.debug('checkPostLoginNewsMessage: no popup found')
-            return False
-        else:
-            log.debug('checkPostLoginNewsMessage: found popup - closing ...')
-            self.screenWrapper.backButton()
-            return True
-
-    def __checkRaidTabOnScreen(self, filename, hash):
-        if not os.path.isfile(filename):
-            return False
-
-        log.debug('__checkRaidTabOnScreen: Checking for raidscreen ...')
-        col = cv2.imread(filename)
-        bounds = self.resolutionCalculator.getNearbyRaidTabBounds()
-        log.debug("__checkRaidTabOnScreen: Bounds %s" % str(bounds))
-        raidtimer = col[bounds.top:bounds.bottom, bounds.left:bounds.right]
-        cv2.imwrite(self.tempDirPath + "/" + str(hash) + "_message.jpg", raidtimer)
-        col = Image.open(self.tempDirPath + "/" + str(hash) + "_message.jpg")
-        gray = col.convert('L')
-        bw = gray.point(lambda x: 0 if x < 210 else 255, '1')
-        bw.save(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg")
-
-        text = image_to_string(Image.open(self.tempDirPath + "/" + str(hash) + "_cropped_message_bw.jpg"),
-                               config='-c tessedit_char_whitelist=RAID -psm 7')
-        log.debug("__checkRaidTabOnScreen: Check for raidtab present resulted in text: %s" % text)
-
-        os.remove('temp/' + str(hash) + '_cropped_message_bw.jpg')
-        os.remove('temp/' + str(hash) + '_message.jpg')
-        if 'RAID' in text:
-            log.debug("__checkRaidTabOnScreen: Found raidtab")
-            return True
-        else:
-            log.debug("__checkRaidTabOnScreen: Could not find raidtab")
-            return False
 
     # assumes we are on the general view of the game
     def checkRaidscreen(self, filename, hash):
@@ -322,12 +411,7 @@ class PogoWindows:
             log.debug('checkRaidscreen: RAID-tab found')
             return True
         if self.__checkRaidLine(filename, hash, True):
-            # RAID Tab not active
             log.debug('checkRaidscreen: RAID-tab not activated')
-            # pos = self.resolutionCalculator.getNearbyRaidTabClick()
-            # self.screenWrapper.click(pos.x, pos.y)
-            # time.sleep(.5)
-            # log.debug('checkRaidscreen: RAID-tab clicked')
             return False
 
         log.debug('checkRaidscreen: nearby not found')
@@ -335,58 +419,29 @@ class PogoWindows:
         return False
 
     def checkNearby(self, filename, hash):
+        try:
+            screenshotRead = cv2.imread(filename)
+        except:
+            log.error("Screenshot corrupted :(")
+            return False
+        if screenshotRead is None:
+            log.error("Screenshot corrupted :(")
+            return False
+        
         if self.__checkRaidLine(filename, hash):
             log.info('Nearby already open')
             return True
 
-        if self.__checkRaidLine(filename, hash, True):
+        if self.__checkRaidLine(filename, hash, leftSide=True, clickinvers=True):
             log.info('Raidscreen not running but nearby open')
-            posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
-            self.screenWrapper.click(posRaids.x, posRaids.y)
-            time.sleep(.5)
             return False
+            
+        height, width, _ = screenshotRead.shape
 
         log.info('Raidscreen not running...')
-        posNearby = self.resolutionCalculator.getNearbyClick()
-        self.screenWrapper.click(posNearby.x, posNearby.y)
-        time.sleep(.5)
-        posRaids = self.resolutionCalculator.getNearbyRaidTabClick()
-        self.screenWrapper.click(posRaids.x, posRaids.y)
-        time.sleep(.5)
+        self.screenWrapper.click(int(width - ( width / 7.2)), int(height - ( height / 12.19)))
+        time.sleep(4)
         return False
-
-    def checkGameQuitPopup(self, filename, hash):
-        if not os.path.isfile(filename):
-            return False
-
-        log.debug('checkGameQuitPopup: Checking for quit-game popup ...')
-        pos = None
-        pos = self.resolutionCalculator.getquitGameClick()
-        bounds = self.resolutionCalculator.getQuitGamePopupBounds()
-        if not self.__lookForButton(filename, 2.20, bounds.top):
-            log.debug('checkGameQuitPopup: Could not find quit popup')
-            return False
-        else:
-            log.info('checkGameQuitPopup: Found quit popup - aborting quit ...')
-            self.screenWrapper.backButton()
-            return True
-
-    def checkSpeedwarning(self, filename, hash):
-        if not os.path.isfile(filename):
-            return False
-
-        log.debug('checkSpeedwarning: Checking for speed-warning ...')
-        bounds = self.resolutionCalculator.getSpeedwarningBounds()
-
-        if not self.__lookForButton(filename, 1.60, bounds.bottom, True):
-            log.debug('checkSpeedwarning: No speedmessage found')
-            return False
-        else:
-            log.debug('checkSpeedwarning: Found Speedmessage - closing ...')
-            posPassenger = self.resolutionCalculator.getSpeedwarningClick()
-            log.debug("checkSpeedwarning: Clicking %s" % str(posPassenger))
-            self.screenWrapper.click(posPassenger.x, posPassenger.y)
-            return True
 
     def checkWeatherWarning(self, filename, hash):
         if not os.path.isfile(filename):
@@ -409,51 +464,55 @@ class PogoWindows:
             self.screenWrapper.click(posPassenger.x, posPassenger.y)
             return True
 
-    def __checkClosePresent(self, filename, hash, windowsToCheck, radiusratio=12, Xcord=True):
+    def __checkClosePresent(self, filename, hash, radiusratio=12, Xcord=True):
         if not os.path.isfile(filename):
             log.warning("__checkClosePresent: %s does not exist" % str(filename))
             return False
 
-        image = cv2.imread(filename)
-        height, width, _ = image.shape
-        
+        try:
+            image = cv2.imread(filename)
+            height, width, _ = image.shape
+        except:
+            log.error("Screenshot corrupted :(")
+            return False
+
         cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), image)
              
-        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash, float(radiusratio), Xcord, True) > 0:
+        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash, float(radiusratio), xcord=False, crop=True, click=True, canny=True) > 0:
             return True
-
-    def isNewsQuestCloseButtonPresent(self, filename, hash):
-        return self.__checkClosePresent(filename, hash, 'news_or_quest')
-
-    #check for other close buttons (menu, raidtab etc)
-    def isOtherCloseButtonPresent(self, filename, hash):
-        return self.__checkClosePresent(filename, hash, 'menu_or_raid')
 
     #checks for X button on any screen... could kill raidscreen, handle properly
-    def checkCloseExceptNearbyButton(self, filename, hash):
-        if (not os.path.isfile(filename) 
-            or self.__checkRaidLine(filename, hash)
-            or self.__checkRaidLine(filename, hash, True)):
-            #file not found or raid tab present
-            log.debug("checkCloseExceptNearbyButton: Not checking for close button (X). Input wrong OR nearby window open")
-            return False 
+    def checkCloseExceptNearbyButton(self, filename, hash, closeraid = False):
+        try:
+            screenshotRead = cv2.imread(filename)
+        except:
+            log.error("Screenshot corrupted :(")
+            return False
+        if screenshotRead is None:
+            log.error("Screenshot corrupted :(")
+            return False
+        
+        if not closeraid:
+            if (not os.path.isfile(filename) 
+                or self.__checkRaidLine(filename, hash)
+                or self.__checkRaidLine(filename, hash, True)):
+                #file not found or raid tab present
+                log.debug("checkCloseExceptNearbyButton: Not checking for close button (X). Input wrong OR nearby window open")
+                return False 
             
         log.debug("checkCloseExceptNearbyButton: Checking for close button (X). Input wrong OR nearby window open")   
-
-        if (self.__checkClosePresent(filename, hash, 'gym', 12, False)):
+        
+        if (self.__checkClosePresent(filename, hash, 10, True)):
+            log.debug("Found close button (X). Closing the window - Ratio: 10")
+            return True
+        if (self.__checkClosePresent(filename, hash, 12, True)):
             log.debug("Found close button (X). Closing the window - Ratio: 12")
-            self.screenWrapper.backButton()
-            time.sleep(1.5)
             return True
-        if (self.__checkClosePresent(filename, hash, 'gym', 14, False)):
+        if (self.__checkClosePresent(filename, hash, 14, True)):
             log.debug("Found close button (X). Closing the window - Ratio: 14")
-            self.screenWrapper.backButton()
-            time.sleep(1.5)
             return True
-        if (self.__checkClosePresent(filename, hash, 'gym', 13, False)):
+        if (self.__checkClosePresent(filename, hash, 13, True)):
             log.debug("Found close button (X). Closing the window - Ratio: 13")
-            self.screenWrapper.backButton()
-            time.sleep(1.5)
             return True
         else:
             log.debug("Could not find close button (X).")

@@ -3,6 +3,7 @@ from walkerArgs import parseArgs
 import requests
 import json
 import sys
+from s2sphere import Cell, CellId, LatLng
 
 reload(sys)
 
@@ -11,12 +12,12 @@ sys.setdefaultencoding('utf8')
 log = logging.getLogger(__name__)
 args = parseArgs()
 
-webhook_payload = """[{{
+raid_webhook_payload = """[{{
       "message": {{
         "latitude": {lat},
         "longitude": {lon},
         "level": {lvl},
-        "pokemon_id": {poke_id},
+        "pokemon_id": "{poke_id}",
         "team": {team},
         "cp": "{cp}",
         "move_1": {move_1},
@@ -39,8 +40,12 @@ def get_raid_boss_cp(mon_id):
         with open('pokemon.json') as j:
             pokemon_file = json.load(j)
 
+        log.debug("Removing leading zero from string where necessary")
+        mon_id = int(mon_id)
+
         if 'cp' in pokemon_file[str(mon_id)]:
-            log.debug("CP found for pokemon_id: " + str(mon_id) + " with the value of " + str(pokemon_file[str(mon_id)]["cp"]))
+            log.debug("CP found for pokemon_id: " + str(mon_id) + " with the value of " + str(
+                pokemon_file[str(mon_id)]["cp"]))
             return pokemon_file[str(mon_id)]["cp"]
         else:
             log.warning("No raid cp found for " + str(mon_id))
@@ -50,9 +55,9 @@ def get_raid_boss_cp(mon_id):
         return '0'
 
 
-def send_webhook(gymid, type, start, end, lvl, mon=0):
+def send_raid_webhook(gymid, type, start, end, lvl, mon=0):
     log.info('Start preparing values for web hook')
-    
+
     if mon is None:
         poke_id = 0
     else:
@@ -120,7 +125,7 @@ def send_webhook(gymid, type, start, end, lvl, mon=0):
             log.debug('data_sponsor: ' + str(sponsor))
 
     if args.webhook:
-        payload_raw = webhook_payload.format(
+        payload_raw = raid_webhook_payload.format(
             ext_id=gym_id,
             lat=lat,
             lon=lon,
@@ -149,12 +154,45 @@ def send_webhook(gymid, type, start, end, lvl, mon=0):
             args.webhook_url, data=json.dumps(payload),
             headers={'Content-Type': 'application/json'}
         )
-        if response.status_code == 200:
-            log.info("Webhook sent successful for " + type + " gym_id " + str(gym_id))
-        else:
-            log.error(str(response.status_code) + " - there was an issue sending to the webhook!")
-            log.error(response)
+
+
+
+weather_webhook_payload = """[{{
+      "message": {{
+                "s2_cell_id": {0},
+                "coords": {1},
+                "condition": {2},
+                "alert_severity": {3},
+                "warn": {4},
+                "day": {5},
+                "time_changed": {6}
+        }},
+      "type": "weather"
+   }} ]"""
+
+
+def send_weather_webhook(s2cellId, weatherId, severe, warn, day, time):
+    if args.weather_webhook:
+        log.debug("Send Weather Webhook")
+
+        cell = Cell(CellId(s2cellId))
+        coords = []
+        for v in range(0, 4):
+            vertex = LatLng.from_point(cell.get_vertex(v))
+            coords.append([vertex.lat().degrees, vertex.lng().degrees])
+
+        data = weather_webhook_payload.format(s2cellId, coords, weatherId, severe, warn, day, time)
+
+        log.debug(data)
+        payload = json.loads(data)
+        response = requests.post(
+            args.webhook_url, data=json.dumps(payload),
+            headers={'Content-Type': 'application/json'}
+        )
+    else:
+        log.debug("Weather Webhook Disabled")
+
 
 
 if __name__ == '__main__':
-    send_webhook('33578092c5554275a589bd1e144bbbcc.16', 'EGG', '1534163280', '1534165980', '5', 004)
+    send_raid_webhook('33578092c5554275a589bd1e144bbbcc.16', 'EGG', '1534163280', '1534165980', '5', 004)

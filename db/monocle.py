@@ -5,12 +5,13 @@ import datetime
 import collections
 import datetime
 import time
-from webhook import send_webhook
+from webhook import send_raid_webhook, send_weather_webhook
 from walkerArgs import parseArgs
 import requests
 import shutil
 import sys
 import os
+from s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
 
@@ -27,6 +28,65 @@ class MonocleWrapper:
         self.database = database
         self.timezone = timezone
         self.uniqueHash = uniqueHash
+
+    def auto_hatch_eggs(self):
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+
+        mon_id = args.auto_hatch_number
+
+        if mon_id == 0:
+            log.warn('You have enabled auto hatch but not the mon_id '
+                     'so it will mark them as zero so they will remain unhatched...')
+
+        cursor = connection.cursor()
+
+        query_for_count = "SELECT id, fort_id,time_battle,time_end from raids " \
+                          "WHERE time_battle <= {0} AND time_end >= {0} AND level = 5 AND IFNULL(pokemon_id,0) = 0" \
+            .format(int(time.time()))
+        log.debug(query_for_count)
+
+        cursor.execute(query_for_count)
+        result = cursor.fetchall()
+        rows_that_need_hatch_count = cursor.rowcount
+        log.debug("Rows that need updating: {0}".format(rows_that_need_hatch_count))
+        if rows_that_need_hatch_count > 0:
+            counter = 0
+            for row in result:
+                log.debug(row)
+                query = "UPDATE raids SET pokemon_id = {0} WHERE id = {1}" \
+                    .format(mon_id, row[0])
+
+                log.debug(query)
+                cursor.execute(query)
+                affected_rows = cursor.rowcount
+                connection.commit()
+                if affected_rows == 1:
+                    counter = counter + 1
+
+                    log.debug('Sending auto hatched raid for raid id {0}'.format(row[0]))
+                    send_raid_webhook(row[1], 'MON', row[2], row[3], 5, mon_id)
+
+                elif affected_rows > 1:
+                    log.error(
+                        'Something is wrong with the indexing on your table you raids on this id {0}'.format(row['id']))
+                else:
+                    log.error('The row we wanted to update did not get updated that had id {0}'.format(row['id']))
+
+            if counter == rows_that_need_hatch_count:
+                log.info("{0} gym(s) were updated as part of the regular level 5 egg hatching checks".format(counter))
+            else:
+                log.warn('There was an issue and the number expected the hatch did not match the successful updates. '
+                         'Expected {0} Actual {1}'.format(rows_that_need_hatch_count, counter))
+
+            cursor.close()
+        else:
+            log.info('No Eggs due for hatching')
 
     def __checkLastUpdatedColumnExists(self):
         try:
@@ -129,13 +189,14 @@ class MonocleWrapper:
                  ' type VARCHAR(10) NOT NULL, ' +
                  ' id VARCHAR(255) NOT NULL, ' +
                  ' count INT(10) NOT NULL DEFAULT 1, ' +
+                 ' modify DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, ' +
                  ' PRIMARY KEY (hashid))')
         log.debug(query)
         cursor.execute(query)
         connection.commit()
         return True
 
-    def checkForHash(self, imghash, type, raidNo):
+    def checkForHash(self, imghash, type, raidNo, distance):
         log.debug(
             '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'checkForHash: Checking for hash in db')
         try:
@@ -147,12 +208,13 @@ class MonocleWrapper:
             return None
         cursor = connection.cursor()
 
-        query = ('SELECT id, BIT_COUNT( '
-                 'CONVERT((CONV(hash, 16, 10)), SIGNED) '
-                 '^ CONVERT((CONV(\'' + str(imghash) + '\', 16, 10)), SIGNED)) as hamming_distance, '
-                                                       'type FROM trshash '
-                                                       'HAVING hamming_distance < 4 and type = \'' + str(type) + '\' '
-                                                                                                                 'ORDER BY hamming_distance ASC')
+        query = ('SELECT id, hash, BIT_COUNT( '
+                 'CONVERT((CONV(hash, 16, 10)), UNSIGNED) '
+                 '^ CONVERT((CONV(\'' + str(imghash) + '\', 16, 10)), UNSIGNED)) as hamming_distance, '
+                                                       'type, count, modify FROM trshash '
+                                                       'HAVING hamming_distance < ' + str(
+            distance) + '  and type = \'' + str(type) + '\' '
+                                                        'ORDER BY hamming_distance ASC')
 
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'checkForHash: ' + query)
         cursor.execute(query)
@@ -167,14 +229,38 @@ class MonocleWrapper:
             for row in data:
                 log.debug(
                     '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'checkForHash: ID: ' + str(row[0]))
-                return True, row[0]
+                return True, row[0], row[1], row[4], row[5]
         else:
             log.debug(
                 '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'checkForHash: No matching Hash found')
-            return False, None
+            return False, None, None, None, None
+
+    def getAllHash(self, type):
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return None
+        cursor = connection.cursor()
+
+        query = ('SELECT id, hash, '
+                 'type, count, modify FROM trshash '
+                 'HAVING type = \'' + str(type) + '\' ')
+        log.debug(query)
+
+        cursor.execute(query)
+        data = cursor.fetchall()
+
+        return data
 
     def insertHash(self, imghash, type, id, raidNo):
-        doubleCheck = self.checkForHash(imghash, type, raidNo)
+        if type == 'raid':
+            distance = 3
+        else:
+            distance = 4
+        doubleCheck = self.checkForHash(imghash, type, raidNo, distance)
         if doubleCheck[0]:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(
                 self.uniqueHash) + ') ] ' + 'insertHash: Already in DB - update Counter')
@@ -193,7 +279,7 @@ class MonocleWrapper:
                      % (str(imghash), str(type), str(id)))
         else:
             query = (' UPDATE trshash ' +
-                     ' set count=count+1 '
+                     ' set count=count+1, modify=NOW() '
                      ' where hash=\'%s\''
                      % (str(imghash)))
 
@@ -201,7 +287,7 @@ class MonocleWrapper:
         connection.commit()
         return True
 
-    def deleteHashTable(self, ids, type):
+    def deleteHashTable(self, ids, type, mode, field):
         log.debug('Deleting old Hashes of type %s' % type)
         log.debug('Valid ids: %s' % ids)
         try:
@@ -213,7 +299,7 @@ class MonocleWrapper:
             return False
         cursor = connection.cursor()
         query = (' DELETE FROM trshash ' +
-                 ' where id not in (' + ids + ') ' +
+                 ' where ' + field + ' ' + mode + ' (' + ids + ') ' +
                  ' and type like \'%' + type + '%\'')
         log.debug(query)
         cursor.execute(query)
@@ -231,7 +317,7 @@ class MonocleWrapper:
             return False
 
         log.error("__getFortIdWithExternalId: Trying to retrieve ID of '%s'" % str(externalId))
-        query = "SELECT id FROM `forts` WHERE external_id='%s'" % str(externalId)
+        query = "SELECT id FROM forts WHERE external_id='%s'" % str(externalId)
         cursor = connection.cursor()
         log.debug("__getFortIdWithExternalId: Executing query: %s " % str(query))
 
@@ -247,7 +333,7 @@ class MonocleWrapper:
         log.error(str(idEntry[0]))
         return idEntry[0]
 
-    def submitRaid(self, gym, pkm, lvl, start, end, type, raidNo, captureTime, MonWithNoEgg=False):
+    def submitRaid(self, gym, pkm, lvl, start, end, type, raidNo, capture_time, MonWithNoEgg=False):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Submitting raid')
 
         try:
@@ -272,12 +358,12 @@ class MonocleWrapper:
         whereStr = 'WHERE fort_id = %s AND time_end >= %s' % (str(gym), str(int(time.time())))
         if MonWithNoEgg:
             # submit mon without egg info -> we have an endtime
-            start = end - 45 * 60
+            start = end - (int(args.raid_time) * 60)
             log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + "Updating mon without egg")
 
             setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, ' \
                      'pokemon_id = %s, last_updated = %s '
-            data = (lvl, captureTime, start, end, pkm, int(time.time()))
+            data = (lvl, int(float(capture_time)), start, end, pkm, int(time.time()))
 
         elif end is None or start is None:
             # no end or start time given, just update the other stuff
@@ -305,7 +391,7 @@ class MonocleWrapper:
             # we have start and end, mon is either with egg or we're submitting an egg
             setStr = 'SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, pokemon_id = %s, ' \
                      'last_updated = %s '
-            data = (lvl, captureTime, start, end, pkm, int(time.time()))
+            data = (lvl, int(float(capture_time)), start, end, pkm, int(time.time()))
 
         query = updateStr + setStr + whereStr
         log.debug(query % data)
@@ -323,7 +409,7 @@ class MonocleWrapper:
                 query = (
                     'INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, pokemon_id) '
                     'VALUES (%s, %s, %s, %s, %s, %s)')
-                data = (gym, lvl, captureTime, start, end, pkm)
+                data = (gym, lvl, int(float(capture_time)), start, end, pkm)
             elif end is None or start is None:
                 log.info(
                     '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + "Inserting without end or start")
@@ -336,7 +422,7 @@ class MonocleWrapper:
                 query = (
                     'INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, pokemon_id) '
                     'VALUES (%s, %s, %s, %s, %s, %s)')
-                data = (gym, lvl, captureTime, start, end, pkm)
+                data = (gym, lvl, int(float(capture_time)), start, end, pkm)
 
             cursorIns = connection.cursor()
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + query % data)
@@ -355,11 +441,11 @@ class MonocleWrapper:
 
         connection.close()
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Submit finished')
-        self.refreshTimes(gym, raidNo, captureTime)
+        self.refreshTimes(gym, raidNo, capture_time)
 
         if args.webhook and wh_send:
             log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Send webhook')
-            send_webhook(gym, 'RAID', wh_start, wh_end, lvl, pkm)
+            send_raid_webhook(gym, 'RAID', wh_start, wh_end, lvl, pkm)
 
         return True
 
@@ -481,11 +567,11 @@ class MonocleWrapper:
                 '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'raidExist: Mon is new - submitting')
             return False
 
-    def refreshTimes(self, gym, raidNo, captureTime):
+    def refreshTimes(self, gym, raidNo, capture_time):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'Refresh Gym Times')
 
         # now = self.dbTimeStringToUnixTimestamp(str(datetime.datetime.now() - datetime.timedelta(hours=self.timezone)))
-        now = time.time()
+        now = int(time.time())
         try:
             connection = mysql.connector.connect(host=self.host,
                                                  user=self.user, port=self.port, passwd=self.password,
@@ -502,7 +588,7 @@ class MonocleWrapper:
 
         return True
 
-    def getNearGyms(self, lat, lng, hash, raidNo):
+    def getNearGyms(self, lat, lng, hash, raidNo, dist=str(args.gym_scan_distance)):
         try:
             connection = mysql.connector.connect(host=self.host,
                                                  user=self.user, port=self.port, passwd=self.password,
@@ -523,7 +609,7 @@ class MonocleWrapper:
                  ' ) ' +
                  ' ) AS distance ' +
                  ' FROM forts ' +
-                 ' HAVING distance <= 2 ' +
+                 ' HAVING distance <= ' + str(dist) + ' ' +
                  ' ORDER BY distance')
 
         cursor.execute(query)
@@ -540,7 +626,66 @@ class MonocleWrapper:
         connection.commit()
         return data
 
-    def setScannedLocation(self, lat, lng, captureTime):
+    def checkGymsNearby(self, lat, lng, hash, raidNo, gym):
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return []
+        cursor = connection.cursor()
+
+        query = ('SELECT ' +
+                 ' id, ( ' +
+                 ' 6371 * acos ( ' +
+                 ' cos ( radians( \'' + str(lat) + '\' ) ) ' +
+                 ' * cos( radians( lat ) ) ' +
+                 ' * cos( radians( lon ) - radians( \'' + str(lng) + '\' ) ) ' +
+                 ' + sin ( radians( \'' + str(lat) + '\' ) ) ' +
+                 ' * sin( radians( lat ) ) ' +
+                 ' ) ' +
+                 ' ) AS distance ' +
+                 ' FROM forts ' +
+                 ' HAVING distance <= ' + str(args.gym_scan_distance + 5) + ' and id=\'' + str(gym) + '\'')
+
+        cursor.execute(query)
+        data = cursor.fetchall()
+        number_of_rows = cursor.rowcount
+        if number_of_rows > 0:
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(
+                self.uniqueHash) + ') ] ' + 'checkGymsNearby: GymHash seems to be correct')
+            return True
+        else:
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(
+                self.uniqueHash) + ') ] ' + 'checkGymsNearby: GymHash seems not to be correct')
+            return False
+
+    def updateInsertWeather(self, lat, lng, weatherid, captureTime):
+        log.debug(
+            'updateInsertWeather: for {0}, {1} with WeatherId {2} at {3}'.format(lat, lng, weatherid, captureTime))
+        s2cellid = S2Helper.latLngToCellId(lat, lng)
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return []
+        cursor = connection.cursor()
+
+        query = ("INSERT INTO weather " +
+                 "(s2_cell_id, `condition`, alert_severity, warn, day, updated) " +
+                 "VALUES ({0}, {1}, {2}, {3}, {4}, {5}) "
+                 "ON DUPLICATE KEY UPDATE `condition`={1}, alert_severity={2}, warn = {3}, day={4}, updated={5}"
+                 .format(s2cellid, weatherid, 0, 0, 2, int(float(captureTime))))
+
+        cursor.execute(query)
+        connection.commit()
+        cursor.close()
+        send_weather_webhook(s2cellid, weatherid, 0, 0, 2, float(captureTime))
+
+    def setScannedLocation(self, lat, lng, capture_time):
         log.debug('setScannedLocation: not possible with monocle')
         return True
 
@@ -552,22 +697,29 @@ class MonocleWrapper:
         except:
             log.error("Could not connect to the SQL database")
             return False
+        from geofenceHelper import GeofenceHelper
         log.info('Downloading coords')
         lll = args.latlngleft
         llr = args.latlngright
         queryStr = ""
         if lll and llr:
-            queryStr = ' where (lat BETWEEN {} AND {}) AND (lon BETWEEN {} AND {})'.format(lll[0], llr[0], lll[1],
+            queryStr = ' where (lat BETWEEN {} AND {}) AND (lon BETWEEN {} AND {}) and lat IS NOT NULL and lon IS NOT NULL'.format(lll[0], llr[0], lll[1],
                                                                                            llr[1])
+        else:
+            queryStr = ' where lat IS NOT NULL and lon IS NOT NULL'
         query = "SELECT lat, lon FROM forts {}".format(queryStr)
         cursor = connection.cursor()
         cursor.execute(query)
         file = open(args.file, 'w')
+        listOfCoords = []
         for (lat, lon) in cursor:
-            file.write(str(lat) + ', ' + str(lon) + '\n')
+            listOfCoords.append([lat, lon])
         cursor.close()
         connection.close()
-        file.close()
+        geofenceHelper = GeofenceHelper()
+        geofencedCoords = geofenceHelper.get_geofenced_coordinates(listOfCoords)
+        for (lat, lon) in geofencedCoords:
+            file.write(str(lat) + ', ' + str(lon) + '\n')
         log.info('Downloading finished.')
         return True
 
@@ -624,7 +776,15 @@ class MonocleWrapper:
         if not os.path.exists(file_path):
             os.makedirs(file_path)
 
-        query = ("SELECT forts.id, forts.lat, forts.lon, forts.name, forts.url, IFNULL(forts.park, 'unknown'), forts.sponsor FROM forts")
+        query = "SELECT forts.id, forts.lat, forts.lon, forts.name, forts.url, IFNULL(forts.park, 'unknown'), forts.sponsor FROM forts"
+
+        lll = args.latlngleft
+        llr = args.latlngright
+        if lll and llr:
+            query = "{0}{1}".format(query,
+                                    ' where (lat BETWEEN {} AND {}) AND (lon BETWEEN {} AND {})'.format(lll[0], llr[0],
+                                                                                                        lll[1], llr[1]))
+
         cursor = connection.cursor()
         cursor.execute(query)
 

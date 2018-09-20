@@ -40,7 +40,7 @@ class MonRaidImages(object):
             exit(0)
 
         for file in glob.glob(monImgPath + "*mon*.png"):
-                    os.remove(file)
+            os.remove(file)
 
         for mons in data:
             for mon in mons['DexID']:
@@ -79,58 +79,49 @@ class MonRaidImages(object):
                     cv2.imwrite(monFile, monAsset)
                     crop = cv2.imread(monFile,3)
                     crop = crop[0:int(height), 0:int((width/10)*10)]
-                    kernel = np.ones((1,1),np.uint8)
+                    kernel = np.ones((2,2),np.uint8)
                     crop = cv2.erode(crop,kernel,iterations = 1)
-                    cv2.imwrite(monFile, crop)
+                    kernel = np.ones((3,3),np.uint8)
+                    crop = cv2.morphologyEx(crop, cv2.MORPH_CLOSE, kernel)
+
+                    #gray = cv2.cvtColor(crop,cv2.COLOR_BGR2GRAY)
+                    #_,thresh = cv2.threshold(gray,1,255,cv2.THRESH_BINARY_INV)
+                    #contours = cv2.findContours(thresh,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
+                    #cnt = contours[0]
+                    #x,y,w,h = cv2.boundingRect(cnt)
+                    #crop = crop[y-1:y+h+1,x-1:x+w+1]
+                    cv2.imwrite(monFile,crop)
+                    
+                    
 
         _monList = myList = ','.join(map(str, monList))
         dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
         dbWrapper.deleteHashTable(_monList, 'mon')
-
-
-
+        
     @staticmethod
-    def copyEggs(pogoasset):
+    def copyWeather(pogoasset):
         from shutil import copyfile
-
-        log.info('Processing Eggs')
-
-        eggImgPath = os.getcwd() + '/mon_img/'
-        filePath = os.path.dirname(eggImgPath)
-
+        log.info('Processing Weather Pics')
+        weatherImgPath = os.getcwd() + '/weather/'
+        filePath = os.path.dirname(weatherImgPath)
         if not os.path.exists(filePath):
-            LOG.info('mon_img directory created')
+            log.info('weather directory created')
             os.makedirs(filePath)
-
         assetPath = pogoasset
-        eggIcons = ['ic_raid_egg_normal.png', 'ic_raid_egg_rare.png', 'ic_raid_egg_legendary.png']
-        i = 1
-        for egg in eggIcons:
+            
+        for file in glob.glob(os.path.join(assetPath, 'static_assets/png/weatherIcon_small_*.png')):
+            
+            MonRaidImages.read_transparent_png(file, os.path.join('weather', os.path.basename(file)), 0)
 
-            eggFile = eggImgPath + str('_egg_') + str(i) + '_.png'
 
-            if not os.path.isfile(eggFile):
-
-                log.info('Processing Egg File: ' + str(egg))
-
-                eggFileAsset = assetPath + 'static_assets/png/'+ str(egg)
-
-                if not os.path.isfile(eggFileAsset):
-                    log.error('File ' + str(eggFileAsset) + ' not found')
-                    exit(0)
-
-                MonRaidImages.read_transparent_png(eggFileAsset, eggFile)
-
-                log.info('Processing Eggfile: ' + str(egg) + ' finished')
-                i = i +1
 
     @staticmethod
-    def read_transparent_png(assetFile, saveFile):
+    def read_transparent_png(assetFile, saveFile, bgcolor = 255):
         image_4channel = cv2.imread(assetFile, cv2.IMREAD_UNCHANGED)
         alpha_channel = image_4channel[:,:,3]
         rgb_channels = image_4channel[:,:,:3]
 
-        white_background_image = np.ones_like(rgb_channels, dtype=np.uint8) * 255
+        white_background_image = np.ones_like(rgb_channels, dtype=np.uint8) * bgcolor
 
         alpha_factor = alpha_channel[:,:,np.newaxis].astype(np.float32) / 255.0
         alpha_factor = np.concatenate((alpha_factor,alpha_factor,alpha_factor), axis=2)
@@ -146,7 +137,7 @@ class MonRaidImages(object):
     @staticmethod
     def runAll(pogoasset):
         MonRaidImages.copyMons(pogoasset)
-        MonRaidImages.copyEggs(pogoasset)
+        MonRaidImages.copyWeather(pogoasset)
         
 if __name__ == '__main__':
     MonRaidImages.runAll('../../PogoAssets/')

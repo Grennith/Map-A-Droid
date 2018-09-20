@@ -8,12 +8,21 @@ gym_img/*
 temp/*
 screenshots/*
 unknown/*
+weather/*
+weather/
 screenshot.png
 *.log
 hashing.json
 gym_info.json
 .DS_Store
 
+mon_img/_egg_*
 mon_img/_mon*
 *.csv
 .idea/
+www_hash/*
+updateGyms.txt
+venv/
+*.calc
+*.position
+geofence.txt

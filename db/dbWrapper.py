@@ -20,6 +20,9 @@ class DbWrapper:
         else:
             return self.__dbWrapperUsed.ensureLastUpdatedColumn()
 
+    def autoHatchEggs(self):
+        return self.__dbWrapperUsed.auto_hatch_eggs()
+
     def dbTimeStringToUnixTimestamp(self, timestring):
         return self.__dbWrapperUsed.dbTimeStringToUnixTimestamp(timestring)
 
@@ -29,14 +32,17 @@ class DbWrapper:
     def createHashDatabaseIfNotExists(self):
         return self.__dbWrapperUsed.createHashDatabaseIfNotExists()
 
-    def checkForHash(self, imghash, type, raidNo):
-        return self.__dbWrapperUsed.checkForHash(imghash, type, raidNo)
+    def checkForHash(self, imghash, type, raidNo, distance=4):
+        return self.__dbWrapperUsed.checkForHash(imghash, type, raidNo, distance)
+        
+    def getAllHash(self, type):
+        return self.__dbWrapperUsed.getAllHash(type)
 
     def insertHash(self, imghash, type, id, raidNo):
         return self.__dbWrapperUsed.insertHash(imghash, type, id, raidNo)
 
-    def deleteHashTable(self, ids, type):
-        return self.__dbWrapperUsed.deleteHashTable(ids, type)
+    def deleteHashTable(self, ids, type, mode=' not in ', field = ' id '):
+        return self.__dbWrapperUsed.deleteHashTable(ids, type, mode, field)
 
     def submitRaid(self, gym, pkm, lvl, start, end, type, raidNo, captureTime, MonWithNoEgg=False):
         return self.__dbWrapperUsed.submitRaid(gym, pkm, lvl, start, end, type, raidNo, captureTime, MonWithNoEgg)
@@ -53,8 +59,14 @@ class DbWrapper:
     def refreshTimes(self, gym, raidNo, captureTime):
         return self.__dbWrapperUsed.refreshTimes(gym, raidNo, captureTime)
 
-    def getNearGyms(self, lat, lng, hash, raidNo):
-        return self.__dbWrapperUsed.getNearGyms(lat, lng, hash, raidNo)
+    def getNearGyms(self, lat, lng, hash, raidNo, dist):
+        return self.__dbWrapperUsed.getNearGyms(lat, lng, hash, raidNo, dist)
+        
+    def checkGymsNearby(self, lat, lng, hash, raidNo, gymId):
+        return self.__dbWrapperUsed.checkGymsNearby(lat, lng, hash, raidNo, gymId)
+        
+    def updateInsertWeather(self, lat, lng, weatherid, captureTime):
+        return self.__dbWrapperUsed.updateInsertWeather(lat, lng, weatherid, captureTime)
 
     def setScannedLocation(self, lat, lng, captureTime):
         return self.__dbWrapperUsed.setScannedLocation(lat, lng, captureTime)

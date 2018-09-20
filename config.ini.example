@@ -37,13 +37,6 @@
 #tel_port:                   # Port of the telnet server  (needed for scanning mode)
 #tel_password:               # Telnet password  (needed for scanning mode)
 
-# Device specifics
-######################
-
-screen_width:
-screen_height:
-
-
 # Coords CSV
 ######################
 
@@ -79,7 +72,7 @@ screen_height:
 pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
 #temp_path:                  # Path for generated files while detecting raids (default: temp/)
 #raidscreen_path:            # Path for taken screenshots (default: screenshots/)
-#unknown_path:               # Path for not automaticly detected gyms or mons (defaul: unknown/)
+#unknown_path:               # Path for not automaticly detected gyms or mons (default: unknown/)
 #successsave_path:           # Path for successful submitted crops (default: success/)
 
 # other settings
@@ -88,6 +81,19 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #cleanup_age:                # Delete Screenshots older than X minutes. Default: 1440 - 0 to disable
 #save_success                # Save successful submitted crops to successsave_path
 #last_scanned                # Submit last scanned locations to RM database (if your fork support this!)
+#npValue:                    # Matching Zoom - Max Value (default: 0.5 (for width = 720px )- or: 1.5 (for width = 1080px ))
+#npFrom:                     # Matching Zoom - Start Value (default: 0.2 (for width = 720px )- or: 0.5 (for width = 1080px ))
+#gym_scan_distance:          # Distance of scanned Gyms (Default: 6km(!!)) - reduce if you scan an area with many gyms at one place
+#weather                     # Detect weather from captured Image and post to database - if your frontend support this!
+#route_file:                 # Filename for Route Cache without extension (Default: route)
+#position_file:              # Filename for the bot's current position (Default: current)
+
+# MADmin
+######################
+#madmin_sort:                # MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)
+#madmin_port:                # MADmin web port (Default: 5000)
+#madmin_time:                # MADmin clock format (12/24) (Default: 24)
+#madmin_noresponsive         # MADmin deactivate responsive tables
 
 # timezone settings
 ######################
@@ -103,6 +109,8 @@ timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Ge
 # params for downloadDBCords.py (generate coordfile from param file)
 ######################
 
+#geofence-file:                 # Geofence file to define outer borders of the scan area.
+#geofence-excluded-file:        # File to define forbidden areas inside scan area. Regarded this as inverted geofence. Can be combined with geofence-file.
 #latlngleft:                 # download gym cords from this param f.e. [47.1, 47.2]
 #latlngright:                # download gym cords to this param  f.e. [9.1, 9.5]
 
@@ -111,3 +119,9 @@ timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Ge
 
 #webhook                     # active support for webhook
 #webhook_url:                # URL endpoint for your webhook - beginning with http://
+#weather_webhook             # active support for weather webhook
+
+# Auto Hatch
+######################
+# auto_hatch                 # Active auto hatch of level 5 eggs
+# auto_hatch_number          # Auto hatch of level 5 Pokemon ID

@@ -1842,6 +1842,8 @@
   "147": {
     "name": "Dratini",
     "rarity": "Uncommon",
+    "cp":"3426",
+    "level":1,
     "types": [
       {
         "type": "Dragon",
@@ -3916,6 +3918,7 @@
   "315":{
     "name": "Roselia",
     "rarity":"",
+    "cp":10887,
     "types": [
       {
         "type": "Grass",

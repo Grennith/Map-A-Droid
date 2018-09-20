@@ -5,10 +5,11 @@ import datetime
 import collections
 import datetime
 import time
-from webhook import send_webhook
+from webhook import send_raid_webhook, send_weather_webhook
 from walkerArgs import parseArgs
 import requests
 import shutil
+from s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
 
@@ -25,6 +26,71 @@ class RmWrapper:
         self.database = database
         self.timezone = timezone
         self.uniqueHash = uniqueHash
+
+    def auto_hatch_eggs(self):
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return False
+
+        mon_id = args.auto_hatch_number
+
+        if mon_id == 0:
+            log.warn('You have enabled auto hatch but not the mon_id '
+                     'so it will mark them as zero so they will remain unhatched...')
+
+        cursor = connection.cursor()
+        dbTimeToCheck = datetime.datetime.now() - datetime.timedelta(hours=self.timezone)
+
+        query_for_count = "SELECT gym_id,start,end from raid " \
+                          "WHERE start <=  \'{0}\' AND end >= \'{0}\' AND level = 5 AND IFNULL(pokemon_id,0) = 0" \
+            .format(str(dbTimeToCheck))
+
+
+        log.debug(query_for_count)
+        cursor.execute(query_for_count)
+        result = cursor.fetchall()
+        rows_that_need_hatch_count = cursor.rowcount
+        log.debug("Rows that need updating: {0}".format(rows_that_need_hatch_count))
+
+        if rows_that_need_hatch_count > 0:
+            counter = 0
+            for row in result:
+                log.debug(row)
+                query = "UPDATE raid SET pokemon_id = {0} WHERE gym_id = \'{1}\'".format(mon_id, row[0])
+                log.debug(query)
+                cursor.execute(query)
+                affected_rows = cursor.rowcount
+                connection.commit()
+                if affected_rows == 1:
+                    counter = counter + 1
+                    log.debug('Sending auto hatched raid for raid id {0}'.format(row[0]))
+                    send_raid_webhook(row[0],
+                                 'MON',
+                                      self.dbTimeStringToUnixTimestamp(row[1]),
+                                      self.dbTimeStringToUnixTimestamp(row[2]),
+                                      5,
+                                      mon_id)
+                elif affected_rows > 1:
+                    log.error('Something is wrong with the indexing on your table you raids on this id {0}'
+                              .format(row[0]))
+                else:
+                    log.error('The row we wanted to update did not get updated that had id {0}'
+                              .format(row[0]))
+
+            if counter == rows_that_need_hatch_count:
+                log.info("{0} gym(s) were updated as part of the regular level 5 egg hatching checks"
+                         .format(counter))
+            else:
+                log.warn('There was an issue and the number expected the hatch did not match the successful updates. '
+                         'Expected {0} Actual {1}'.format(rows_that_need_hatch_count, counter))
+
+            cursor.close()
+        else:
+            log.info('No Eggs due for hatching')
 
     def dbTimeStringToUnixTimestamp(self, timestring):
         dt = datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
@@ -82,6 +148,7 @@ class RmWrapper:
                  ' type VARCHAR(10) NOT NULL, ' +
                  ' id VARCHAR(255) NOT NULL, ' +
                  ' count INT(10) NOT NULL DEFAULT 1, ' +
+                 ' modify DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, ' +
                  ' PRIMARY KEY (hashid))')
         log.debug(query)
         cursor.execute(query)
@@ -90,7 +157,7 @@ class RmWrapper:
         connection.close()
         return True
 
-    def checkForHash(self, imghash, type, raidNo):
+    def checkForHash(self, imghash, type, raidNo, distance):
         log.debug(
             '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'checkForHash: Checking for hash in db')
         try:
@@ -102,12 +169,13 @@ class RmWrapper:
             return None
         cursor = connection.cursor()
 
-        query = ('SELECT id, BIT_COUNT( '
-                 'CONVERT((CONV(hash, 16, 10)), SIGNED) '
-                 '^ CONVERT((CONV(\'' + str(imghash) + '\', 16, 10)), SIGNED)) as hamming_distance, '
-                                                       'type FROM trshash '
-                                                       'HAVING hamming_distance < 4 and type = \'' + str(type) + '\' '
-                                                                                                                 'ORDER BY hamming_distance ASC')
+        query = ('SELECT id, hash, BIT_COUNT( '
+                 'CONVERT((CONV(hash, 16, 10)), UNSIGNED) '
+                 '^ CONVERT((CONV(\'' + str(imghash) + '\', 16, 10)), UNSIGNED)) as hamming_distance, '
+                 'type, count, modify FROM trshash '
+                 'HAVING hamming_distance < ' + str(distance) + ' and type = \'' + str(type) + '\' '
+                 'ORDER BY hamming_distance ASC')
+        log.debug(query)
 
         cursor.execute(query)
         id = None
@@ -124,14 +192,38 @@ class RmWrapper:
             for row in data:
                 log.debug(
                     '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'checkForHash: ID: ' + str(row[0]))
-                return True, row[0]
+                return True, row[0], row[1], row[4], row[5]
         else:
             log.debug(
                 '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'checkForHash: No matching Hash found')
-            return False, None
+            return False, None, None, None, None
+            
+    def getAllHash(self, type):
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return None
+        cursor = connection.cursor()
+
+        query = ('SELECT id, hash, '
+                 'type, count, modify FROM trshash '
+                 'HAVING type = \'' + str(type) + '\' ')
+        log.debug(query)
+
+        cursor.execute(query)
+        data = cursor.fetchall()
+        
+        return data
 
     def insertHash(self, imghash, type, id, raidNo):
-        doubleCheck = self.checkForHash(imghash, type, raidNo)
+        if type == 'raid':
+            distance = 3
+        else:
+            distance = 4
+        doubleCheck = self.checkForHash(imghash, type, raidNo, distance)
         if doubleCheck[0]:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(
                 self.uniqueHash) + ') ] ' + 'insertHash: Already in DB - update Counter')
@@ -150,7 +242,7 @@ class RmWrapper:
                      % (str(imghash), str(type), str(id)))
         else:
             query = (' UPDATE trshash ' +
-                     ' set count=count+1 '
+                     ' set count=count+1, modify=NOW() '
                      ' where hash=\'%s\''
                      % (str(imghash)))
 
@@ -161,7 +253,7 @@ class RmWrapper:
         connection.close()
         return True
 
-    def deleteHashTable(self, ids, type):
+    def deleteHashTable(self, ids, type, mode, field):
         log.debug('Deleting old Hashes of type %s' % type)
         log.debug('Valid ids: %s' % ids)
         try:
@@ -173,7 +265,7 @@ class RmWrapper:
             return False
         cursor = connection.cursor()
         query = (' DELETE FROM trshash ' +
-                 ' where id not in (' + ids + ') ' +
+                 ' where ' + field + ' ' + mode + ' (' + ids + ') ' +
                  ' and type like \'%' + type + '%\'')
         log.debug(query)
         cursor.execute(query)
@@ -185,6 +277,12 @@ class RmWrapper:
 
     def submitRaid(self, gym, pkm, lvl, start, end, type, raidNo, captureTime, MonWithNoEgg=False):
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'submitRaid: Submitting raid')
+
+        if self.raidExist(gym, type, raidNo, pkm):
+            self.refreshTimes(gym, raidNo, captureTime)
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(
+                self.uniqueHash) + ') ] ' + 'submitRaid: %s already submitted - ignoring' % str(type))
+            return False
 
         try:
             connection = mysql.connector.connect(host=self.host,
@@ -215,11 +313,11 @@ class RmWrapper:
         whereStr = 'WHERE gym_id = \'%s\' ' % str(gym)
         if MonWithNoEgg:
             # submit mon without egginfo -> we have an endtime
-            start = end - 45 * 60
+            start = end - 45 * 60 * 4
             log.info("Updating mon without egg")
             setStr = 'SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), ' \
-                     'pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s) '
-            data = (lvl, captureTime, start, end, pkm, int(time.time()))
+                     'pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, move_1 = %s, move_2 = %s '
+            data = (lvl, captureTime, start, end, pkm, int(time.time()), '999', '1', '1')
 
             # send out a webhook - this case should only occur once...
             wh_send = True
@@ -228,8 +326,8 @@ class RmWrapper:
         elif end is None or start is None:
             # no end or start time given, just update anything there is
             log.info("Updating without end- or starttime - we should've seen the egg before")
-            setStr = 'SET level = %s, pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s) '
-            data = (lvl, pkm, int(time.time()))
+            setStr = 'SET level = %s, pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, move_1 = %s, move_2 = %s'
+            data = (lvl, pkm, int(time.time()), '999', '1', '1')
 
             foundEndTime, EndTime = self.getRaidEndtime(gym, raidNo)
             if foundEndTime:
@@ -244,13 +342,12 @@ class RmWrapper:
             # we have start and end, mon is either with egg or we're submitting an egg
             setStr = 'SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), ' \
                      'pokemon_id = %s, ' \
-                     'last_scanned = FROM_UNIXTIME(%s) '
-            data = (lvl, captureTime, start, end, pkm, int(time.time()))
+                     'last_scanned = FROM_UNIXTIME(%s), cp = %s, move_1 = %s, move_2 = %s '
+            data = (lvl, captureTime, start, end, pkm, int(time.time()), '999', '1', '1')
 
             wh_send = True
             wh_start = start
             wh_end = end
-
 
         query = updateStr + setStr + whereStr
         log.debug(query % data)
@@ -264,10 +361,10 @@ class RmWrapper:
             if MonWithNoEgg:
                 # submit mon without egg info -> we have an endtime
                 log.info("Inserting mon without egg")
-                start = end - 45 * 60
+                start = end - (int(args.raid_time) * 60)
                 query = (
-                    'INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned) '
-                    'VALUES (%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), %s, FROM_UNIXTIME(%s))')
+                    'INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, move_1, move_2) '
+                    'VALUES (%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), %s, FROM_UNIXTIME(%s), 999, 1, 1)')
                 data = (gym, lvl, captureTime, start, end, pkm, int(time.time()))
             elif end is None or start is None:
                 log.info("Inserting without end or start")
@@ -278,8 +375,8 @@ class RmWrapper:
                 # we have start and end, mon is either with egg or we're submitting an egg
                 log.info("Inserting everything")
                 query = (
-                    'INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned) '
-                    'VALUES (%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), %s, FROM_UNIXTIME(%s))')
+                    'INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, move_1, move_2) '
+                    'VALUES (%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), %s, FROM_UNIXTIME(%s), 999, 1, 1)')
                 data = (gym, lvl, captureTime, start, end, pkm, int(time.time()))
 
             cursorIns = connection.cursor()
@@ -307,7 +404,7 @@ class RmWrapper:
                 wh_start += (self.timezone * 60 * 60)
             if wh_end:
                 wh_end += (self.timezone * 60 * 60)
-            send_webhook(gym, 'RAID', wh_start, wh_end, lvl, pkm)
+            send_raid_webhook(gym, 'RAID', wh_start, wh_end, lvl, pkm)
 
         return True
 
@@ -465,7 +562,7 @@ class RmWrapper:
         connection.close()
         return True
 
-    def getNearGyms(self, lat, lng, hash, raidNo):
+    def getNearGyms(self, lat, lng, hash, raidNo, dist=str(args.gym_scan_distance)):
         try:
             connection = mysql.connector.connect(host=self.host,
                                                  user=self.user, port=self.port, passwd=self.password,
@@ -489,7 +586,7 @@ class RmWrapper:
                  ' ) ' +
                  ' ) AS distance ' +
                  ' FROM gym ' +
-                 ' HAVING distance <= 2 ' +
+                 ' HAVING distance <= ' + str(dist) + ' ' +
                  ' ORDER BY distance')
 
         cursor.execute(query)
@@ -508,6 +605,74 @@ class RmWrapper:
         connection.close()
         return data
 
+    def checkGymsNearby(self, lat, lng, hash, raidNo, gym):
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return []
+        cursor = connection.cursor()
+
+        query = ('SELECT ' +
+                 ' gym_id, ( ' +
+                 ' 6371 * acos ( ' +
+                 ' cos ( radians( \'' + str(lat) + '\' ) ) ' +
+                 ' * cos( radians( latitude ) ) ' +
+                 ' * cos( radians( longitude ) - radians( \'' + str(lng) + '\' ) ) ' +
+                 ' + sin ( radians( \'' + str(lat) + '\' ) ) ' +
+                 ' * sin( radians( latitude ) ) ' +
+                 ' ) ' +
+                 ' ) AS distance ' +
+                 ' FROM gym ' +
+                 ' HAVING distance <= ' + str(args.gym_scan_distance) + ' and gym_id=\'' + str(gym) + '\'')
+
+        cursor.execute(query)
+        data = cursor.fetchall()
+        number_of_rows = cursor.rowcount
+        if number_of_rows > 0:
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(
+                self.uniqueHash) + ') ] ' + 'checkGymsNearby: GymHash seems to be correct')
+            return True
+        else:
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(
+                self.uniqueHash) + ') ] ' + 'checkGymsNearby: GymHash seems not to be correct')
+            return False
+            
+    def updateInsertWeather(self, lat, lng, weatherid, captureTime):
+        now_timezone = datetime.datetime.fromtimestamp(float(captureTime))
+        now_timezone = time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
+        now = (datetime.datetime.fromtimestamp(float(captureTime)) - datetime.timedelta(hours=self.timezone)).strftime(
+            "%Y-%m-%d %H:%M:%S")
+        s2cellid = S2Helper.latLngToCellId(lat, lng)
+        realLat, realLng = S2Helper.middleOfCell(s2cellid)
+        
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return []
+        cursor = connection.cursor()
+        
+        query = ('INSERT INTO weather ' + 
+                '(s2_cell_id, latitude, longitude, cloud_level, rain_level, ' +
+                'wind_level, snow_level, fog_level, wind_direction, gameplay_weather, ' +
+                'severity, warn_weather, world_time, last_updated) VALUES ' + 
+                ' (' + str(s2cellid) + ', ' + str(lat) + ', ' + str(lng) + ', NULL, NULL, NULL, NULL, NULL, NULL, ' +
+                '' + str(weatherid) + ', NULL, NULL, 1, \'' + str(now) + '\')' + 
+                ' ON DUPLICATE KEY UPDATE fog_level=0, cloud_level=0, snow_level=0, wind_direction=0, world_time=0, latitude=' + str(realLat) + ', longitude=' + str(realLng) + ', ' + 
+                ' gameplay_weather=' + str(weatherid) + ', last_updated=\'' + str(now) + '\'')
+
+        cursor.execute(query)
+        connection.commit()
+        cursor.close()
+        send_weather_webhook(s2cellid, weatherid, 0, 0, 2, now_timezone)
+
+        
+
     def setScannedLocation(self, lat, lng, captureTime):
 
         now = (datetime.datetime.fromtimestamp(float(captureTime)) - datetime.timedelta(hours=self.timezone)).strftime(
@@ -522,12 +687,17 @@ class RmWrapper:
 
         cursor = connection.cursor()
         query = (
-                    'insert into scannedlocation (cellid, latitude, longitude, last_modified, done, band1, band2, '
-                    'band3, band4, band5, midpoint, width) values ' +
-                    '(' + str(
-                time.time()) + ', ' + lat + ', ' + lng + ', \'' + now + '\', 1, -1, -1, -1, -1, -1, -1, -1)')
-        cursor.execute(query)
-
+                'insert into scannedlocation (cellid, latitude, longitude, last_modified, done, band1, band2, '
+                'band3, band4, band5, midpoint, width) values ' +
+                '(' + str(
+            time.time()) + ', ' + lat + ', ' + lng + ', \'' + now + '\', 1, -1, -1, -1, -1, -1, -1, -1)')
+        try:
+            cursor.execute(query)
+        except Exception:
+            log.warn("setScannedLocation: failed setting the last scanned location.")
+            cursor.close()
+            connection.close()
+            return False
         connection.commit()
         cursor.close()
         connection.close()
@@ -541,27 +711,37 @@ class RmWrapper:
         except:
             log.error("Could not connect to the SQL database")
             return False
+        from geofenceHelper import GeofenceHelper
         log.info('Downloading coords')
         lll = args.latlngleft
         llr = args.latlngright
         queryStr = ""
         if lll and llr:
-            queryStr = ' where (latitude BETWEEN {} AND {}) AND (longitude BETWEEN {} AND {})'.format(lll[0], llr[0],
+            queryStr = ' where (latitude BETWEEN {} AND {}) AND (longitude BETWEEN {} AND {}) and latitude IS NOT NULL and longitude IS NOT NULL'.format(lll[0], llr[0],
                                                                                                       lll[1], llr[1])
+        else:
+            queryStr = ' where latitude IS NOT NULL and longitude IS NOT NULL'                                                                            
         query = "SELECT latitude, longitude FROM gym {}".format(queryStr)
         cursor = connection.cursor()
         cursor.execute(query)
         file = open(args.file, 'w')
-        for (latitude, longitude) in cursor:
-            file.write(str(latitude) + ', ' + str(longitude) + '\n')
+        listOfCoords = []
+        for (lat, lon) in cursor:
+            # file.write(str(lat) + ', ' + str(lon) + '\n')
+            listOfCoords.append([lat, lon])
         cursor.close()
         connection.close()
+        geofenceHelper = GeofenceHelper()
+        geofencedCoords = geofenceHelper.get_geofenced_coordinates(listOfCoords)
+        for (lat, lon) in geofencedCoords:
+            file.write(str(lat) + ', ' + str(lon) + '\n')
         file.close()
         log.info('Downloading finished.')
         return True
 
     def __encodeHashJson(self, team_id, latitude, longitude, name, description, url):
-        return ({'team_id': team_id, 'latitude': latitude, 'longitude': longitude, 'name': name, 'description': '', 'url': url})
+        return (
+        {'team_id': team_id, 'latitude': latitude, 'longitude': longitude, 'name': name, 'description': '', 'url': url})
 
     def __download_img(self, url, file_name):
         retry = 1
@@ -606,6 +786,17 @@ class RmWrapper:
         query = "SELECT gym.gym_id, gym.team_id, gym.latitude, gym.longitude, gymdetails.name, " \
                 "gymdetails.description, gymdetails.url FROM gym inner join gymdetails where gym.gym_id = " \
                 "gymdetails.gym_id "
+
+        lll = args.latlngleft
+        llr = args.latlngright
+
+        if lll and llr:
+            query = "{0}{1}".format(query,
+                                    ' AND (latitude BETWEEN {} AND {}) AND (longitude BETWEEN {} AND {})'
+                                    .format(lll[0],
+                                            llr[0],
+                                            lll[1],
+                                            llr[1]))
         cursor = connection.cursor()
         cursor.execute(query)
 

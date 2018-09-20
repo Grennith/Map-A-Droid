@@ -6,6 +6,7 @@ from util import *
 from args import *
 import collections
 import logging
+import glob, os
 
 log = logging.getLogger(__name__)
 
@@ -256,7 +257,17 @@ def __getShortestDistanceOfPointLessMax(point, coordinates, maxDistance):
 
     return ShortestDistance(index, shortestDistance)
 
-def getJsonRoute(filePath, gymDistance, maxAmountOfGymsToSumUpWithGym):
+def getJsonRoute(filePath, gymDistance, maxAmountOfGymsToSumUpWithGym, routefile):
+    export_data = []
+    if os.path.isfile(routefile + '.calc'):
+        log.info('Found existing Routefile')
+        route = open(routefile + '.calc', 'r') 
+        for line in route: 
+            lineSplit = line.split(',')
+            export_data.append({'lat' : float(lineSplit[0].replace('\n','')),
+                'lng' : float(lineSplit[1].replace('\n',''))})
+        return export_data
+            
     csvCoordinates = np.loadtxt(filePath, delimiter=',')
     log.debug("Read %s coordinates from file" % str(len(csvCoordinates)))
     #log.debug("Read from file: %s" % str(csvCoordinates))
@@ -364,8 +375,10 @@ def getJsonRoute(filePath, gymDistance, maxAmountOfGymsToSumUpWithGym):
         #      " Distance:", "%.2fm" % round(cost_best, 2),
         #      " Optimization Threshold:", "%d" % cost_best_counter)
 
-    export_data = []
+    
     for i in range(len(sol_best)):
+        with open(routefile + '.calc', 'a') as f:
+            f.write(str(lessCoordinates[int(sol_best[i])][0].item()) + ', ' + str(lessCoordinates[int(sol_best[i])][1].item()) + '\n')
         export_data.append({'lat' : lessCoordinates[int(sol_best[i])][0].item(),
             'lng' : lessCoordinates[int(sol_best[i])][1].item()})
 

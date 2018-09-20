@@ -5,11 +5,11 @@ from walkerArgs import parseArgs
 from  segscanner import Scanner
 from threading import Thread, Event
 import logging
-from ocr.resolutionCalculator import *
 import collections
 import cv2
 import multiprocessing
 import re
+import numpy as np
 
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
@@ -18,22 +18,49 @@ args = parseArgs()
 
 class RaidScan:
     @staticmethod
-    def process(filename, hash, raidno, captureTime, captureLat, captureLng, src_path):
+    def process(filename, hash, raidno, captureTime, captureLat, captureLng, src_path, radius):
         args = parseArgs()
         scanner = Scanner(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword,
                           args.dbname, args.temp_path, args.unknown_path, args.timezone, hash)
-        checkcrop = scanner.start_detect(filename, hash, raidno, captureTime, captureLat, captureLng, src_path)
+        checkcrop = scanner.start_detect(filename, hash, raidno, captureTime, captureLat, captureLng, src_path, radius)
         return checkcrop
 
 
 class checkScreenshot(PatternMatchingEventHandler):
     def __init__(self, width, height):
-        self.resolutionCalculator = ResolutionCalc(width, height)
         log.info("Starting pogo window manager in OCR thread")
-        # self.pogoWindowManager = PogoWindows(str(args.vnc_ip,), 1, args.vnc_port, args.vnc_password,
-        # args.screen_width, args.screen_height, args.temp_path)
+        
+    def cropImage(self, screenshot, captureTime, captureLat, captureLng, src_path):
+        p = None
+        raidNo = 0
+        processes = []
+        
+        hash = str(time.time())
+        height, width, channel = screenshot.shape
+        gray=cv2.cvtColor(screenshot,cv2.COLOR_BGR2GRAY)
 
-        # self.procPool = Pool(10)
+        minRadius = int(((width / 4.736)) / 2) - 1
+        maxRadius = int(((width / 4.736)) / 2) + 1
+        log.debug('Searching for Raid Circles with Radius from %s to %s px' % (str(minRadius), str(maxRadius)))
+        
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,1,height / 8,param1=100,param2=15,minRadius=minRadius,maxRadius=maxRadius)
+        
+        if circles is not None:
+            circles = np.round(circles[0, :]).astype("int")
+            for (x, y, r) in circles:
+                raidNo += 1
+                raidCropFilepath = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) + ".jpg"
+                new_crop = screenshot[y-r-int((r*2*0.03)):y+r+int((r*2*0.75)), x-r-int((r*2*0.03)):x+r+int((r*2*0.3))]
+                cv2.imwrite(raidCropFilepath, new_crop)
+                if args.ocr_multitask:
+                    p = multiprocessing.Process(target=RaidScan.process, name='OCR-crop-analysis-' + str(raidNo), args=(raidCropFilepath, hash, raidNo, captureTime, captureLat, captureLng, src_path, r))
+                else:
+                    p = Thread(target=RaidScan.process, name='OCR-processing', args=(raidCropFilepath, hash, raidNo, captureTime, captureLat, captureLng, src_path, r))
+                processes.append(p)          
+                p.daemon = True
+                p.start()
+                    
+
 
     def prepareAnalysis(self, raidNo, bounds, screenshot, captureTime, captureLat, captureLng, src_path):
         curTime = time.time()
@@ -72,37 +99,17 @@ class checkScreenshot(PatternMatchingEventHandler):
         log.debug("Read a lng of %s in new file" % str(captureLng))
         log.debug("Read a raidcount of %s in new file" % str(amountOfRaids))
         raidPic = cv2.imread(event.src_path)
+        if raidPic is None:
+            log.warning("FileObserver: Image passed is None, aborting.")
+            return
         # amountOfRaids = self.pogoWindowManager.getAmountOfRaids(event.src_path)
         if amountOfRaids is None or amountOfRaids == 0:
             return
-        log.debug(amountOfRaids)
         processes = []
         bounds = []
-
-        if int(amountOfRaids) == 1:
-            # we got just one raid...
-            boundsOfSingleRaid = self.resolutionCalculator.getRaidBoundsSingle()
-            log.debug(boundsOfSingleRaid)
-            p = self.prepareAnalysis(1, boundsOfSingleRaid, raidPic, captureTime, captureLat, captureLng, event.src_path)
-            if p is not None:
-                processes.append(p)
-                p.daemon = True
-                p.start()
-        elif amountOfRaids == 2:
-            bounds.append(self.resolutionCalculator.getRaidBoundsTwo(1))
-            bounds.append(self.resolutionCalculator.getRaidBoundsTwo(2))
-        else:
-            if amountOfRaids is None or amountOfRaids > 6:
-                amountOfRaids = 6 # ignore any more raids, shouldn't be the case all too often
-            for i in range(amountOfRaids): # 0 to 5....
-                bounds.append(self.resolutionCalculator.getRaidBounds(i + 1))
-        log.debug(bounds)
-        for i in range(len(bounds)):
-            p = self.prepareAnalysis(i + 1, bounds[i], raidPic, captureTime, captureLat, captureLng, event.src_path)
-            if p is not None:
-                processes.append(p)
-                p.daemon = True
-                p.start()
+        
+        self.cropImage(raidPic, captureTime, captureLat, captureLng, event.src_path)
+        log.debug("process: Done starting off processes")
 
         # TODO: join threads/processes
         log.debug("process: Done starting off processes")

@@ -73,9 +73,9 @@ def parseArgs():
                         help='The max time to wait for a command to return. Int seconds.')
 
     # Device specifics
-    parser.add_argument('-sw', '--screen_width', type=int, required=True,
+    parser.add_argument('-sw', '--screen_width', type=int, required=False,
                         help='The mobile\'s screen width')
-    parser.add_argument('-sh', '--screen_height', type=int, required=True,
+    parser.add_argument('-sh', '--screen_height', type=int, required=False,
                         help='The mobile\'s screen height')
 
     # CSV for Coords
@@ -111,6 +111,10 @@ def parseArgs():
                         help=(
                             'The delay in minutes to wait after an egg has hatched to move to the location of the '
                             'gym. Default: 3.5'))
+    parser.add_argument('-watd', '--walk_after_teleport_distance', required=False, type=int, default=0,
+                        help=(
+                            'The walk a couple meters after a teleport covering a greater distance than this value. '
+                            'Supposedly helps with loading'))
 
     # Runtypes
     parser.add_argument('-os', '--only_scan', action='store_true', default=False,
@@ -145,13 +149,23 @@ def parseArgs():
     parser.add_argument('-gdv', '--gym_detection_value', default='0.75', type=float,
                         help=(
                             'Value of gym detection. The higher the more accurate is checked. 0.65 maybe generate '
-                            'more false positive. Default: 0.85'))
+                            'more false positive. Default: 0.75'))
 
     parser.add_argument('-ssv', '--save_success', action='store_true', default=False,
                         help='Save success submitted raidcrops.')
 
     parser.add_argument('-lc', '--last_scanned', action='store_true', default=False,
                         help='Submit last scanned location to RM DB (if supported). Default: False')
+
+    parser.add_argument('-gsd', '--gym_scan_distance', type=float, default=6.0,
+                        help='Search for nearby Gmy within this radius (in KM!!). '
+                        'In areas with many Gyms reduce this argument to 1-2 Default: 6')
+
+    parser.add_argument('-npv', '--npValue', type=float, default=0.5,
+                        help='Matching zoom max value. (Based on resolution)')
+
+    parser.add_argument('-npf', '--npFrom', type=float, default=0.2,
+                        help='Matching zoom start value. (Based on resolution)')
 
     # Cleanup Hash Database
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
@@ -178,6 +192,46 @@ def parseArgs():
                         help='Active webhook support')
     parser.add_argument('-whurl', '--webhook_url', default='',
                         help='URL to receive webhooks')
+    parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
+                        help='Active weather webhook support')
+    # weather
+    parser.add_argument('-w', '--weather', action='store_true', default=False,
+                        help='Read weather and post to db - if supported! (Default: False)')
+
+    # MADmin
+    parser.add_argument('-mmt', '--madmin_time', default='24',
+                        help='MADmin clock format (12/24) (Default: 24)')
+
+    parser.add_argument('-mmsc', '--madmin_sort', default='6',
+                        help='MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)')
+
+    parser.add_argument('-mmprt', '--madmin_port', default='5000',
+                        help='MADmin web port (Default: 5000)')
+
+    parser.add_argument('-mmnrsp', '--madmin_noresponsive', action='store_false', default=True,
+                        help='MADmin deactivate responsive tables')
+
+    parser.add_argument('-rfile', '--route_file', default='route',
+                        help='Filename for Route Cache without extension (Default: route)')
+
+    parser.add_argument('-pfile', '--position_file', default='current',
+                        help='Filename for bot\'s current position (Default: current)')
+
+    # Geofences
+    parser.add_argument('-gf', '--geofence-file',
+                        help=('Geofence file to define outer borders of the ' +
+                              'scan area.'),
+                        default='')
+    parser.add_argument('-gef', '--geofence-excluded-file',
+                        help=('File to define excluded areas inside scan ' +
+                              'area. Regarded this as inverted geofence. ' +
+                              'Can be combined with geofence-file.'),
+                        default='')
+
+    # etc
+
+    parser.add_argument('-rdt', '--raid_time', default='45', type=int,
+                        help='Raid Battle time in minutes. (Default: 45)')
 
     # log settings
     parser.add_argument('--no-file-logs',
@@ -193,13 +247,19 @@ def parseArgs():
                               " with the instance's status name. Read the"
                               ' python time module docs for details.'
                               ' Default: %%Y%%m%%d_%%H%%M_<SN>.log.'),
-                        default='%Y%m%d_%H%M_<SN>.log'),
+                        default='%Y%m%d_%H%M_<SN>.log')
     parser.add_argument('-sn', '--status-name', default=str(os.getpid()),
                         help=('Enable status page database update using ' +
                               'STATUS_NAME as main worker name.'))
 
+    parser.add_argument('-ah', '--auto_hatch', action='store_true', default=False,
+                        help='Active auto hatch of level 5 eggs')
 
+    parser.add_argument('-ahn', '--auto_hatch_number', type=int, default=0,
+                        help='Auto hatch of level 5 Pokemon ID')
 
+    parser.add_argument('--no_initial_restart', default=False,
+                        help='Disable automatic PoGo restart when walker initially starts. NOT recommended.')
 
     verbose = parser.add_mutually_exclusive_group()
     verbose.add_argument('-v',
