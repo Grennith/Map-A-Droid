@@ -256,28 +256,24 @@ class PogoWindows:
         faktor =  width / _widthold
         
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
-        edges = cv2.Canny(gray, 100, 200, apertureSize=3)
+        edges = cv2.Canny(gray, 50, 200, apertureSize=3)
         #checking for all possible button lines
         
-        if _widthold > 1080 or _widthold <=720:
-            maxLineLength = (width / ratiomin) + (width*0.165)
-        else:
-            maxLineLength = (width / ratiomin) + (width*0.02)
-            
+        maxLineLength = (width / ratiomin) + (width*0.18)
         log.debug("lookForButton: MaxLineLength:" + str(maxLineLength))
         minLineLength = (width / ratiomax) - (width*0.02)
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
 
         
-        kernel = np.ones((4,4),np.uint8)
-        edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+        #kernel = np.ones((4,4),np.uint8)
+        #edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
         
         maxLineGap = 50
         lineCount = 0
         lines = []
         _x = 0
         _y = height
-        lines = cv2.HoughLinesP(edges, 1, np.pi / 180, 160, maxLineGap, minLineLength)
+        lines = cv2.HoughLinesP(edges, rho = 1, theta = math.pi / 180, threshold = 70, minLineLength = minLineLength, maxLineGap = 2)
         if lines is None:
             return False
 
