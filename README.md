@@ -15,8 +15,8 @@ The Raid Mapper is a Raid scanner for Pokemon GO, based on Android devices and O
 * [PogoAssets](https://github.com/ZeChrales/PogoAssets)  
 * Google or PTC account with minimum level 5 and no Raid-bosses in the dex  
 * Mobile with Android 6 or higher
-* Root privileges [Magisk](https://forum.xda-developers.com/apps/magisk/official-magisk-v7-universal-systemless-t3473445) 
-* [Remote GPS Controller](https://github.com/Grennith/Map-A-Droid/blob/master/APKs/RemoteGpsController.apk)  
+* Root privileges [Magisk](https://forum.xda-developers.com/apps/magisk/official-magisk-v7-universal-systemless-t3473445)
+* [Remote GPS Controller](https://github.com/Grennith/Map-A-Droid/blob/master/APKs/RemoteGpsController.apk)
 
 ## Current limitations
 * The only supported aspect ratio is 16:9. If you have a softkey bar, disable it for PoGO.  
@@ -31,9 +31,9 @@ The Raid Mapper is a Raid scanner for Pokemon GO, based on Android devices and O
 
 ## Some (but not limiting) examples of phones working with the project:
 * Redmi 5A (annoying to setup) running LineageOS 15.1
-* Samsung S5(+) running LOS 15.1
+* Samsung S5(+) running LineageOS 15.1
 * Motorola G4 running LineageOS 15.1
-* HTC One M7 running LOS 14.1
+* HTC One M7 running LineageOS 14.1
 * Samsung XCover 4 running stock Android 7.1.2
 
 ## Installation
@@ -57,20 +57,20 @@ Ubuntu/Debian, run `apt install tesseract-ocr python-opencv`
 If you do not get OpenCV 3.0 or above:
 Run the shell from [here](https://github.com/milq/milq/blob/master/scripts/bash/install-opencv.sh)
 
-> If face issues with the shell sceript ensure that Open JDK has installed correctly and try and running lines 57-70 individually and on line 67 run just `cmake` without the paramters.
+> If face issues with the shell script ensure that Open JDK has installed correctly and try and running lines 57-70 individually and on line 67 run just `cmake` without the parameters.
 
 All other parts are installed from the requirements.txt
 
 #### MacOS (Using Brew ([How to Install Brew](https://brew.sh/)))
 Run the shell from [here](https://github.com/milq/milq/blob/master/scripts/bash/install-opencv.sh)
 
-> If face issues with the shell sceript ensure that Open JDK has installed correctly and try and running lines 57-70 individually and on line 67 run just `cmake` without the paramters.
+> If face issues with the shell script ensure that Open JDK has installed correctly and try and running lines 57-70 individually and on line 67 run just `cmake` without the parameters.
 
 ```bash
 brew install imagemagick
 brew install tesseract --all-languages
 ```
- 
+
 #### Windows
 ```bash
 // TODO
@@ -79,7 +79,7 @@ brew install tesseract --all-languages
 1. Ensure your phone has an unlocked bootloader and it able to support root. Lineage OS is a good place to start for a custom ROM and they have good installation instruction for each device.
 2. Install [Magisk](https://forum.xda-developers.com/apps/magisk/official-magisk-v7-universal-systemless-t3473445) by flashing ([App Installs/ROM Feature Installs via Flashing](https://forum.xda-developers.com/wiki/Flashing_Guide_-_Android)).  
 
-3. Install RemoteGPSController (RGC) [here](http://www.github.com/Grennith/Map-A-Droid/blob/master/APKs/RemoteGpsController.apk) located in the `APKs` github folder.
+3. Install RemoteGPSController (RGC) [here](https://www.github.com/Grennith/Map-A-Droid/blob/master/APKs/RemoteGpsController.apk) located in the `APKs` github folder.
 
 4. Install [Link2SD](https://play.google.com/store/apps/details?id=com.buak.Link2SD&hl=en_GB) and ensure that RemoteGPSController is converted to a System Apps.
 
@@ -90,11 +90,11 @@ brew install tesseract --all-languages
 
 ### MySQL - Database  
 You will need a MySQL server installed:  
-* (Tutorial from RocketMap) [Installing MySQL](https://rocketmap.readthedocs.io/en/develop/basic-install/mysql.html) 
+* (Tutorial from RocketMap) [Installing MySQL](https://rocketmap.readthedocs.io/en/develop/basic-install/mysql.html)
 
 You will also need to create the `trshash` table using the following query
 ```sql
-Create table if not exists trshash ( 
+Create table if not exists trshash (
 hashid MEDIUMINT NOT NULL AUTO_INCREMENT,
 hash VARCHAR(255) NOT NULL,
 type VARCHAR(10) NOT NULL,
@@ -104,7 +104,7 @@ modify DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
 PRIMARY KEY (hashid));
 ```
 
-Remember: The account you use for Map-A-Droid has to have CREATE/DROP permissions as well as 
+Remember: The account you use for Map-A-Droid has to have CREATE/DROP permissions as well as
 INSERT, UPDATE, DELETE, and SELECT!
 
 ### Configuration
@@ -124,7 +124,7 @@ INSERT, UPDATE, DELETE, and SELECT!
 
 (The images should be located in `gym_img` folder)
 
-</br> 
+</br>
 
 3) We also need gym locations and there are two solutions:
     - If you have a RocketMap/Monocle database with old gym-details, run `downloadDBCords.py`  
@@ -141,10 +141,9 @@ INSERT, UPDATE, DELETE, and SELECT!
 1. Mobile - Start Remote GPS Controller.
     * Select Start within the app to start GPS
     * Select MediaProjection to allow touch commands  
-    * 
 </br>
 
-4. PC - Make sure you're in the directory of Map-A-Droid and run the following 2 commands 
+2. PC - Make sure you're in the directory of Map-A-Droid and run the following 2 commands 
 
 To start the GPS walking around
 `python startWalker.py -os`
@@ -152,6 +151,7 @@ To start the GPS walking around
 To start the processing of the screenshot that have been taken
 `python startWalker.py -oo`
 
+Best practice is to run both commands in seperate [screen](https://www.gnu.org/software/screen/) sessions.
 
 >Note if running via ssh you may face issues around "no screen available" to get around the prefix your commands with `MPLBACKEND=Agg`
 
@@ -161,7 +161,7 @@ To start the processing of the screenshot that have been taken
 Make sure you're in the directory of Map-A-Droid and run:  
 ```
 git pull
-pip install -r requirements.txt 
+pip install -r requirements.txt
 ```
 >If there are changes to OCR that require OCR hashing to be cleared it will likely be announced in Discord. But the argument you add to your `-oo` command is `-chd`
 The command will look like this:
