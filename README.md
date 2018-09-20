@@ -31,7 +31,7 @@ The Raid Mapper is a Raid scanner for Pokemon GO, based on Android devices and O
 
 ## Some (but not limiting) examples of phones working with the project:
 * Redmi 5A (annoying to setup) running LineageOS 15.1
-* Samsung S5 running LOS 15.1
+* Samsung S5(+) running LOS 15.1
 * Motorola G4 running LineageOS 15.1
 * HTC One M7 running LOS 14.1
 * Samsung XCover 4 running stock Android 7.1.2
