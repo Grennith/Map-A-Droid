@@ -328,6 +328,12 @@ class PogoWindows:
         if screenshotRead is None:
             log.error("Screenshot corrupted :(")
             return False
+            
+        if self.__readCircleCount(os.path.join('', filename), hash, float(11), xcord=False, crop=True, click=False, canny=True) == -1:
+            log.debug("__checkRaidLine: Not active")
+            return False
+            
+            
         height, width, _ = screenshotRead.shape
         screenshotRead = screenshotRead[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
                          int(0):int(width)]
