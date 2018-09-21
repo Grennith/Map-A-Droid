@@ -395,11 +395,11 @@ def getToRaidscreen(maxAttempts, again=False):
 
     attempts = 0
 
-    if os.path.isdir(args.temp_path + 'screenshot.png'):
+    if os.path.isdir(os.path.join(args.temp_path, 'screenshot.png')):
         log.error("getToRaidscreen: screenshot.png is not a file/corrupted")
         return False
     
-    while pogoWindowManager.isGpsSignalLost(args.temp_path + 'screenshot.png', 123):
+    while pogoWindowManager.isGpsSignalLost(os.path.join(args.temp_path, 'screenshot.png'), 123):
         time.sleep(1)
         takeScreenshot()
         log.warning("getToRaidscreen: GPS signal error")
@@ -411,29 +411,29 @@ def getToRaidscreen(maxAttempts, again=False):
             return False
     redErrorCount = 0
 
-    while not pogoWindowManager.checkRaidscreen(args.temp_path + 'screenshot.png', 123):
+    while not pogoWindowManager.checkRaidscreen(os.path.join(args.temp_path, 'screenshot.png'), 123):
         if attempts > maxAttempts:
             # could not reach raidtab in given maxAttempts
             log.error("getToRaidscreen: Could not get to raidtab within %s attempts" % str(maxAttempts))
             return False
         checkPogoFreeze()
         # not using continue since we need to get a screen before the next round...
-        found = pogoWindowManager.lookForButton(args.temp_path + 'screenshot.png', 2.20, 3.01)
+        found = pogoWindowManager.lookForButton(os.path.join(args.temp_path, 'screenshot.png'), 2.20, 3.01)
         if found:
             log.info("getToRaidscreen: Found button (small)")
 
-        if not found and pogoWindowManager.checkCloseExceptNearbyButton(args.temp_path + 'screenshot.png', 123):
+        if not found and pogoWindowManager.checkCloseExceptNearbyButton(os.path.join(args.temp_path, 'screenshot.png'), 123):
             log.info("getToRaidscreen: Found (X) button (except nearby)")
             found = True
 
-        if not found and pogoWindowManager.lookForButton(args.temp_path + 'screenshot.png', 1.05, 2.20):
+        if not found and pogoWindowManager.lookForButton(os.path.join(args.temp_path, 'screenshot.png'), 1.05, 2.20):
             log.info("getToRaidscreen: Found button (big)")
             found = True
 
         log.info("getToRaidscreen: Previous checks found popups: %s" % str(found))
         if not found:
             log.info("getToRaidscreen: Previous checks found nothing. Checking nearby open")
-            if pogoWindowManager.checkNearby(args.temp_path + 'screenshot.png', 123):
+            if pogoWindowManager.checkNearby(os.path.join(args.temp_path, 'screenshot.png'), 123):
                 return takeScreenshot(delayBefore=args.post_screenshot_delay)
 
         if not takeScreenshot(delayBefore=args.post_screenshot_delay):
@@ -463,7 +463,7 @@ def reopenRaidTab():
     if not takeScreenshot():
         log.error("reopenRaidTab: Failed retrieving screenshot before checking for closebutton")
         return
-    pogoWindowManager.checkCloseExceptNearbyButton(args.temp_path + 'screenshot.png', '123', 'True')
+    pogoWindowManager.checkCloseExceptNearbyButton(os.path.join(args.temp_path, 'screenshot.png'), '123', 'True')
     getToRaidscreen(3)
     time.sleep(1)
 
@@ -475,7 +475,7 @@ def takeScreenshot(delayAfter=0.0, delayBefore=0.0):
     if lastScreenshotTaken and compareToTime < 0.5:
         log.debug("takeScreenshot: screenshot taken recently, returning immediately")
         return True
-    elif not screenWrapper.getScreenshot(args.temp_path + 'screenshot.png'):
+    elif not screenWrapper.getScreenshot(os.path.join(args.temp_path, 'screenshot.png')):
         log.error("takeScreenshot: Failed retrieving screenshot")
         return False
     else:
@@ -490,7 +490,8 @@ def checkPogoFreeze():
 
     if not takeScreenshot():
         return
-    screenHash = getImageHash(args.temp_path + 'screenshot.png')
+    
+    screenHash = getImageHash(os.path.join(args.temp_path, 'screenshot.png'))
     log.debug("checkPogoFreeze: Old Hash: " + lastScreenHash)
     log.debug("checkPogoFreeze: New Hash: " + screenHash)
     if hamming_distance(str(lastScreenHash), str(screenHash)) < 4 and lastScreenHash != '0':
@@ -693,7 +694,7 @@ def main_thread():
                 dbWrapper.setScannedLocation(str(curLat), str(curLng), str(curTime))
 
             log.info("main: Checking raidcount and copying raidscreen if raids present")
-            countOfRaids = pogoWindowManager.readRaidCircles(args.temp_path + 'screenshot.png', 123)
+            countOfRaids = pogoWindowManager.readRaidCircles(os.path.join(args.temp_path, 'screenshot.png'), 123)
             if countOfRaids == -1:
                 # reopen raidtab and take screenshot...
                 log.warning("main: Count present but no raid shown, reopening raidTab")
@@ -702,7 +703,7 @@ def main_thread():
                 if not takeScreenshot():
                     windowLock.release()
                     continue
-                countOfRaids = pogoWindowManager.readRaidCircles(args.temp_path + 'screenshot.png', 123)
+                countOfRaids = pogoWindowManager.readRaidCircles(os.path.join(args.temp_path, 'screenshot.png'), 123)
             #    elif countOfRaids == 0:
             #        emptycount += 1
             #        if emptycount > 30:
@@ -713,7 +714,7 @@ def main_thread():
             # not an elif since we may have gotten a new screenshot..
             #detectin weather
             if args.weather:
-                weather = checkWeather(args.temp_path + 'screenshot.png')
+                weather = checkWeather(os.path.join(args.temp_path, 'screenshot.png'))
                 if weather[0]:
                     log.debug('Submit Weather')
                     dbWrapper.updateInsertWeather(curLat, curLng, weather[1], curTime)
@@ -728,8 +729,8 @@ def main_thread():
                 copyFileName = args.raidscreen_path + '/raidscreen_' + str(curTime) + "_" + str(curLat) + "_" + str(
                     curLng) + "_" + str(countOfRaids) + '.png'
                 log.debug('Copying file: ' + copyFileName)
-                copyfile(args.temp_path + 'screenshot.png', copyFileName)
-                os.remove(args.temp_path + 'screenshot.png')
+                copyfile(os.path.join(args.temp_path, 'screenshot.png'), copyFileName)
+                os.remove(os.path.join(args.temp_path, 'screenshot.png'))
 
             log.debug("main: Releasing lock")
             windowLock.release()

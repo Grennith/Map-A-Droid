@@ -36,7 +36,7 @@ sed -i 's/^pogoasset:.*/pogoasset: \/opt\/PogoAssets\//' config.ini
 timezone=$(python2.7 check_timezone.py | grep TIMEZONE: | grep -oEi '[-+0123456789]+')
 sed -i "s/^timezone:.*/timezone: ${timezone}/" config.ini
 sed -i "s/#temp_path:.*/temp_path: \/mnt\/mad_temp_ramdisk\//" config.ini
-sudo -H pip install -r setup/raspbian/requirements.txt
+sudo -H pip install -r /opt/Map-A-Droid/setup/raspbian/requirements.txt
 # setup ramdisk and stuff
 sudo mkdir /mnt/mad_temp_ramdisk
 sudo echo "tmpfs /mnt/mad_temp_ramdisk tmpfs nodev,nosuid,size=50M 0 0" >> /etc/fstab

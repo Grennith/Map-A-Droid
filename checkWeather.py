@@ -103,4 +103,4 @@ def checkWeather(raidpic):
     
 if __name__ == '__main__':
    
-    checkWeather(args.temp_path + 'screenshot.png')
+    checkWeather(os.path.join(args.temp_path, 'screenshot.png'))
