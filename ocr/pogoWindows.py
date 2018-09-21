@@ -266,8 +266,8 @@ class PogoWindows:
         log.debug("lookForButton: MinLineLength:" + str(minLineLength))
 
         
-        #kernel = np.ones((4,4),np.uint8)
-        #edges = cv2.morphologyEx(edges, cv2.MORPH_CLOSE, kernel)
+        kernel = np.ones((2,2),np.uint8)
+        edges = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
         
         maxLineGap = 50
         lineCount = 0
