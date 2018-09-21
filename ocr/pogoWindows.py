@@ -295,7 +295,7 @@ class PogoWindows:
                     log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
                         x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
 
-        if lineCount >= 1 and lineCount < 4:
+        if lineCount >= 1 and lineCount < 5:
             
             #recalculate click area for real resolution
             click_x = int(((width - _x2) + ((_x2 - _x1) /2)) / round(faktor,2)) 
@@ -305,7 +305,7 @@ class PogoWindows:
             time.sleep(4)
             return True
             
-        elif lineCount > 4:
+        elif lineCount >= 5:
             log.debug('lookForButton: found to much Buttons :) - close it' )
             self.screenWrapper.backButton()
             time.sleep(4)
