@@ -186,6 +186,8 @@ def parseArgs():
                         help='download gym cords from this param f.e. [47.1, 47.2]')
     parser.add_argument('-latlngright', '--latlngright', default=[], action='append',
                         help='download gym cords to this param  f.e. [9.1, 9.5]')
+    parser.add_argument('-jj', '--justjson', action='store_true', default=False,
+                        help='just generate the gym_info.json')
 
     # webhook
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,

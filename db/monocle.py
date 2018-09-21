@@ -790,13 +790,15 @@ class MonocleWrapper:
 
         for (id, lat, lon, name, url, park, sponsor) in cursor:
             if url is not None:
-                filename = url_image_path + '_' + str(id) + '_.jpg'
-                print('Downloading', filename)
-                self.__download_img(str(url), str(filename))
+                if not args.justjson:
+                    filename = url_image_path + '_' + str(id) + '_.jpg'
+                    print('Downloading', filename)
+                    self.__download_img(str(url), str(filename))
                 gyminfo[id] = self.__encodeHashJson('0', lat, lon, name, url, park, sponsor)
 
         cursor.close()
         connection.close()
         with io.open('gym_info.json', 'w', encoding='UTF-8') as outfile:
             outfile.write(unicode(json.dumps(gyminfo, indent=4, sort_keys=True)))
+        print 'Finished...'
         return True

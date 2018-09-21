@@ -802,12 +802,15 @@ class RmWrapper:
 
         for (gym_id, team_id, latitude, longitude, name, description, url) in cursor:
             if url is not None:
-                filename = url_image_path + '_' + str(gym_id) + '_.jpg'
-                print('Downloading', filename)
-                self.__download_img(str(url), str(filename))
+                if not args.justjson:
+                    filename = url_image_path + '_' + str(gym_id) + '_.jpg'
+                    print('Downloading', filename)
+                    self.__download_img(str(url), str(filename))
                 gyminfo[gym_id] = self.__encodeHashJson(team_id, latitude, longitude, name, description, url)
         cursor.close()
         connection.close()
         with io.open('gym_info.json', 'w', encoding='UTF-8') as outfile:
             outfile.write(unicode(json.dumps(gyminfo, indent=4, sort_keys=True)))
+        print 'Finished...'
         return True
+        
