@@ -660,6 +660,14 @@ def main_thread():
                 log.info("main: Teleporting...")
                 telnGeo.setLocation(curLat, curLng, 0)
                 delayUsed = args.post_teleport_delay
+                # Test for cooldown / teleported distance
+                if args.cool_down_sleep:
+                    if distance > 2500:
+                        delayUsed = 30
+                    elif distance > 5000:
+                        delayUsed = 45
+                    elif distance > 10000:
+                        delayUsed = 60
 
                 if 0 < args.walk_after_teleport_distance < distance:
                     toWalk = getDistanceOfTwoPointsInMeters(float(curLat), float(curLng), float(curLat) + 0.0001, float(curLng) + 0.0001)

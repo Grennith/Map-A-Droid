@@ -115,6 +115,8 @@ def parseArgs():
                         help=(
                             'The walk a couple meters after a teleport covering a greater distance than this value. '
                             'Supposedly helps with loading'))
+    parser.add_argument('-cds', '--cool_down_sleep', action='store_true', default=False,
+                        help='Sleep for cooldown after teleport.')
 
     # Runtypes
     parser.add_argument('-os', '--only_scan', action='store_true', default=False,
