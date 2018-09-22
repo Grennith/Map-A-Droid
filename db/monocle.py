@@ -257,7 +257,7 @@ class MonocleWrapper:
 
     def insertHash(self, imghash, type, id, raidNo):
         if type == 'raid':
-            distance = 3
+            distance = 2
         else:
             distance = 4
         doubleCheck = self.checkForHash(imghash, type, raidNo, distance)

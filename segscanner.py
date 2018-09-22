@@ -620,7 +620,7 @@ class Scanner:
         os.remove(tempHash)
         
         if type == 'raid':
-            distance = 3
+            distance = 2
         else:
             distance = 4
 
@@ -651,7 +651,7 @@ class Scanner:
         os.remove(tempHash)
         
         if type == 'raid':
-            distance = 3
+            distance = 2
         else:
             distance = 4
         
@@ -686,7 +686,7 @@ class Scanner:
         os.remove(tempHash)
         
         if type == 'raid':
-            distance = 3
+            distance = 2
         else:
             distance = 4
         
