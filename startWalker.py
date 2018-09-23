@@ -673,7 +673,7 @@ def main_thread():
                 if 0 < args.walk_after_teleport_distance < distance:
                     toWalk = getDistanceOfTwoPointsInMeters(float(curLat), float(curLng), float(curLat) + 0.0001, float(curLng) + 0.0001)
                     log.error("Walking a bit: %s" % str(toWalk))
-                    time.debug(0.3)
+                    time.sleep(0.3)
                     telnGeo.walkFromTo(curLat, curLng, curLat + 0.0001, curLng + 0.0001, 11)
                     log.debug("Walking back")
                     time.sleep(0.3)
