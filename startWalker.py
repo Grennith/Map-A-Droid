@@ -668,20 +668,22 @@ def main_thread():
                         delayUsed = 45
                     elif distance > 10000:
                         delayUsed = 60
+                    log.info("Need more sleep after Teleport: %s seconds!" % str(delayUsed))
 
                 if 0 < args.walk_after_teleport_distance < distance:
                     toWalk = getDistanceOfTwoPointsInMeters(float(curLat), float(curLng), float(curLat) + 0.0001, float(curLng) + 0.0001)
                     log.error("Walking a bit: %s" % str(toWalk))
-                    time.sleep(0.3)
+                    time.debug(0.3)
                     telnGeo.walkFromTo(curLat, curLng, curLat + 0.0001, curLng + 0.0001, 11)
-                    log.error("Walking back")
+                    log.debug("Walking back")
                     time.sleep(0.3)
                     telnGeo.walkFromTo(curLat + 0.0001, curLng + 0.0001, curLat, curLng, 11)
-                    log.error("Done walking")
+                    log.debug("Done walking")
             else:
                 log.info("main: Walking...")
                 telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
                 delayUsed = args.post_walk_delay
+            log.info("Sleeping %s" % str(delayUsed))
             time.sleep(delayUsed)
 
             # ok, we should be at the next gym, check for errors and stuff
