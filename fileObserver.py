@@ -2,7 +2,7 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 from walkerArgs import parseArgs
-from  segscanner import Scanner
+from segscanner import Scanner
 from threading import Thread, Event
 import logging
 import collections
@@ -43,7 +43,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         maxRadius = int(((width / 4.736)) / 2) + 1
         log.debug('Searching for Raid Circles with Radius from %s to %s px' % (str(minRadius), str(maxRadius)))
         
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,1,height / 8,param1=100,param2=15,minRadius=minRadius,maxRadius=maxRadius)
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, height / 8, param1=100, param2=15, minRadius=minRadius, maxRadius=maxRadius)
         
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")

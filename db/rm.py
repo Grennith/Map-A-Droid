@@ -44,11 +44,14 @@ class RmWrapper:
 
         cursor = connection.cursor()
         dbTimeToCheck = datetime.datetime.now() - datetime.timedelta(hours=self.timezone)
-
-        query_for_count = "SELECT gym_id,start,end from raid " \
-                          "WHERE start <=  \'{0}\' AND end >= \'{0}\' AND level = 5 AND IFNULL(pokemon_id,0) = 0" \
+        log.debug("Time used to find eggs " + str(dbTimeToCheck))
+        
+        query_for_count = "SELECT gym_id, start, end from raid " \
+                          "WHERE start <= FROM_UNIXTIME({0}) " \
+                          "AND end >= FROM_UNIXTIME({0}) " \
+                          "AND level = 5 " \
+                          "AND IFNULL(pokemon_id,0) = 0" \
             .format(str(dbTimeToCheck))
-
 
         log.debug(query_for_count)
         cursor.execute(query_for_count)
@@ -297,6 +300,7 @@ class RmWrapper:
 
         if end is not None:
             end -= self.timezone * 60 * 60
+
         wh_send = False
         wh_start = 0
         wh_end = 0
