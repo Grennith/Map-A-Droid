@@ -51,7 +51,8 @@ class RmWrapper:
                           "AND end >= FROM_UNIXTIME({0}) " \
                           "AND level = 5 " \
                           "AND IFNULL(pokemon_id,0) = 0" \
-            .format(str(dbTimeToCheck))
+            .format(self.dbTimeStringToUnixTimestamp(dbTimeToCheck))
+
 
         log.debug(query_for_count)
         cursor.execute(query_for_count)
@@ -113,6 +114,7 @@ class RmWrapper:
         #    'ON raid.gym_id = gym.gym_id WHERE raid.start >= \'%s\''
         #    % str(datetime.datetime.now() - datetime.timedelta(hours = self.timezone)))
         dbTimeToCheck = datetime.datetime.now() - datetime.timedelta(hours=self.timezone)
+
         query = (' SELECT start, latitude, longitude FROM raid LEFT JOIN gym ' +
                  'ON raid.gym_id = gym.gym_id WHERE raid.end > \'%s\' ' % str(dbTimeToCheck) +
                  'AND raid.pokemon_id IS NULL')
@@ -817,4 +819,3 @@ class RmWrapper:
             outfile.write(unicode(json.dumps(gyminfo, indent=4, sort_keys=True)))
         print 'Finished...'
         return True
-        
