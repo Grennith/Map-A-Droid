@@ -223,20 +223,21 @@ def sleeptimer():
     sleeptime = args.sleepinterval
     global sleep
     global telnMore
-    tmFrom = datetime.datetime.strptime(sleeptime[0], "%H:%M")
-    log.debug("sleeptimer: tmFrom: %s" % str(tmFrom))
-    tmTil = datetime.datetime.strptime(sleeptime[1], "%H:%M") + datetime.timedelta(hours=24)
-    log.debug("sleeptimer: tmTil: %s" % str(tmTil))
+    sts1 = sleeptime[0].split(':')
+    sts2 = sleeptime[1].split(':')
     while True:
-        # we assume sleep is always at night...
-        tmNow = datetime.datetime.strptime(datetime.datetime.now().strftime('%H:%M'), "%H:%M")
-        tmNowNextDay = tmNow + datetime.timedelta(hours=24)
+        tmFrom = datetime.datetime.now().replace(hour=int(sts1[0]),minute=int(sts1[1]),second=0,microsecond=0)
+        tmTil = datetime.datetime.now().replace(hour=int(sts2[0]),minute=int(sts2[1]),second=0,microsecond=0) 
+        tmNow = datetime.datetime.now()
+        if tmTil < tmFrom:
+            tmTil = tmTil + datetime.timedelta(hours=24)
+        else:
+            tmTil = tmTil
         log.debug("Time now: %s" % tmNow)
-        log.debug("Time Now Next Day: %s" % tmNowNextDay)
         log.debug("Time From: %s" % tmFrom)
         log.debug("Time Til: %s" % tmTil)
 
-        if tmNow >= tmFrom or tmNowNextDay < tmTil:
+        if tmNow >= tmFrom and tmNow < tmTil:
             log.info('Going to sleep - bye bye')
             # Stopping pogo...
             if telnMore:
@@ -247,20 +248,12 @@ def sleeptimer():
             while sleep:
                 log.info("Currently sleeping...zzz")
                 log.debug("Time now: %s" % tmNow)
-                log.debug("Time Now Next Day: %s" % tmNowNextDay)
                 log.debug("Time From: %s" % tmFrom)
                 log.debug("Time Til: %s" % tmTil)
-                tmNow = datetime.datetime.strptime(datetime.datetime.now().strftime('%H:%M'), "%H:%M")
-                tmNowNextDay = tmNow + datetime.timedelta(hours=24)
-                log.info('Still sleeping, current time... %s' % str(tmNow))
-                if tmNowNextDay >= tmTil and tmNow < tmFrom:
-                    log.debug("Time now: %s" % tmNow)
-                    log.debug("Time Now Next Day: %s" % tmNowNextDay)
-                    log.debug("Time From: %s" % tmFrom)
-                    log.debug("Time Til: %s" % tmTil)
-
+                tmNow = datetime.datetime.now()
+                log.info('Still sleeping, current time... %s' % str(tmNow.strftime("%H:%M")))
+                if tmNow >= tmTil:
                     log.warning('sleeptimer: Wakeup - here we go ...')
-                    # Turning screen on and starting app
                     if telnMore:
                         telnMore.turnScreenOn()
                         telnMore.startApp("sleeptimer: com.nianticlabs.pokemongo")
