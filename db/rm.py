@@ -319,7 +319,7 @@ class RmWrapper:
         whereStr = 'WHERE gym_id = \'%s\' ' % str(gym)
         if MonWithNoEgg:
             # submit mon without egginfo -> we have an endtime
-            start = end - 45 * 60 * 4
+            start = end - (int(args.raid_time) * 60)
             log.info("Updating mon without egg")
             setStr = 'SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), ' \
                      'pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, move_1 = %s, move_2 = %s '
