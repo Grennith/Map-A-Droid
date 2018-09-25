@@ -114,7 +114,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         # TODO: join threads/processes
         log.debug("process: Done starting off processes")
 
-    patterns = ['*.png']
+    patterns = ['*.png', '*.jpg']
     ignore_directories = True
     ignore_patterns = ""
     case_sensitive = False
