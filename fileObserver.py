@@ -84,7 +84,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         # print filename
         time.sleep(2)
         # groups: 1 -> timestamp, 2 -> latitude, 3 -> longitude, 4 -> raidcount
-        raidcount = re.search(r'raidscreen_(\d+.?\d*)_(-?\d+\.\d+)_(-?\d+\.\d+)_(\d+)\.png', event.src_path)
+        raidcount = re.search(r'raidscreen_(\d+.?\d*)_(-?\d+.\d+)_(-?\d+.\d+)_(\d+)(.jpg|.png)$', event.src_path)
         if raidcount is None:
             # we could not read the raidcount... stop
             log.warning("Could not read raidcount in %s" % event.src_path)
