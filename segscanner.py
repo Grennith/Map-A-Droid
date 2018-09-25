@@ -104,8 +104,8 @@ class Scanner:
         unixnow =  time.mktime(zero.timetuple())
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Reading Raidtimer')
         height, width, channel = raidpic.shape
-        raidtimer = raidpic[int(round(radius*2*0.03)+(2*radius)+(radius*2*0.08)):int(round(radius*2*0.03)+(2*radius)+(radius*2*0.23)), 0:width]
-        raidtimer = cv2.resize(raidtimer, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+        raidtimer = raidpic[int(round(radius*2*0.03)+(2*radius)+(radius*2*0.13)):int(round(radius*2*0.03)+(2*radius)+(radius*2*0.23)), 0:width]
+        raidtimer = cv2.resize(raidtimer, (0,0), fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
         emptyRaidTempPath = os.path.join(self.tempPath, str(raidNo) + str(hash) + '_endraid.png')
         cv2.imwrite(emptyRaidTempPath, raidtimer)
         rt = Image.open(emptyRaidTempPath)
@@ -456,7 +456,7 @@ class Scanner:
             lvl = raidHash_[1]
             mon = raidHash_[2]
             
-            if lvl == raidlevel or raidlevel is not None:
+            if lvl == raidlevel and raidlevel is not None:
 
                 if not mon:
                     lvl = self.detectLevel(img, hash, raidNo, radius) #redetect level
