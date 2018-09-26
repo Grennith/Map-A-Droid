@@ -1,9 +1,9 @@
 # Basic docker image for Map-a-Droid
 # Usage:
-#   docker build -t MAD                   # Build the docker Image
-#   docker run -d MAD startWalker.py -os  # Launch Walker 
-#   docker run -d MAD startWalker.py -os  # Launch Screenshot Processing
-#   docker run -d MAD madmin.py           # Launch MAdmin
+#   docker build -t mad                   # Build the docker Image
+#   docker run -d mad startWalker.py -os  # Launch Walker 
+#   docker run -d mad startWalker.py -os  # Launch Screenshot Processing
+#   docker run -d mad madmin.py           # Launch MAdmin
 
 FROM python:2.7-slim
 
