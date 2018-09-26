@@ -27,7 +27,5 @@ COPY requirements.txt /usr/src/app/
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# RUN apt-get install libgtk2.0-dev -y
-
 # Copy everything to the working directory (Python files, templates, config) in one go.
 COPY . /usr/src/app/
