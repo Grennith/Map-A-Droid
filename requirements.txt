@@ -7,7 +7,7 @@ imutils
 configargparse
 image
 scikit-image
-mysql-connector-python-rf
+mysql-connector-python
 twisted
 gpxdata
 flask
