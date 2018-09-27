@@ -159,12 +159,17 @@ class MonocleWrapper:
         # print(query)
         # data = (datetime.datetime.now())
         cursor.execute(query)
-
+        from geofenceHelper import GeofenceHelper
+        geofenceHelper = GeofenceHelper()
         data = []
         log.debug("Result of raidQ query: %s" % str(query))
         for (time_battle, lat, lon) in cursor:
             if lat is None or lon is None:
                 log.warning("lat or lng is none")
+                continue
+            elif not geofenceHelper.is_coord_inside_include_geofence([lat, lon]):
+                log.debug("Excluded hatch at %s, %s since the coordinate is not inside the given include fences"
+                          % (str(lat), str(lon)))
                 continue
             # timestamp = self.dbTimeStringToUnixTimestamp(str(start))
             data.append((time_battle + delayAfterHatch * 60, RaidLocation(lat, lon)))

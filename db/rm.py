@@ -121,12 +121,17 @@ class RmWrapper:
         # print(query)
         # data = (datetime.datetime.now())
         cursor.execute(query)
-
+        from geofenceHelper import GeofenceHelper
+        geofenceHelper = GeofenceHelper()
         data = []
         log.debug("Result of raidQ query: %s" % str(query))
         for (start, latitude, longitude) in cursor:
             if latitude is None or longitude is None:
                 log.warning("lat or lng is none")
+                continue
+            elif not geofenceHelper.is_coord_inside_include_geofence([latitude, longitude]):
+                log.debug("Excluded hatch at %s, %s since the coordinate is not inside the given include fences"
+                          % (str(latitude), str(longitude)))
                 continue
             timestamp = self.dbTimeStringToUnixTimestamp(str(start))
             data.append((timestamp + delayAfterHatch * 60, RaidLocation(latitude, longitude)))

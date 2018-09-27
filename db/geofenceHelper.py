@@ -35,6 +35,21 @@ class GeofenceHelper:
                      len(self.geofenced_areas),
                      len(self.excluded_areas))
 
+    def is_coord_inside_include_geofence(self, coordinate):
+        log.error("Checking if coord %s is inside fences" % str(coordinate))
+        # Coordinate is not valid if in one excluded area.
+        if self._is_excluded(coordinate):
+            return False
+
+        # Coordinate is geofenced if in one geofenced area.
+        if self.geofenced_areas:
+            for va in self.geofenced_areas:
+                if self._in_area(coordinate, va):
+                    return True
+        else:
+            return True
+        return False
+
     def get_geofenced_coordinates(self, coordinates):
         log.info('Using matplotlib: %s.', self.use_matplotlib)
         log.info('Found %d coordinates to geofence.', len(coordinates))
