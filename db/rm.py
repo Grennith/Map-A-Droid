@@ -97,7 +97,7 @@ class RmWrapper:
             log.info('No Eggs due for hatching')
 
     def dbTimeStringToUnixTimestamp(self, timestring):
-        dt = datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
+        dt = datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S.%f')
         unixtime = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
         return unixtime
 
