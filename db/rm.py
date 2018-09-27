@@ -43,15 +43,15 @@ class RmWrapper:
                      'so it will mark them as zero so they will remain unhatched...')
 
         cursor = connection.cursor()
-        dbTimeToCheck = datetime.datetime.now() - datetime.timedelta(hours=self.timezone)
-        log.debug("Time used to find eggs " + str(dbTimeToCheck))
+        db_time_to_check = datetime.datetime.now() - datetime.timedelta(hours=self.timezone)
+        log.debug("Time used to find eggs " + str(db_time_to_check))
         
         query_for_count = "SELECT gym_id, start, end from raid " \
                           "WHERE start <= FROM_UNIXTIME({0}) " \
                           "AND end >= FROM_UNIXTIME({0}) " \
                           "AND level = 5 " \
                           "AND IFNULL(pokemon_id,0) = 0" \
-            .format(self.dbTimeStringToUnixTimestamp(dbTimeToCheck))
+            .format(self.dbTimeStringToUnixTimestamp(str(db_time_to_check)))
 
 
         log.debug(query_for_count)
