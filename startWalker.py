@@ -95,7 +95,7 @@ redErrorCount = 0
 dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname,
                       args.timezone)
 
-if not args.only_ocr:
+if not args.only_ocr and not args.with_madmin:
     log.info("Starting Telnet MORE Client")
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password), args.tel_timeout_command,
                           args.tel_timeout_socket)
@@ -130,6 +130,12 @@ def main():
 
     MonRaidImages.runAll(args.pogoasset)
 
+    if args.with_madmin:
+        log.info('Starting Madmin on Port: %s' % str(args.madmin_port))
+        t_flask = Thread(name='madmin', target=start_madnin())
+        t_flask.daemon = False
+        t_flask.start()
+
     if not args.only_ocr:
         log.info('Processing Pokemon Matching....')
         t = Thread(target=main_thread, name='main')
@@ -152,8 +158,8 @@ def main():
         t_observ = Thread(name='cleanupraidscreen',
                           target=deleteOldScreens(args.raidscreen_path, args.successsave_path, args.cleanup_age))
         t_observ.daemon = True
-        t_observ.start()
-
+        t_observ.start()  
+            
     if args.sleeptimer:
         log.info('Starting Sleeptimer....')
         t_sleeptimer = Thread(name='sleeptimer',
@@ -170,6 +176,11 @@ def main():
     while True:
         time.sleep(10)
 
+def start_madnin():
+    import madmin
+    madmin.app.run(host='0.0.0.0', port=int(args.madmin_port), threaded=True, use_reloader=False)
+    sys.exit(0)
+        
 
 def level_5_auto_hatch():
     while sleep is not True and args.auto_hatch:
@@ -178,8 +189,7 @@ def level_5_auto_hatch():
         time.sleep(60)
         log.debug("Sleep Status: " + str(sleep))
         log.debug("Auto Hatch Enabled: " + str(args.auto_hatch))
-
-
+    
 def deleteOldScreens(folderscreen, foldersuccess, minutes):
     if minutes == "0":
         log.info('deleteOldScreens: Search/Delete Screenshots is disabled')

@@ -125,6 +125,8 @@ def parseArgs():
                         help='Use this instance only for OCR.')
     parser.add_argument('-om', '--ocr_multitask', action='store_true', default=False,
                         help='Running OCR in sub-processes (module multiprocessing) to speed up analysis of raids.')
+    parser.add_argument('-wm', '--with_madmin', action='store_true', default=False,
+                        help='Start madmin as instance.')
 
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
@@ -163,8 +165,10 @@ def parseArgs():
                         help='Search for nearby Gmy within this radius (in KM!!). '
                         'In areas with many Gyms reduce this argument to 1-2 Default: 6')
                         
-    parser.add_argument('-npmv', '--npmValue', type=float, default=0.8,
-                        help='Matching zoom start value for mon!. (Based on resolution)')
+    parser.add_argument('-npmf', '--npmFrom', type=float, default=0.8,
+                        help='Matching zoom start value for mon! (Based on resolution)')
+    parser.add_argument('-npmv', '--npmValue', type=float, default=2.0,
+                        help='Matching zoom max value for mon! (Based on resolution)')
 
     parser.add_argument('-npv', '--npValue', type=float, default=0.5,
                         help='Matching zoom max value. (Based on resolution)')
