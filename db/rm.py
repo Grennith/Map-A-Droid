@@ -43,15 +43,15 @@ class RmWrapper:
                      'so it will mark them as zero so they will remain unhatched...')
 
         cursor = connection.cursor()
-        dbTimeToCheck = datetime.datetime.now() - datetime.timedelta(hours=self.timezone)
-        log.debug("Time used to find eggs " + str(dbTimeToCheck))
-        
+        db_time_to_check = datetime.datetime.now() - datetime.timedelta(hours=self.timezone)
+        log.debug("Time used to find eggs " + str(db_time_to_check))
+
         query_for_count = "SELECT gym_id, start, end from raid " \
                           "WHERE start <= FROM_UNIXTIME({0}) " \
                           "AND end >= FROM_UNIXTIME({0}) " \
                           "AND level = 5 " \
                           "AND IFNULL(pokemon_id,0) = 0" \
-            .format(self.dbTimeStringToUnixTimestamp(dbTimeToCheck))
+            .format(self.dbTimeStringToUnixTimestamp(str(db_time_to_check)))
 
 
         log.debug(query_for_count)
@@ -97,7 +97,10 @@ class RmWrapper:
             log.info('No Eggs due for hatching')
 
     def dbTimeStringToUnixTimestamp(self, timestring):
-        dt = datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
+        try:
+            dt = datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S.%f')
+        except ValueError:
+            dt = datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
         unixtime = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
         return unixtime
 
@@ -121,12 +124,17 @@ class RmWrapper:
         # print(query)
         # data = (datetime.datetime.now())
         cursor.execute(query)
-
+        from geofenceHelper import GeofenceHelper
+        geofenceHelper = GeofenceHelper()
         data = []
         log.debug("Result of raidQ query: %s" % str(query))
         for (start, latitude, longitude) in cursor:
             if latitude is None or longitude is None:
                 log.warning("lat or lng is none")
+                continue
+            elif not geofenceHelper.is_coord_inside_include_geofence([latitude, longitude]):
+                log.debug("Excluded hatch at %s, %s since the coordinate is not inside the given include fences"
+                          % (str(latitude), str(longitude)))
                 continue
             timestamp = self.dbTimeStringToUnixTimestamp(str(start))
             data.append((timestamp + delayAfterHatch * 60, RaidLocation(latitude, longitude)))
@@ -202,7 +210,7 @@ class RmWrapper:
             log.debug(
                 '[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'checkForHash: No matching Hash found')
             return False, None, None, None, None
-            
+
     def getAllHash(self, type):
         try:
             connection = mysql.connector.connect(host=self.host,
@@ -220,7 +228,7 @@ class RmWrapper:
 
         cursor.execute(query)
         data = cursor.fetchall()
-        
+
         return data
 
     def insertHash(self, imghash, type, id, raidNo):
@@ -645,7 +653,7 @@ class RmWrapper:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(
                 self.uniqueHash) + ') ] ' + 'checkGymsNearby: GymHash seems not to be correct')
             return False
-            
+
     def updateInsertWeather(self, lat, lng, weatherid, captureTime):
         now_timezone = datetime.datetime.fromtimestamp(float(captureTime))
         now_timezone = time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
@@ -653,7 +661,7 @@ class RmWrapper:
             "%Y-%m-%d %H:%M:%S")
         s2cellid = S2Helper.latLngToCellId(lat, lng)
         realLat, realLng = S2Helper.middleOfCell(s2cellid)
-        
+
         try:
             connection = mysql.connector.connect(host=self.host,
                                                  user=self.user, port=self.port, passwd=self.password,
@@ -662,14 +670,14 @@ class RmWrapper:
             log.error("Could not connect to the SQL database")
             return []
         cursor = connection.cursor()
-        
-        query = ('INSERT INTO weather ' + 
+
+        query = ('INSERT INTO weather ' +
                 '(s2_cell_id, latitude, longitude, cloud_level, rain_level, ' +
                 'wind_level, snow_level, fog_level, wind_direction, gameplay_weather, ' +
-                'severity, warn_weather, world_time, last_updated) VALUES ' + 
+                'severity, warn_weather, world_time, last_updated) VALUES ' +
                 ' (' + str(s2cellid) + ', ' + str(lat) + ', ' + str(lng) + ', NULL, NULL, NULL, NULL, NULL, NULL, ' +
-                '' + str(weatherid) + ', NULL, NULL, 1, \'' + str(now) + '\')' + 
-                ' ON DUPLICATE KEY UPDATE fog_level=0, cloud_level=0, snow_level=0, wind_direction=0, world_time=0, latitude=' + str(realLat) + ', longitude=' + str(realLng) + ', ' + 
+                '' + str(weatherid) + ', NULL, NULL, 1, \'' + str(now) + '\')' +
+                ' ON DUPLICATE KEY UPDATE fog_level=0, cloud_level=0, snow_level=0, wind_direction=0, world_time=0, latitude=' + str(realLat) + ', longitude=' + str(realLng) + ', ' +
                 ' gameplay_weather=' + str(weatherid) + ', last_updated=\'' + str(now) + '\'')
 
         cursor.execute(query)
@@ -677,7 +685,7 @@ class RmWrapper:
         cursor.close()
         send_weather_webhook(s2cellid, weatherid, 0, 0, 2, now_timezone)
 
-        
+
 
     def setScannedLocation(self, lat, lng, captureTime):
 
@@ -726,7 +734,7 @@ class RmWrapper:
             queryStr = ' where (latitude BETWEEN {} AND {}) AND (longitude BETWEEN {} AND {}) and latitude IS NOT NULL and longitude IS NOT NULL'.format(lll[0], llr[0],
                                                                                                       lll[1], llr[1])
         else:
-            queryStr = ' where latitude IS NOT NULL and longitude IS NOT NULL'                                                                            
+            queryStr = ' where latitude IS NOT NULL and longitude IS NOT NULL'
         query = "SELECT latitude, longitude FROM gym {}".format(queryStr)
         cursor = connection.cursor()
         cursor.execute(query)
