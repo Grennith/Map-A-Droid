@@ -252,7 +252,7 @@ class PogoWindows:
         log.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
         
         # resize for better line quality
-        gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
+        #gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
         height, width = gray.shape
         faktor =  width / _widthold
         

@@ -162,6 +162,9 @@ def parseArgs():
     parser.add_argument('-gsd', '--gym_scan_distance', type=float, default=6.0,
                         help='Search for nearby Gmy within this radius (in KM!!). '
                         'In areas with many Gyms reduce this argument to 1-2 Default: 6')
+                        
+    parser.add_argument('-npmv', '--npmValue', type=float, default=0.8,
+                        help='Matching zoom start value for mon!. (Based on resolution)')
 
     parser.add_argument('-npv', '--npValue', type=float, default=0.5,
                         help='Matching zoom max value. (Based on resolution)')
