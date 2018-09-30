@@ -307,7 +307,7 @@ class PogoWindows:
             
         elif lineCount > 6:
             log.debug('lookForButton: found to much Buttons :) - close it' )
-            self.screenWrapper.backButton()
+            self.screenWrapper.click(int(width - ( width / 7.2)), int(height - ( height / 12.19)))
             time.sleep(4)
                 
             return True
