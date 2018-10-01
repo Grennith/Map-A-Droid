@@ -71,7 +71,6 @@ class Scanner:
         gray = rt.convert('L')
         bw = gray.point(lambda x: 0 if x<200 else 255, '1')
         raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','').replace('.',':').replace('U','0')
-        #log.debug(re.match(r'\d\d:\d\d[am|pm]*', raidtimer))
         #cleanup
         os.remove(emptyRaidTempPath)
         raidFound = len(raidtimer) > 0
@@ -422,6 +421,7 @@ class Scanner:
         #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
         raidtimer = self.detectRaidTime(img, hash, raidNo, radius)
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Got raidtime %s' % (str(raidtimer)))
+        raidend = self.detectRaidEndtimer(img, hash, raidNo, radius)
 
         #first item in tuple stands for raid present in crop or not
         if (not raidtimer[0]):

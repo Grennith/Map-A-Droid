@@ -295,7 +295,7 @@ class PogoWindows:
                     log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
                         x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
 
-        if lineCount >= 1 and lineCount <= 6:
+        if lineCount > 1 and lineCount <= 6:
             
             #recalculate click area for real resolution
             click_x = int(((width - _x2) + ((_x2 - _x1) /2)) / round(faktor,2)) 
