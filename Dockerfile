@@ -2,8 +2,8 @@
 # Usage:
 #   docker build -t mad .                 # Build the docker Image
 #   docker run -d mad startWalker.py -os  # Launch Walker 
-#   docker run -d mad startWalker.py -os  # Launch Screenshot Processing
-#   docker run -d mad madmin.py           # Launch MAdmin
+#   docker run -d mad startWalker.py -oo  # Launch Screenshot Processing
+#   docker run -d mad startWalker.py -wm  # Launch MAdmin
 
 FROM python:2.7-slim
 
