@@ -130,7 +130,7 @@ def parseArgs():
 
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
-                        help='Temp Folder for OCR Scanning. Defaul: temp')
+                        help='Temp Folder for OCR Scanning. Default: temp')
 
     parser.add_argument('-pgasset', '--pogoasset', required=True,
                         help=('Path to Pogo Asset.'
@@ -188,13 +188,13 @@ def parseArgs():
     parser.add_argument('-st', '--sleeptimer', action='store_true', default=False,
                         help='Active the Sleeptimer.')
     parser.add_argument('-si', '--sleepinterval', default=[], action='append',
-                        help='Intervalls for the sleeptimer. f.e. [[22:00, 5:00]]')
+                        help='Intervals for the sleeptimer. f.e. [[22:00, 5:00]]')
 
     # download coords
     parser.add_argument('-latlngleft', '--latlngleft', default=[], action='append',
-                        help='download gym cords from this param f.e. [47.1, 47.2]')
+                        help='download gym coords from this param f.e. [47.1, 47.2]')
     parser.add_argument('-latlngright', '--latlngright', default=[], action='append',
-                        help='download gym cords to this param  f.e. [9.1, 9.5]')
+                        help='download gym coords to this param  f.e. [9.1, 9.5]')
     parser.add_argument('-jj', '--justjson', action='store_true', default=False,
                         help='just generate the gym_info.json')
 
