@@ -8,6 +8,7 @@ import datetime
 import time
 import matching as mt
 import matching_mon as mt_mon
+import matching_gym as mt_gym
 import logging
 from walkerArgs import parseArgs
 from skimage.measure import compare_ssim as ssim
@@ -268,12 +269,13 @@ class Scanner:
             for closegym in closestGymIds:
 
                 for file in glob.glob("gym_img/_" + str(closegym[0]) + "_.jpg"):
-                    find_gym = mt.fort_image_matching(raidpic, file, True, float(args.gym_detection_value), raidNo, hash, checkX=True, radius=radius, x1=x1, x2=x2, y1=y1, y2=y2)
+                    #find_gym = mt.fort_image_matching(raidpic, file, True, float(args.gym_detection_value), raidNo, hash, checkX=True, radius=radius, x1=x1, x2=x2, y1=y1, y2=y2)
+                    find_gym= mt_gym.gym_matching(raidpic, file, raidNo, hash)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Compare Gym-ID - ' + str(closegym[0]) + ' - Match: ' + str(find_gym))
                     if foundgym is None or find_gym > foundgym[0]:
                         foundgym = find_gym, file
 
-                    if foundgym and foundgym[0]>=float(args.gym_detection_value):
+                    if foundgym and foundgym[0]>=5:
                         #okay, we very likely found our gym
                         gymSplit = foundgym[1].split('_')
                         gymId = gymSplit[2]
