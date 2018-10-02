@@ -16,6 +16,7 @@ hashing.json
 gym_info.json
 .DS_Store
 
+/docs/build/
 mon_img/_egg_*
 mon_img/_mon*
 *.csv
