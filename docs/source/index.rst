@@ -4,13 +4,22 @@
    contain the root `toctree` directive.
 
 ****************************************
-Welcome to Map 'A' Droid's documentation
+Welcome to Map 'A' Droid's Wiki
 ****************************************
+
+.. image:: images/banner.png
+    :align: center
+
+|discord| |nbsp| |repo| |nbsp| |issues| |nbsp| |prs|
+
+Map-A-Droid is an Android & Python based project that monitors the raid nearby within Pokemon Go and processes the images reporting the raids out to web-hooks and into a database ready for visual representation.
+
 
 .. toctree::
    :maxdepth: 2
    :caption: Introduction
 
+   intro/about
    intro/limitations
 
 
@@ -35,3 +44,16 @@ Welcome to Map 'A' Droid's documentation
 
    other/faq
    other/help
+
+
+
+.. |discord| image:: https://discordapp.com/api/guilds/465247740553592832/widget.png?style=shield
+    :target: https://discord.gg/MC3vAH9
+.. |repo| image:: https://img.shields.io/badge/github-MapADroid-green.svg
+    :target: https://github.com/Grennith/Map-A-Droid
+.. |issues| image:: https://img.shields.io/github/issues/Grennith/Map-A-Droid.svg
+    :target: https://github.com/Grennith/Map-A-Droid/issues
+.. |prs| image:: https://img.shields.io/github/issues-pr/Grennith/Map-A-Droid.svg
+    :target: https://github.com/Grennith/Map-A-Droid/pulls
+.. |nbsp| unicode:: 0xA0
+   :trim:

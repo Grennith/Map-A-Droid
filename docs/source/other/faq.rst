@@ -42,11 +42,11 @@ Cant login to PoGo - device incompatible etc?
 4. Ensure that all files from flashing the ROM and also folders with Magisk references are deleted
 5. Clear app cache before trying again.
 
-Using Raid information
+Using Raid Information
 --------------------------------------
 
 How do i get the raids on a map?
-````````````````````````````````````````````
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 We would recommend either the front end of Rocket Map - this has been forked to use OSM rather than Google Maps Api. If you prefer you can use PMSF we recommend WhiteWillem's fork
 
 `Forked Rocket Map <hhttps://github.com/cecpk/RocketMap>`_
