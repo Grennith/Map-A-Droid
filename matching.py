@@ -36,11 +36,11 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
             img_temp.save(tempFile)
             fort_img = cv2.imread(tempFile,3)
             os.remove(tempFile)
-        else:
-            if height_f > width_f:
-                fort_img = fort_img[int((height_f/2)-(height_f/2)):int((height_f/2)+(height_f/2)), int((width_f/2)-(width_f/2.5)):int((width_f/2)+(width_f/2.5))]
-            else:
-                fort_img = fort_img[int((height_f/2)-(height_f/2.5)):int((height_f/2)+(height_f/2.5)), int((width_f/2)-(width_f/2)):int((width_f/2)+(width_f/2))]
+        #else:
+            #if height_f > width_f:
+            #    fort_img = fort_img[int((height_f/2)-(height_f/2)):int((height_f/2)+(height_f/2)), int((width_f/2)-(width_f/2.5)):int((width_f/2)+(width_f/2.5))]
+           # else:
+           #     fort_img = fort_img[int((height_f/2)-(height_f/2.5)):int((height_f/2)+(height_f/2.5)), int((width_f/2)-(width_f/2)):int((width_f/2)+(width_f/2))]
                
         x1 = int(round(radius*2*0.03)+(radius*x1))
         x2 = int(round(radius*2*0.03)+(radius*x2))

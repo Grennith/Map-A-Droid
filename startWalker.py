@@ -95,7 +95,7 @@ redErrorCount = 0
 dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname,
                       args.timezone)
 
-if not args.only_ocr:
+if not args.only_ocr and not args.with_madmin:
     log.info("Starting Telnet MORE Client")
     telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password), args.tel_timeout_command,
                           args.tel_timeout_socket)
@@ -130,6 +130,12 @@ def main():
 
     MonRaidImages.runAll(args.pogoasset)
 
+    if args.with_madmin:
+        log.info('Starting Madmin on Port: %s' % str(args.madmin_port))
+        t_flask = Thread(name='madmin', target=start_madnin())
+        t_flask.daemon = False
+        t_flask.start()
+
     if not args.only_ocr:
         log.info('Processing Pokemon Matching....')
         t = Thread(target=main_thread, name='main')
@@ -152,8 +158,8 @@ def main():
         t_observ = Thread(name='cleanupraidscreen',
                           target=deleteOldScreens(args.raidscreen_path, args.successsave_path, args.cleanup_age))
         t_observ.daemon = True
-        t_observ.start()
-
+        t_observ.start()  
+            
     if args.sleeptimer:
         log.info('Starting Sleeptimer....')
         t_sleeptimer = Thread(name='sleeptimer',
@@ -170,6 +176,11 @@ def main():
     while True:
         time.sleep(10)
 
+def start_madnin():
+    import madmin
+    madmin.app.run(host='0.0.0.0', port=int(args.madmin_port), threaded=True, use_reloader=False)
+    sys.exit(0)
+        
 
 def level_5_auto_hatch():
     while sleep is not True and args.auto_hatch:
@@ -178,8 +189,7 @@ def level_5_auto_hatch():
         time.sleep(60)
         log.debug("Sleep Status: " + str(sleep))
         log.debug("Auto Hatch Enabled: " + str(args.auto_hatch))
-
-
+    
 def deleteOldScreens(folderscreen, foldersuccess, minutes):
     if minutes == "0":
         log.info('deleteOldScreens: Search/Delete Screenshots is disabled')
@@ -223,20 +233,21 @@ def sleeptimer():
     sleeptime = args.sleepinterval
     global sleep
     global telnMore
-    tmFrom = datetime.datetime.strptime(sleeptime[0], "%H:%M")
-    log.debug("sleeptimer: tmFrom: %s" % str(tmFrom))
-    tmTil = datetime.datetime.strptime(sleeptime[1], "%H:%M") + datetime.timedelta(hours=24)
-    log.debug("sleeptimer: tmTil: %s" % str(tmTil))
+    sts1 = sleeptime[0].split(':')
+    sts2 = sleeptime[1].split(':')
     while True:
-        # we assume sleep is always at night...
-        tmNow = datetime.datetime.strptime(datetime.datetime.now().strftime('%H:%M'), "%H:%M")
-        tmNowNextDay = tmNow + datetime.timedelta(hours=24)
+        tmFrom = datetime.datetime.now().replace(hour=int(sts1[0]),minute=int(sts1[1]),second=0,microsecond=0)
+        tmTil = datetime.datetime.now().replace(hour=int(sts2[0]),minute=int(sts2[1]),second=0,microsecond=0) 
+        tmNow = datetime.datetime.now()
+        if tmTil < tmFrom:
+            tmTil = tmTil + datetime.timedelta(hours=24)
+        else:
+            tmTil = tmTil
         log.debug("Time now: %s" % tmNow)
-        log.debug("Time Now Next Day: %s" % tmNowNextDay)
         log.debug("Time From: %s" % tmFrom)
         log.debug("Time Til: %s" % tmTil)
 
-        if tmNow >= tmFrom or tmNowNextDay < tmTil:
+        if tmNow >= tmFrom and tmNow < tmTil:
             log.info('Going to sleep - bye bye')
             # Stopping pogo...
             if telnMore:
@@ -247,20 +258,12 @@ def sleeptimer():
             while sleep:
                 log.info("Currently sleeping...zzz")
                 log.debug("Time now: %s" % tmNow)
-                log.debug("Time Now Next Day: %s" % tmNowNextDay)
                 log.debug("Time From: %s" % tmFrom)
                 log.debug("Time Til: %s" % tmTil)
-                tmNow = datetime.datetime.strptime(datetime.datetime.now().strftime('%H:%M'), "%H:%M")
-                tmNowNextDay = tmNow + datetime.timedelta(hours=24)
-                log.info('Still sleeping, current time... %s' % str(tmNow))
-                if tmNowNextDay >= tmTil and tmNow < tmFrom:
-                    log.debug("Time now: %s" % tmNow)
-                    log.debug("Time Now Next Day: %s" % tmNowNextDay)
-                    log.debug("Time From: %s" % tmFrom)
-                    log.debug("Time Til: %s" % tmTil)
-
+                tmNow = datetime.datetime.now()
+                log.info('Still sleeping, current time... %s' % str(tmNow.strftime("%H:%M")))
+                if tmNow >= tmTil:
                     log.warning('sleeptimer: Wakeup - here we go ...')
-                    # Turning screen on and starting app
                     if telnMore:
                         telnMore.turnScreenOn()
                         telnMore.startApp("sleeptimer: com.nianticlabs.pokemongo")
@@ -660,20 +663,30 @@ def main_thread():
                 log.info("main: Teleporting...")
                 telnGeo.setLocation(curLat, curLng, 0)
                 delayUsed = args.post_teleport_delay
+                # Test for cooldown / teleported distance
+                if args.cool_down_sleep:
+                    if distance > 2500:
+                        delayUsed = 30
+                    elif distance > 5000:
+                        delayUsed = 45
+                    elif distance > 10000:
+                        delayUsed = 60
+                    log.info("Need more sleep after Teleport: %s seconds!" % str(delayUsed))
 
                 if 0 < args.walk_after_teleport_distance < distance:
                     toWalk = getDistanceOfTwoPointsInMeters(float(curLat), float(curLng), float(curLat) + 0.0001, float(curLng) + 0.0001)
                     log.error("Walking a bit: %s" % str(toWalk))
                     time.sleep(0.3)
                     telnGeo.walkFromTo(curLat, curLng, curLat + 0.0001, curLng + 0.0001, 11)
-                    log.error("Walking back")
+                    log.debug("Walking back")
                     time.sleep(0.3)
                     telnGeo.walkFromTo(curLat + 0.0001, curLng + 0.0001, curLat, curLng, 11)
-                    log.error("Done walking")
+                    log.debug("Done walking")
             else:
                 log.info("main: Walking...")
                 telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
                 delayUsed = args.post_walk_delay
+            log.info("Sleeping %s" % str(delayUsed))
             time.sleep(delayUsed)
 
             # ok, we should be at the next gym, check for errors and stuff

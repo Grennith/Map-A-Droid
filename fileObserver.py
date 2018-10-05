@@ -2,7 +2,7 @@ import time
 from watchdog.observers import Observer
 from watchdog.events import PatternMatchingEventHandler
 from walkerArgs import parseArgs
-from  segscanner import Scanner
+from segscanner import Scanner
 from threading import Thread, Event
 import logging
 import collections
@@ -10,6 +10,7 @@ import cv2
 import multiprocessing
 import re
 import numpy as np
+import os
 
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
@@ -36,21 +37,24 @@ class checkScreenshot(PatternMatchingEventHandler):
         processes = []
         
         hash = str(time.time())
+        orgScreen = screenshot
         height, width, channel = screenshot.shape
         gray=cv2.cvtColor(screenshot,cv2.COLOR_BGR2GRAY)
+        gray=cv2.GaussianBlur(gray, (7, 7), 2)
 
-        minRadius = int(((width / 4.736)) / 2) - 1
-        maxRadius = int(((width / 4.736)) / 2) + 1
+        minRadius = int(((width / 4.736)) / 2) 
+        maxRadius = int(((width / 4.736)) / 2)
         log.debug('Searching for Raid Circles with Radius from %s to %s px' % (str(minRadius), str(maxRadius)))
         
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,1,height / 8,param1=100,param2=15,minRadius=minRadius,maxRadius=maxRadius)
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50,param2=30, minRadius=minRadius, maxRadius=maxRadius)
         
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
             for (x, y, r) in circles:
+                log.debug('Found Circle with x:%s, y:%s, r:%s' % (str(x), str(y), str(r)))
                 raidNo += 1
-                raidCropFilepath = args.temp_path + "/" + str(hash) + "_raidcrop" + str(raidNo) + ".jpg"
-                new_crop = screenshot[y-r-int((r*2*0.03)):y+r+int((r*2*0.75)), x-r-int((r*2*0.03)):x+r+int((r*2*0.3))]
+                raidCropFilepath = os.path.join(args.temp_path, str(hash) + "_raidcrop" + str(raidNo) +".jpg")
+                new_crop = orgScreen[y-r-int((r*2*0.03)):y+r+int((r*2*0.75)), x-r-int((r*2*0.03)):x+r+int((r*2*0.3))]
                 cv2.imwrite(raidCropFilepath, new_crop)
                 if args.ocr_multitask:
                     p = multiprocessing.Process(target=RaidScan.process, name='OCR-crop-analysis-' + str(raidNo), args=(raidCropFilepath, hash, raidNo, captureTime, captureLat, captureLng, src_path, r))
@@ -84,7 +88,7 @@ class checkScreenshot(PatternMatchingEventHandler):
         # print filename
         time.sleep(2)
         # groups: 1 -> timestamp, 2 -> latitude, 3 -> longitude, 4 -> raidcount
-        raidcount = re.search(r'raidscreen_(\d+.?\d*)_(-?\d+\.\d+)_(-?\d+\.\d+)_(\d+)\.png', event.src_path)
+        raidcount = re.search(r'raidscreen_(\d+.?\d*)_(-?\d+.\d+)_(-?\d+.\d+)_(\d+)(.jpg|.png)$', event.src_path)
         if raidcount is None:
             # we could not read the raidcount... stop
             log.warning("Could not read raidcount in %s" % event.src_path)

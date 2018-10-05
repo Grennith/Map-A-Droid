@@ -13,7 +13,7 @@ sys.setdefaultencoding('utf8')
 args = parseArgs()
 
 try:
-    connection = mysql.connector.connect(host=args.dbip, user=args.dbusername, passwd=args.dbpassword, db=args.dbname)
+    connection = mysql.connector.connect(host=args.dbip, port=args.dbport, user=args.dbusername, passwd=args.dbpassword, db=args.dbname)
 except Exception:
     print("Could not connect to the DB")
     exit(0)
@@ -105,7 +105,7 @@ def main():
         if len(line) < 5:
             continue
         # strict regex...
-        values = re.search(r'"(.*)"\s*,\s*(\d+\.\d+)\s*,\s*(\d+\.\d+)\s*,\s*"(.*)"\s*', line).groups()
+        values = re.search(r'"(.*)"\s*,\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*,\s*"(.*)"\s*', line).groups()
         updateEntry(values[0], float(values[1]), float(values[2]), values[3])
 
     connection.close()

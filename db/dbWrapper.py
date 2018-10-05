@@ -76,3 +76,6 @@ class DbWrapper:
 
     def downloadGymImages(self):
         return self.__dbWrapperUsed.downloadGymImages()
+        
+    def clearHashGyms(self, mons):
+        return self.__dbWrapperUsed.clearHashGyms(mons)

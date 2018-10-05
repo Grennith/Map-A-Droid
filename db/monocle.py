@@ -159,12 +159,17 @@ class MonocleWrapper:
         # print(query)
         # data = (datetime.datetime.now())
         cursor.execute(query)
-
+        from geofenceHelper import GeofenceHelper
+        geofenceHelper = GeofenceHelper()
         data = []
         log.debug("Result of raidQ query: %s" % str(query))
         for (time_battle, lat, lon) in cursor:
             if lat is None or lon is None:
                 log.warning("lat or lng is none")
+                continue
+            elif not geofenceHelper.is_coord_inside_include_geofence([lat, lon]):
+                log.debug("Excluded hatch at %s, %s since the coordinate is not inside the given include fences"
+                          % (str(lat), str(lon)))
                 continue
             # timestamp = self.dbTimeStringToUnixTimestamp(str(start))
             data.append((time_battle + delayAfterHatch * 60, RaidLocation(lat, lon)))
@@ -257,7 +262,7 @@ class MonocleWrapper:
 
     def insertHash(self, imghash, type, id, raidNo):
         if type == 'raid':
-            distance = 3
+            distance = 4
         else:
             distance = 4
         doubleCheck = self.checkForHash(imghash, type, raidNo, distance)
@@ -801,4 +806,38 @@ class MonocleWrapper:
         with io.open('gym_info.json', 'w', encoding='UTF-8') as outfile:
             outfile.write(unicode(json.dumps(gyminfo, indent=4, sort_keys=True)))
         print 'Finished...'
+        return True
+    
+    def clearHashGyms(self, mons):
+        data = []
+        try:
+            connection = mysql.connector.connect(host=self.host,
+                                                 user=self.user, port=self.port, passwd=self.password,
+                                                 db=self.database)
+        except:
+            log.error("Could not connect to the SQL database")
+            return []
+        cursor = connection.cursor()
+        
+        monSplit = mons.split('|')
+        for mon in monSplit:
+            query = ('SELECT hashid from trshash where id like \'%"mon":"' + str(mon) + '"%\' and type=\'raid\'')
+            cursor.execute(query)
+            for dbid in cursor:
+                data.append(int(dbid[0]))
+                
+        _monList = myList = ','.join(map(str, data))
+        log.debug('clearHashGyms: Read Raid Hashes with known Mons')
+        
+        if len(data) > 0:
+        
+            query = ('DELETE FROM trshash ' +
+                 ' where hashid not in (' + _monList + ')' +
+                 ' and type=\'raid\'')
+            cursor.execute(query)
+            connection.commit()
+            
+        log.debug('clearHashGyms: Deleted Raidhashes with unknown mons')
+        cursor.close()
+        connection.close()
         return True

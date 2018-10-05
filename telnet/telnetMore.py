@@ -2,6 +2,7 @@ from telnetClient import *
 import struct
 import sys
 import socket
+import select
 import time
 import logging
 
@@ -16,6 +17,8 @@ class TelnetMore:
         self.__commandTimeout = commandTimeout
         self.__ip = ip
         self.__port = port
+        self.__socketTimeout = socketTimeout
+        self.__commandTimeout = commandTimeout
 
     def __runAndOk(self, command, timeout):
         result = self.telnetClient.sendCommand(command, timeout)
@@ -55,10 +58,16 @@ class TelnetMore:
     def __read(self, s):
         """Read data and return the read bytes."""
         try:
-            data, sender = s.recvfrom(4096)
+            ready = select.select([s], [], [], self.__commandTimeout)
+        except select.error as err:
+            log.error("__read: Timeout retrieving message: %s" % str(err))
+            self.__close_socket(s)
+            return b''
+        try:
+            data = s.recv(4096)
             return data
         except (socket.timeout, AttributeError, OSError):
-            log.warning("Socket, Attribute or OSError")
+            log.warning("Sockettimeout, Attribute or OSError")
             self.__close_socket(s)
             return b''
         except: #attribute, conn reset etc etc
@@ -70,6 +79,7 @@ class TelnetMore:
         try:
             s.connect((self.__ip, self.__port + 1))
             s.setblocking(1)
+            s.settimeout(self.__socketTimeout)
             return True
         except:
             log.warning("telnetMore::getScreenshot: Failed connecting to socket...")

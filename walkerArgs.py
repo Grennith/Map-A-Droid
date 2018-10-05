@@ -83,7 +83,7 @@ def parseArgs():
                         help='Full path to the .csv containing the gym coordinates.')
 
     # Walk Settings
-    parser.add_argument('-s', '--speed', required=False, type=int, default=50,
+    parser.add_argument('-s', '--speed', required=False, type=int, default=0,
                         help='The speed to walk from gym to gym in kmph. speed=0 means teleportation. Default: 50')
     parser.add_argument('-m', '--max_distance', required=False, type=int,
                         help=(
@@ -115,6 +115,8 @@ def parseArgs():
                         help=(
                             'The walk a couple meters after a teleport covering a greater distance than this value. '
                             'Supposedly helps with loading'))
+    parser.add_argument('-cds', '--cool_down_sleep', action='store_true', default=False,
+                        help='Sleep for cooldown after teleport.')
 
     # Runtypes
     parser.add_argument('-os', '--only_scan', action='store_true', default=False,
@@ -123,10 +125,12 @@ def parseArgs():
                         help='Use this instance only for OCR.')
     parser.add_argument('-om', '--ocr_multitask', action='store_true', default=False,
                         help='Running OCR in sub-processes (module multiprocessing) to speed up analysis of raids.')
+    parser.add_argument('-wm', '--with_madmin', action='store_true', default=False,
+                        help='Start madmin as instance.')
 
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
-                        help='Temp Folder for OCR Scanning. Defaul: temp')
+                        help='Temp Folder for OCR Scanning. Default: temp')
 
     parser.add_argument('-pgasset', '--pogoasset', required=True,
                         help=('Path to Pogo Asset.'
@@ -160,6 +164,11 @@ def parseArgs():
     parser.add_argument('-gsd', '--gym_scan_distance', type=float, default=6.0,
                         help='Search for nearby Gmy within this radius (in KM!!). '
                         'In areas with many Gyms reduce this argument to 1-2 Default: 6')
+                        
+    parser.add_argument('-npmf', '--npmFrom', type=float, default=0.8,
+                        help='Matching zoom start value for mon! (Based on resolution)')
+    parser.add_argument('-npmv', '--npmValue', type=float, default=2.0,
+                        help='Matching zoom max value for mon! (Based on resolution)')
 
     parser.add_argument('-npv', '--npValue', type=float, default=0.5,
                         help='Matching zoom max value. (Based on resolution)')
@@ -179,13 +188,13 @@ def parseArgs():
     parser.add_argument('-st', '--sleeptimer', action='store_true', default=False,
                         help='Active the Sleeptimer.')
     parser.add_argument('-si', '--sleepinterval', default=[], action='append',
-                        help='Intervalls for the sleeptimer. f.e. [[22:00, 5:00]]')
+                        help='Intervals for the sleeptimer. f.e. [[22:00, 5:00]]')
 
     # download coords
     parser.add_argument('-latlngleft', '--latlngleft', default=[], action='append',
-                        help='download gym cords from this param f.e. [47.1, 47.2]')
+                        help='download gym coords from this param f.e. [47.1, 47.2]')
     parser.add_argument('-latlngright', '--latlngright', default=[], action='append',
-                        help='download gym cords to this param  f.e. [9.1, 9.5]')
+                        help='download gym coords to this param  f.e. [9.1, 9.5]')
     parser.add_argument('-jj', '--justjson', action='store_true', default=False,
                         help='just generate the gym_info.json')
 

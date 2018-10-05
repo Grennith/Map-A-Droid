@@ -252,7 +252,7 @@ class PogoWindows:
         log.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
         
         # resize for better line quality
-        gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
+        #gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
         height, width = gray.shape
         faktor =  width / _widthold
         
@@ -295,7 +295,7 @@ class PogoWindows:
                     log.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
                         x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
 
-        if lineCount >= 1 and lineCount < 5:
+        if lineCount > 1 and lineCount <= 6:
             
             #recalculate click area for real resolution
             click_x = int(((width - _x2) + ((_x2 - _x1) /2)) / round(faktor,2)) 
@@ -305,9 +305,9 @@ class PogoWindows:
             time.sleep(4)
             return True
             
-        elif lineCount >= 5:
+        elif lineCount > 6:
             log.debug('lookForButton: found to much Buttons :) - close it' )
-            self.screenWrapper.backButton()
+            self.screenWrapper.click(int(width - ( width / 7.2)), int(height - ( height / 12.19)))
             time.sleep(4)
                 
             return True

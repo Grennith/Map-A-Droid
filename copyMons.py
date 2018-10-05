@@ -94,9 +94,9 @@ class MonRaidImages(object):
                     
                     
 
-        _monList = myList = ','.join(map(str, monList))
+        _monList = myList = '|'.join(map(str, monList))
         dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname, args.timezone)
-        dbWrapper.deleteHashTable(_monList, 'mon')
+        dbWrapper.clearHashGyms(_monList)
         
     @staticmethod
     def copyWeather(pogoasset):
