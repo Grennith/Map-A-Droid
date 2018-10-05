@@ -12,7 +12,7 @@ Welcome to Map 'A' Droid's Wiki
 
 |discord| |nbsp| |repo| |nbsp| |issues| |nbsp| |prs|
 
-Map-A-Droid is an Android based project that monitors the raid nearby within Pokemon Go and processes the images reporting the raids our to webhook and into datebases
+Map-A-Droid is an Android & Python based project that monitors the raid nearby within Pokemon Go and processes the images reporting the raids out to web-hooks and into a database ready for visual representation.
 
 
 .. toctree::

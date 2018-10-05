@@ -19,7 +19,7 @@ Get Gym Images
 --------------
 2) We need gym images and there are two solutions:
 - If you have a RocketMap/Monocle database with old gym-details, run `downloadfortimg.py`
-- Or, grab the images from [Ingress Intel Map](https://www.ingress.com/intel)
+- Or, grab the images from `Ingress Intel Map <https://www.ingress.com/intel>`_
 
 (The images should be located in `gym_img` folder)
 
@@ -28,7 +28,7 @@ Get Gym Coords
 --------------
 3) We also need gym locations and there are two solutions:
 - If you have a RocketMap/Monocle database with old gym-details, run `downloadDBCords.py`
-- Or, grab the locations from [Ingress Intel Map](https://www.ingress.com/intel)
+- Or, grab the locations from `Ingress Intel Map <https://www.ingress.com/intel>`_
 
 (The coords should be located in `coords.csv` if you followed the last step in 1.)
 
@@ -51,6 +51,6 @@ To start the GPS walking around
 To start the processing of the screenshot that have been taken
 `python startWalker.py -oo`
 
-Best practice is to run both commands in seperate [screen](https://www.gnu.org/software/screen/) sessions.
+Best practice is to run both commands in seperate `screen <https://www.gnu.org/software/screen/>`_ sessions.
 
 >Note if running via ssh you may face issues around "no screen available" to get around the prefix your commands with `MPLBACKEND=Agg`

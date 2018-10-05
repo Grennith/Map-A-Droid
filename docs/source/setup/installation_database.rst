@@ -7,7 +7,7 @@ Prerequisites
 -------------
 You will need a MySQL server installed:
 
-* (Tutorial from RocketMap) [Installing MySQL](https://rocketmap.readthedocs.io/en/develop/basic-install/mysql.html)
+* (Tutorial from RocketMap) `Installing MySQL <https://rocketmap.readthedocs.io/en/develop/basic-install/mysql.html>`_
 
 You will also need to create the `trshash` table using the following query
 
