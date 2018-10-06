@@ -8,6 +8,7 @@ import logging
 
 log = logging.getLogger()
 
+
 class TelnetMore:
     def __init__(self, ip, port, password, commandTimeout, socketTimeout):
         # Throws ValueError if unable to connect!
@@ -70,7 +71,7 @@ class TelnetMore:
             log.warning("Sockettimeout, Attribute or OSError")
             self.__close_socket(s)
             return b''
-        except: #attribute, conn reset etc etc
+        except:  # attribute, conn reset etc etc
             log.warning("Other error trying to receive data")
             self.__close_socket(s)
             return b''
@@ -87,19 +88,21 @@ class TelnetMore:
 
     def getScreenshot(self, path):
         encoded = self.telnetClient.sendCommand("screen capture\r\n", self.__commandTimeout)
+        log.debug("getScreenshot: Response: %s" % str(encoded))
         if encoded is None:
             return False
-        elif len(encoded) < 500 and "KO: " in encoded:
-            log.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
+        elif len(encoded) < 100 and "KO: " in encoded:
+            log.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled! %s" % str(encoded))
             return False
-        elif not "OK:" in encoded:
-            log.error("getScreenshot: response not OK")
+        elif "OK:" not in encoded:
+            log.error("getScreenshot: response not OK. %s" % str(encoded))
             return False
-        elif not "size:" in encoded:
+        elif "size:" not in encoded:
             log.error("getScreenshot: won't be able to read a size, aborting")
             return False
         # extract the length of the image from encoded
         # first split by ',', then by ':'
+        log.debug("getScreenshot: Trying to read image length")
         keyVals = encoded.split(',')
         size = 0
         for key in keyVals:
@@ -110,6 +113,7 @@ class TelnetMore:
             log.error("getScreenshot: invalid size")
             return False
 
+        log.debug("getScreenshot: setting up socket")
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         attempts = 0
         while not self.__connectImageSocket(s):
@@ -119,9 +123,12 @@ class TelnetMore:
                 log.error("Could not connect to the image socket in 100 attempts")
                 self.__close_socket(s)
                 return False
-            
+
+        log.debug("getScreenshot: Starting to reseize image of size %s" % str(size))
         sizeToReceive = size
+        log.debug("getScreenshot: Receive the first few bits...: %s")
         image = self.__read(s)
+        log.debug("getScreenshot: Start receiving the rest")
         while sizeToReceive >= sys.getsizeof(image):
             received = self.__read(s)
             if received == b'':
@@ -129,6 +136,7 @@ class TelnetMore:
                 return False
             image = image + received
 
+        log.debug("getScreenshot: Done, we got the whole image")
         self.__close_socket(s)
         fh = open(path, "wb")
         fh.write(image)
