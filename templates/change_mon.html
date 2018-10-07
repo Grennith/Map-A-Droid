@@ -39,10 +39,10 @@
 		   success: function(result)
 		   {
 		   console.log(result);
-		   var output="<table><thead><tr><th>Name</th><th>ID</th><th>Pic</th><th>Match</th></thead><tbody>";
+		   var output="<table><thead><tr><th>Name</th><th>ID</th><th>Level</th><th>Pic</th><th>Match</th></thead><tbody>";
 		   for (var i in result)
 		   {
-		   output+="<tr><td>" + result[i].name + "</td><td>" + result[i].mon + "</td><td><img src='" + result[i].filename + "' width=100></td><td><a href='modify_raid_mon?hash={{ hash }}&mon=" + result[i].mon + "&gym={{ gym }}&lvl={{ lvl }}'>Match this </a> </td></tr>";
+		   output+="<tr><td>" + result[i].name + "</td><td>" + result[i].mon + "</td><td>" + result[i].lvl + "</td><td><img src='" + result[i].filename + "' width=100></td><td><a href='modify_raid_mon?hash={{ hash }}&mon=" + result[i].mon + "&gym={{ gym }}&lvl={{ lvl }}'>Match this </a> </td></tr>";
 		   }
 		   output+="</tbody></table>";
 

@@ -588,6 +588,13 @@ class RmWrapper:
         # query = (' SELECT start, latitude, longitude FROM raid LEFT JOIN gym ' +
         #    'ON raid.gym_id = gym.gym_id WHERE raid.start >= \'%s\''
         #    % str(datetime.datetime.now() - datetime.timedelta(hours = self.timezone)))
+        
+        if dist == 99:
+            distance = str(9999)
+            lat = args.home_lat
+            lng = args.home_lng
+        else:
+            distance = str(args.gym_scan_distance)
 
         query = ('SELECT ' +
                  ' gym_id, ( ' +

@@ -112,12 +112,9 @@ class Scanner:
         gray = rt.convert('L')
         bw = gray.point(lambda x: 0 if x<200 else 255, '1')
 
-
         raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('"','').replace('-','').replace('.',':').replace('B','8').replace('A','4').replace('—','').replace('_','').replace("'","").replace('U','0')
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Raid-End-Text: ' + str(raidtimer))
         
-        
-
         os.remove(emptyRaidTempPath)
         raidEndFound = len(raidtimer) > 0
 
@@ -269,7 +266,12 @@ class Scanner:
                 
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: No Gym-Hash: found - searching')
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Searching closest gyms')
-            closestGymIds = self.dbWrapper.getNearGyms(captureLat, captureLng, hash, raidNo, str(args.gym_scan_distance))
+            if captureLat == '9999':
+                distance = 99
+            else:
+                distance = str(args.gym_scan_distance)
+                
+            closestGymIds = self.dbWrapper.getNearGyms(captureLat, captureLng, hash, raidNo, distance)
 
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detecting Gym')
             for closegym in closestGymIds:
