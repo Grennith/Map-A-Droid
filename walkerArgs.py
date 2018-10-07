@@ -146,6 +146,13 @@ def parseArgs():
                         help='Folder for unknows Gyms or Mons. Default: unknown')
 
     # div. settings
+    
+    parser.add_argument('-hlat', '--home_lat', default='0.0', type=float,
+                        help=('Set Lat from the center of your scan location.'
+                              'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))      
+    parser.add_argument('-hlng', '--home_lng', default='0.0', type=float,
+                        help=('Set Lng from the center of your scan location.'
+                              'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
 
     parser.add_argument('-clnupa', '--cleanup_age', default='1440',
                         help='Delete Screenshots older than X minutes. Default: 1440')

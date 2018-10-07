@@ -132,9 +132,16 @@ def near_gym():
         data = json.load(f)
     lat = request.args.get('lat')
     lon = request.args.get('lon')
+    if lat == "9999":
+        distance = int(9999)
+        lat = args.home_lat
+        lon = args.home_lng
+    else:
+        distance = int(args.gym_scan_distance)+5
+    
     if not lat or not lon:
         return 'Missing Argument...'
-    closestGymIds = dbWrapper.getNearGyms(lat, lon, 123, 1, args.gym_scan_distance+5)
+    closestGymIds = dbWrapper.getNearGyms(lat, lon, 123, 1, int(distance))
     for closegym in closestGymIds:
 
         gymid = str(closegym[0])
@@ -318,26 +325,37 @@ def get_raids():
 @app.route("/get_mons")
 def get_mons():
     mons = []
-
-
+    monList =[]
+    
     with open('pokemon.json') as f:
         mondata = json.load(f)
+    
+    with open('raidmons.json') as f:
+        raidmon = json.load(f)
+    
+    for mons in raidmon:
+        for mon in mons['DexID']:
+            lvl = mons['Level']
+            if str(mon).find("_") > -1:
+                mon_split = str(mon).split("_")
+                mon = mon_split[0]
+                frmadd = mon_split[1] 
+            else:
+                frmadd = "00"
 
-    for file in glob.glob(os.path.join(args.pogoasset, str('pokemon_icons/pokemon_icon_*_00.png'))):
-        unkfile = re.search('pokemon_icon_(-?\d+)', file)
-        mon = (unkfile.group(1))
-        monPic = '/asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
-        monName = 'unknown'
-        monid = int(mon)
-
-        if str(monid) in mondata:
-            monName = mondata[str(monid)]["name"]
-
-        monJson = ({'filename': monPic, 'mon': monid, 'name': monName })
-        mons.append(monJson)
-
-
-    return jsonify(mons)
+            mon = '{:03d}'.format(int(mon))
+            
+            monPic = '/asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
+            monName = 'unknown'
+            monid = int(mon)
+            
+            if str(monid) in mondata:
+                monName = mondata[str(monid)]["name"]
+            
+            monJson = ({'filename': monPic, 'mon': monid, 'name': monName, 'lvl': lvl })
+            monList.append(monJson)
+            
+    return jsonify(monList)
 
 @app.route("/get_screens")
 def get_screens():
@@ -359,7 +377,7 @@ def get_screens():
 def get_unknows():
     unk = []
     for file in glob.glob("www_hash/unkgym_*.jpg"):
-        unkfile = re.search('unkgym_(-?\d+\.\d+)_(-?\d+\.\d+)_((?s).*)\.jpg', file)
+        unkfile = re.search('unkgym_(-?\d+\.?\d+)_(-?\d+\.?\d+)_((?s).*)\.jpg', file)
         creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
         lat = (unkfile.group(1))
         lon = (unkfile.group(2))

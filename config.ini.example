@@ -87,6 +87,8 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #weather                     # Detect weather from captured Image and post to database - if your frontend support this!
 #route_file:                 # Filename for Route Cache without extension (Default: route)
 #position_file:              # Filename for the bot's current position (Default: current)
+#home_lat:                   # Center Lat of your scan location (Default: 0.0)
+#home_lng:                   # Center Lng of your scan location (Default: 0.0)
 
 # MADmin
 ######################

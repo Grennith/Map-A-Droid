@@ -43,7 +43,14 @@
 		   var output="<table><thead><tr><th>Hash</th><th>Hashpic</th><th>Lat</th><th>Lon</th><th>Creation Date</th></thead><tbody>";
 		   for (var i in result)
 		   {
-		   output+="<tr><td>" + result[i].hashvalue + "<br><br><a href='/match_unknows?hash=" + result[i].hashvalue + "&lat=" + result[i].lat +"&lon=" + result[i].lon + "'>Match Gym</a><br><a href='/delete_file?hash=" + result[i].hashvalue + "&type=gym&redirect=unknown'>Delete</a></td><td><img class='lazy' data-original='../" + result[i].filename + "' width=100></td><td>" + result[i].lat + "</td><td>" + result[i].lon + "</td><td>" + result[i].creation + "</td></tr>";
+			   if (result[i].lat === "9999") {
+				   vlat = 'MADBot'
+				   vlon = 'MADBot'
+			   } else {
+			   	   vlat = result[i].lat
+				   vlon = result[i].lon
+			   }
+		   output+="<tr><td>" + result[i].hashvalue + "<br><br><a href='/match_unknows?hash=" + result[i].hashvalue + "&lat=" + result[i].lat+"&lon=" + result[i].lon + "'>Match Gym</a><br><a href='/delete_file?hash=" + result[i].hashvalue + "&type=gym&redirect=unknown'>Delete</a></td><td><img class='lazy' data-original='../" + result[i].filename + "' width=100></td><td>" + vlat  + "</td><td>" + vlon + "</td><td>" + result[i].creation + "</td></tr>";
 		   }
 		   output+="</tbody></table>";
 
