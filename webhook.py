@@ -35,6 +35,25 @@ raid_webhook_payload = """[{{
    }} ]"""
 
 
+egg_webhook_payload = """[{{
+      "message": {{
+        "latitude": {lat},
+        "longitude": {lon},
+        "level": {lvl},
+        "team": {team},
+        "raid_begin": {hatch_time},      
+        "raid_end": {end},
+        "gym_id": "{ext_id}",
+        "name": "{name_id}",
+        "gym_url": "{url}",
+        "sponsor": "{sponsor}",
+        "weather": "{weather}",
+        "park": "{park}"
+      }},
+      "type": "{type}"
+   }} ]"""
+
+
 def get_raid_boss_cp(mon_id):
     if int(mon_id) > 0:
         with open('pokemon.json') as j:
@@ -125,27 +144,45 @@ def send_raid_webhook(gymid, type, start, end, lvl, mon=0):
             log.debug('data_sponsor: ' + str(sponsor))
 
     if args.webhook:
-        payload_raw = raid_webhook_payload.format(
-            ext_id=gym_id,
-            lat=lat,
-            lon=lon,
-            name_id=name,
-            sponsor=sponsor,
-            poke_id=poke_id,
-            lvl=lvl,
-            end=end,
-            hatch_time=hatch_time,
-            move_1=move_1,
-            move_2=move_2,
-            cp=cp,
-            form=form,
-            team=team,
-            type=type_,
-            url=url,
-            description=description,
-            park=park,
-            weather=weather
-        )
+        if poke_id == 0 or poke_id is None:
+            payload_raw = egg_webhook_payload.format(
+                ext_id=gym_id,
+                lat=lat,
+                lon=lon,
+                name_id=name,
+                sponsor=sponsor,
+                lvl=lvl,
+                end=end,
+                hatch_time=hatch_time,
+                team=team,
+                type=type_,
+                url=url,
+                description=description,
+                park=park,
+                weather=weather
+            )
+        else:
+            payload_raw = raid_webhook_payload.format(
+                ext_id=gym_id,
+                lat=lat,
+                lon=lon,
+                name_id=name,
+                sponsor=sponsor,
+                poke_id=poke_id,
+                lvl=lvl,
+                end=end,
+                hatch_time=hatch_time,
+                move_1=move_1,
+                move_2=move_2,
+                cp=cp,
+                form=form,
+                team=team,
+                type=type_,
+                url=url,
+                description=description,
+                park=park,
+                weather=weather
+            )
 
         log.debug(payload_raw)
 

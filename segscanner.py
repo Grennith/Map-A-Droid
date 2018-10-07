@@ -18,6 +18,7 @@ import json
 import hashlib
 import re
 from shutil import copyfile
+import imagehash
 
 import sys
 reload(sys)
@@ -70,8 +71,7 @@ class Scanner:
         rt = Image.open(emptyRaidTempPath)
         gray = rt.convert('L')
         bw = gray.point(lambda x: 0 if x<200 else 255, '1')
-        raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','').replace('.',':')
-        #log.debug(re.match(r'\d\d:\d\d[am|pm]*', raidtimer))
+        raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('-','').replace('.',':').replace('U','0')
         #cleanup
         os.remove(emptyRaidTempPath)
         raidFound = len(raidtimer) > 0
@@ -104,8 +104,8 @@ class Scanner:
         unixnow =  time.mktime(zero.timetuple())
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Reading Raidtimer')
         height, width, channel = raidpic.shape
-        raidtimer = raidpic[int(round(radius*2*0.03)+(2*radius)+(radius*2*0.08)):int(round(radius*2*0.03)+(2*radius)+(radius*2*0.23)), 0:width]
-        raidtimer = cv2.resize(raidtimer, (0,0), fx=2, fy=2, interpolation=cv2.INTER_CUBIC)
+        raidtimer = raidpic[int(round(radius*2*0.03)+(2*radius)+(radius*2*0.10)):int(round(radius*2*0.03)+(2*radius)+(radius*2*0.23)), 0:width]
+        raidtimer = cv2.resize(raidtimer, (0,0), fx=3, fy=3, interpolation=cv2.INTER_CUBIC)
         emptyRaidTempPath = os.path.join(self.tempPath, str(raidNo) + str(hash) + '_endraid.png')
         cv2.imwrite(emptyRaidTempPath, raidtimer)
         rt = Image.open(emptyRaidTempPath)
@@ -113,13 +113,19 @@ class Scanner:
         bw = gray.point(lambda x: 0 if x<200 else 255, '1')
 
 
-        raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('"','').replace('-','').replace('.',':').replace('B','8').replace('A','4').replace('—','').replace('_','').replace("'","")
+        raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('"','').replace('-','').replace('.',':').replace('B','8').replace('A','4').replace('—','').replace('_','').replace("'","").replace('U','0')
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Raid-End-Text: ' + str(raidtimer))
+        
+        
 
         os.remove(emptyRaidTempPath)
         raidEndFound = len(raidtimer) > 0
 
         if raidEndFound:
+            if raidtimer.count(':') < 2 :
+                if len(raidtimer) == 7:
+                    raidtimer = '0:' + str(raidtimer[2:4]) + ':' + str(raidtimer[5:7])
+                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Try to repair Endtime: %s' % str(raidtimer))
             if ':' in raidtimer:
                 now = datetime.datetime.now()
                 log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: found raidendtimer %s' % raidtimer)
@@ -380,11 +386,12 @@ class Scanner:
 
     def cropImage(self, image, raidNo, radius):
         gray=cv2.cvtColor(image,cv2.COLOR_BGR2GRAY)
+        gray=cv2.GaussianBlur(gray, (7, 7), 2)
         output = image.copy()
         height, width, channel = output.shape
         output = output[0:height*2/3,0:width]
         image_cols, image_rows, _ = image.shape
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,2,image_cols,param1=100,param2=15,minRadius=radius,maxRadius=radius)
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50,param2=30, minRadius=radius, maxRadius=radius)
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
             for (x, y, r) in circles:
@@ -417,11 +424,11 @@ class Scanner:
         
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Generating Raidhash')
         genRaidHash = self.getImageHash(raidhashPic, False, raidNo, 'raid')
-        
 
         #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
         raidtimer = self.detectRaidTime(img, hash, raidNo, radius)
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Got raidtime %s' % (str(raidtimer)))
+        
 
         #first item in tuple stands for raid present in crop or not
         if (not raidtimer[0]):
@@ -446,46 +453,51 @@ class Scanner:
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Creating Hash overall')
         raidHash = self.imageHashExists(raidhashPic, False, 'raid', raidNo)
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: detectRaidHash: ' + str(raidHash))
+        
+        raidlevel = self.detectLevel(img, hash, raidNo, radius) #we need the raid level to make the possible set of mons smaller
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Determined raidlevel to be %s' % (str(raidlevel)))
 
         if raidHash:
             raidHash_ = self.decodeHashJson(raidHash, raidNo)
             gym = raidHash_[0]
             lvl = raidHash_[1]
             mon = raidHash_[2]
+            
+            if lvl == raidlevel and raidlevel is not None:
 
-            if not mon:
-                lvl = self.detectLevel(img, hash, raidNo, radius) #redetect level
-                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Determined raidlevel to be %s' % (str(lvl)))
-
-                if lvl is None:
-                    log.error('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine raidlevel. Filename of Crop: %s' %  (filenameOfCrop))
-                    os.remove(filenameOfCrop)
-                    os.remove(raidhashPic)
-                    return True
+                if not mon:
+                    lvl = self.detectLevel(img, hash, raidNo, radius) #redetect level
+                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Determined raidlevel to be %s' % (str(lvl)))
+ 
+                    if lvl is None:
+                        log.error('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine raidlevel. Filename of Crop: %s' %  (filenameOfCrop))
+                        os.remove(filenameOfCrop)
+                        os.remove(raidhashPic)
+                        return True
                 
-                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found Raidhash with an egg - fast submit')
-                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found egg level %s starting at %s and ending at %s. GymID: %s' % (lvl, raidstart, raidend, gym))
-                self.dbWrapper.submitRaid(str(gym), None, lvl, raidstart, raidend, 'EGG', raidNo, captureTime)
-            else:
-                    
-                raidend = self.detectRaidEndtimer(img, hash, raidNo, radius)
-                if raidend[1]:
-                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found Raidhash with an mon and endtime - fast submit')
-                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(mon), str(gym)))
-                    self.dbWrapper.submitRaid(str(gym), mon, lvl, None, raidend[2], 'MON', raidNo, captureTime, True)
+                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found Raidhash with an egg - fast submit')
+                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found egg level %s starting at %s and ending at %s. GymID: %s' % (lvl, raidstart, raidend, gym))
+                    self.dbWrapper.submitRaid(str(gym), None, lvl, raidstart, raidend, 'EGG', raidNo, captureTime)
                 else:
-                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found Raidhash with an mon - fast submit')
-                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(mon), str(gym)))
-                    self.dbWrapper.submitRaid(str(gym), mon, lvl, None, None, 'MON', raidNo, captureTime)
                     
-            self.imageHash(raidhashPic, raidHash, False, 'raid', raidNo)
-            os.remove(filenameOfCrop)
-            os.remove(raidhashPic)
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Finished')
-            return True
-
-        raidlevel = self.detectLevel(img, hash, raidNo, radius) #we need the raid level to make the possible set of mons smaller
-        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Determined raidlevel to be %s' % (str(raidlevel)))
+                    raidend = self.detectRaidEndtimer(img, hash, raidNo, radius)
+                    if raidend[1]:
+                        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found Raidhash with an mon and endtime - fast submit')
+                        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(mon), str(gym)))
+                        self.dbWrapper.submitRaid(str(gym), mon, lvl, None, raidend[2], 'MON', raidNo, captureTime, True)
+                    else:
+                        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found Raidhash with an mon - fast submit')
+                        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(mon), str(gym)))
+                        self.dbWrapper.submitRaid(str(gym), mon, lvl, None, None, 'MON', raidNo, captureTime)
+                    
+                self.imageHash(raidhashPic, raidHash, False, 'raid', raidNo)
+                os.remove(filenameOfCrop)
+                os.remove(raidhashPic)
+                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Finished')
+                return True
+            else:
+                log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: detected Level not Hash Level')
+            
 
         if raidlevel is None:
             log.error('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine raidlevel. Filename of Crop: %s' %  (filenameOfCrop))
@@ -573,6 +585,10 @@ class Scanner:
 
     def dhash(self, image, raidNo, hash_size = 8):
                 # Grayscale and shrink the image in one step.
+                
+        h = str(imagehash.dhash(image))
+        return h
+        
         image = image.convert('L').resize(
             (hash_size + 1, hash_size),
             Image.ANTIALIAS,
@@ -620,7 +636,7 @@ class Scanner:
         os.remove(tempHash)
         
         if type == 'raid':
-            distance = 2
+            distance = 4
         else:
             distance = 4
 
@@ -651,7 +667,7 @@ class Scanner:
         os.remove(tempHash)
         
         if type == 'raid':
-            distance = 2
+            distance = 4
         else:
             distance = 4
         
@@ -686,7 +702,7 @@ class Scanner:
         os.remove(tempHash)
         
         if type == 'raid':
-            distance = 2
+            distance = 4
         else:
             distance = 4
         

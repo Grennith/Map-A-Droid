@@ -5,7 +5,7 @@ import logging
 import time
 from flask import (Flask, abort, jsonify, render_template,
                    request, make_response,
-                   send_from_directory, send_file, redirect)
+                   send_from_directory, send_file, redirect, current_app)
 from walkerArgs import parseArgs
 from db.dbWrapper import DbWrapper
 import sys
@@ -30,6 +30,9 @@ dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbu
                       args.timezone)
 
 
+#@app.before_first_request
+#def init():
+#    task = my_task.apply_async()
 def run_job():
     try:
         while True:
@@ -41,7 +44,7 @@ def run_job():
     t_webApp = threading.Thread(name='Web App', target=run_job)
     t_webApp.setDaemon(True)
     t_webApp.start()
-
+        
 @app.after_request
 def after_request(response):
   response.headers.add('Access-Control-Allow-Origin', '*')
@@ -230,6 +233,7 @@ def get_gyms():
 
         else:
             print "File: " + str(file) + " not found in Database"
+            os.remove(str(file))
             continue
 
     return jsonify(gyms)
@@ -306,6 +310,7 @@ def get_raids():
             raids.append(raidJson)
         else:
             print "File: " + str(file) + " not found in Database"
+            os.remove(str(file))
             continue
 
     return jsonify(raids)
@@ -505,7 +510,7 @@ def creation_date(path_to_file):
             # so we'll settle for when its content was last modified.
             return stat.st_mtime
 
-
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=int(args.madmin_port), threaded=True)
+    app.run()
+    #host='0.0.0.0', port=int(args.madmin_port), threaded=False)
 

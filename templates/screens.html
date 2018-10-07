@@ -21,6 +21,7 @@
 <script src="https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
 <script src="https://cdn.datatables.net/responsive/2.2.3/js/responsive.bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
 
 <script>
 
@@ -51,13 +52,16 @@
 		   var output="<table><thead><tr><th>Image</th><th>Filename</th><th>Creation Date</th></thead><tbody>";
 		   for (var i in result)
 		   {
-		   output+="<tr><td><img src='" + result[i].filename + "' width=400></td><td>" + result[i].filename + "</td><td>" + result[i].creation + "</td></tr>";
+		   output+="<tr><td><img class='lazy' data-original='" + result[i].filename + "' width=400></td><td>" + result[i].filename + "</td><td>" + result[i].creation + "</td></tr>";
 		   }
 		   output+="</tbody></table>";
 
 		   displayResources.html(output);
 		   $("table").addClass("table");
 		   $('table').DataTable( {
+                   drawCallback: function(){
+                     $("img.lazy").lazyload();
+                   },
 		           "order": [[ 2, "desc" ]],
 			       responsive: {{ responsive }},
 			       "autoWidth": true,
