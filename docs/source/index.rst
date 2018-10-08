@@ -33,7 +33,15 @@ Map-A-Droid is an Android & Python based project that monitors the raid nearby w
 
 .. toctree::
    :maxdepth: 2
-   :caption: Running
+   :caption: Components
+
+   running/components/walker
+   running/components/ocr
+   running/components/madmin
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Configuration
 
    running/config
    running/updating

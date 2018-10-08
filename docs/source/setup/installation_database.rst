@@ -9,7 +9,7 @@ You will need a MySQL server installed:
 
 * (Tutorial from RocketMap) `Installing MySQL <https://rocketmap.readthedocs.io/en/develop/basic-install/mysql.html>`_
 
-You will also need to create the `trshash` table using the following query
+A new table, called ``trshash`` will be created at the first run. You can create it manually using the following query:
 
 .. code-block:: sql
 
