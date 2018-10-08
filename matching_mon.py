@@ -58,7 +58,7 @@ def mon_image_matching(url_img_name, fort_img_name, raidNo, hash):
         if endY < height_f/2 or endX < width_f/2 or endY > height_f/2+height_f/2*0.4 or endY < height_f/2+height_f/2*0.3:
             maxVal = 0.0
         
-        log.info('[Crop: ' + str(raidNo) + ' (' + str(hash) +') ] ' + 'Filename: ' + str(url_img_name) + ' Matchvalue: ' + str(maxVal) + ' Scale: ' + str(scale))
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(hash) +') ] ' + 'Filename: ' + str(url_img_name) + ' Matchvalue: ' + str(maxVal) + ' Scale: ' + str(scale))
 
 
         if found is None or maxVal > found[0]:

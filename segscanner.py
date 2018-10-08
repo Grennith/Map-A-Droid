@@ -72,6 +72,7 @@ class Scanner:
         gray = rt.convert('L')
         bw = gray.point(lambda x: 0 if x<200 else 255, '1')
         raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('"','').replace('-','').replace('.',':').replace('B','8').replace('A','4').replace('—','').replace('_','').replace("'","").replace('U','0').replace('/','7')
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: detect raidtimer text: %s' % raidtimer)
         #cleanup
         os.remove(emptyRaidTempPath)
         raidFound = len(raidtimer) > 0
@@ -82,7 +83,7 @@ class Scanner:
 
                 if hatchTime:
                     log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Hatchtime %s' % str(hatchTime))
-                    if hatchTime > unixnow + (60 * 60 * 2) or hatchTime < unixnow:
+                    if hatchTime > unixnow + (int(args.raid_time) * 60) or hatchTime < unixnow:
                         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Hatchtime not logical')
                         return (raidFound, False, False, False)
                     #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
@@ -92,11 +93,14 @@ class Scanner:
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Start: ' + str(raidstart) + ' End: ' + str(raidend))
                     return (raidFound, True, raidstart, raidend)
                 else:
+                    log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Could not read Raidtime')
                     return (raidFound, True, False, False)
 
             else:
+                log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: No correct format for Raidtime found')
                 return (raidFound, False, '0', '0')
         else:
+            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: No RaidTime found')
             return (raidFound, False, False, False)
 
     def detectRaidEndtimer(self, raidpic, hash, raidNo, radius):
@@ -113,7 +117,7 @@ class Scanner:
         bw = gray.point(lambda x: 0 if x<200 else 255, '1')
 
         raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('"','').replace('-','').replace('.',':').replace('B','8').replace('A','4').replace('—','').replace('_','').replace("'","").replace('U','0').replace('/','7')
-        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Raid-End-Text: ' + str(raidtimer))
+        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: detect raidendtimer text: ' + str(raidtimer))
         
         os.remove(emptyRaidTempPath)
         raidEndFound = len(raidtimer) > 0
@@ -122,7 +126,7 @@ class Scanner:
             if raidtimer.count(':') < 2 :
                 if len(raidtimer) == 7:
                     raidtimer = '0:' + str(raidtimer[2:4]) + ':' + str(raidtimer[5:7])
-                    log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Try to repair Endtime: %s' % str(raidtimer))
+                    log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Try to repair Endtime: %s' % str(raidtimer))
             if ':' in raidtimer:
                 now = datetime.datetime.now()
                 log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: found raidendtimer %s' % raidtimer)
@@ -135,20 +139,23 @@ class Scanner:
                     #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
                     raidend = endTime  #- (self.timezone * 60 * 60)
                     #raidend = getHatchTime(self, raidtimer) + int(45*60) - (self.timezone*60*60)
+                    log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: End: %s' % str(raidend))
                     return (raidEndFound, True, raidend)
                 else:
+                    log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Could not read ReadEndTime')
                     return (raidEndFound, False, False)
 
             else:
-                log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: no raidendtimer detected')
+                log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: No correct format for Raidendtime found')
                 return (raidEndFound, False, '0')
         else:
+            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: No RaidEndTime found')
             return (raidEndFound, False, False)
 
     def detectRaidBoss(self, raidpic, lvl, hash, raidNo):
         foundmon = None
         monID = None
-        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'Extracting Raidboss')
+        log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'Extracting Raidboss')
         picName = os.path.join(self.tempPath, str(hash) + '_raidboss' + str(raidNo) +'.jpg')
         #self.genCannyMonPic(raidpic, picName)
         cv2.imwrite(picName,raidpic)
@@ -190,7 +197,7 @@ class Scanner:
         foundlvl = None
         lvl = None
         
-        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'Scanning Level')
+        log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'Scanning Level')
         height, width, channel = raidpic.shape
         raidlevel = raidpic[int(round(radius*2*0.03)+(2*radius)+(radius*2*0.43)):int(round(radius*2*0.03)+(2*radius)+(radius*2*0.68)), 0:width]
         raidlevel = cv2.resize(raidlevel, (0,0), fx=0.5, fy=0.5) 
@@ -204,7 +211,7 @@ class Scanner:
         
         if lvl >=1 and lvl <=5:
             
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectLevel: found level %s' % str(lvl))
+            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectLevel: found level %s' % str(lvl))
             return lvl
             
         log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectLevel: could not find level')
@@ -232,7 +239,7 @@ class Scanner:
 
         foundMonCrops = False
 
-        log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Scanning Gym')
+        log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Scanning Gym')
 
 
         #if gymHash is none, we haven't seen the gym yet, otherwise, gymHash == gymId we are looking for
@@ -289,11 +296,11 @@ class Scanner:
 
         else:
             self.imageHash(raidpic, gymHash, True, 'gym', raidNo, x1, x2, y1, y2, radius)
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detected Gym-ID: ' + str(gymHash))
+            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detected Gym-ID: ' + str(gymHash))
             return gymHash
 
         if gymId:
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detected Gym - Gym-ID: '+ str(gymId))
+            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detected Gym - Gym-ID: '+ str(gymId))
             gymHash = self.imageHash(raidpic, gymId, True, 'gym', raidNo, x1=x1, x2=x2, y1=y1, y2=y2, radius=radius)
             self.unknownfound(raidpic, 'gym', False, raidNo, hash, False, gymHashvalue, '0', '0')
             return gymId

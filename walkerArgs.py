@@ -234,6 +234,9 @@ def parseArgs():
 
     parser.add_argument('-pfile', '--position_file', default='current',
                         help='Filename for bot\'s current position (Default: current)')
+                        
+    parser.add_argument('-ugd', '--unknown_gym_distance', default='10',
+                        help='Show matchable gyms for unknwon with this radius (in km!) (Default: 10)')
 
     # Geofences
     parser.add_argument('-gf', '--geofence-file',

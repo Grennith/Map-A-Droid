@@ -137,7 +137,7 @@ def near_gym():
         lat = args.home_lat
         lon = args.home_lng
     else:
-        distance = int(args.gym_scan_distance)+5
+        distance = int(args.unknown_gym_distance)
     
     if not lat or not lon:
         return 'Missing Argument...'
