@@ -41,7 +41,6 @@ Running
 1. Mobile - Start Remote GPS Controller.
 * Select Start within the app to start GPS
 * Select MediaProjection to allow touch commands
-</br>
 
 2. PC - Make sure you're in the directory of Map-A-Droid and run the following 2 commands
 
