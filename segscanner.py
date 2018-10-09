@@ -71,7 +71,7 @@ class Scanner:
         rt = Image.open(emptyRaidTempPath)
         gray = rt.convert('L')
         bw = gray.point(lambda x: 0 if x<200 else 255, '1')
-        raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('"','').replace('-','').replace('.',':').replace('B','8').replace('A','4').replace('—','').replace('_','').replace("'","").replace('U','0').replace('/','7')
+        raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~','').replace('o','0').replace('O','0').replace('"','').replace('-','').replace('.',':').replace('B','8').replace('—','').replace('_','').replace("'","").replace('U','0').replace('/','7')
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: detect raidtimer text: %s' % raidtimer)
         #cleanup
         os.remove(emptyRaidTempPath)
