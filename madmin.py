@@ -450,7 +450,7 @@ def pushHashes(path):
 
 @app.route('/screenshots/<path:path>', methods=['GET'])
 def pushScreens(path):
-    return send_from_directory('screenshots', path)
+    return send_from_directory(args.raidscreen_path, path)
 
 @app.route('/match_unknows', methods=['GET'])
 def match_unknows():
