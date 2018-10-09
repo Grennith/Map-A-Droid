@@ -98,7 +98,7 @@ class MonocleWrapper:
             return False
 
         query = "SELECT count(*) FROM information_schema.columns " \
-                "WHERE table_name = 'raids' AND column_name = 'last_updated'"
+                "WHERE table_name = 'raids' AND column_name = 'last_updated' AND table_schema = '{0}'".format(self.database)
         cursor = connection.cursor()
         cursor.execute(query)
         result = int(cursor.fetchall()[0][0])
