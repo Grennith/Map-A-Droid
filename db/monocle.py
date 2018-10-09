@@ -68,10 +68,11 @@ class MonocleWrapper:
                 connection.commit()
                 if affected_rows == 1:
                     counter = counter + 1
-
-                    log.debug('Sending auto hatched raid for raid id {0}'.format(row[0]))
-                    send_raid_webhook(row[1], 'MON', row[2], row[3], 5, mon_id)
-
+                    if args.webhook:
+                        log.debug('Sending auto hatched raid for raid id {0}'.format(row[0]))
+                        send_raid_webhook(row[1], 'MON', row[2], row[3], 5, mon_id)
+                    else:
+                        log.debug('Sending Webhook is disabled')
                 elif affected_rows > 1:
                     log.error(
                         'Something is wrong with the indexing on your table you raids on this id {0}'.format(row['id']))
