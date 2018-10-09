@@ -128,11 +128,11 @@ def send_raid_webhook(gymid, type, start, end, lvl, mon=0):
         name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
         log.debug('data_name: ' + str(name))
         lat = data[str(gymid)]["latitude"]
-        log.debug('data_lat: ' + str(end))
+        log.debug('data_lat: ' + str(lat))
         lon = data[str(gymid)]["longitude"]
-        log.debug('data_lat: ' + str(end))
+        log.debug('data_lat: ' + str(lon))
         url = data[str(gymid)]["url"]
-        log.debug('data_url: ' + str(end))
+        log.debug('data_url: ' + str(url))
         if data[str(gymid)]["description"]:
             description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
             log.debug('data_description: ' + str(description))

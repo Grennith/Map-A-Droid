@@ -29,8 +29,8 @@ class RmWrapper:
 
     def auto_hatch_eggs(self):
         
-        dt = datetime.datetime.now()
-        now_timezone = dt.strftime("%s") 
+        now = (datetime.datetime.now())
+        now_timezone = int(time.mktime(now.timetuple()))  - (self.timezone * 60 * 60) 
        
         
         try:
@@ -49,8 +49,8 @@ class RmWrapper:
 
         cursor = connection.cursor()
 
-        log.debug("Time used to find eggs ")
-        timecheck = int(now_timezone) - int(self.timezone * 60 * 60)
+        log.debug("Time used to find eggs: " + str(now))
+        timecheck = now_timezone
 
         query_for_count = "SELECT gym_id, UNIX_TIMESTAMP(start), UNIX_TIMESTAMP(end) from raid " \
                           "WHERE start <= FROM_UNIXTIME({0}) " \
