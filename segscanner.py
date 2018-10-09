@@ -83,9 +83,9 @@ class Scanner:
 
                 if hatchTime:
                     log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Hatchtime %s' % str(hatchTime))
-                    if hatchTime > unixnow + (int(args.raid_time) * 60) or hatchTime < unixnow:
-                        log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Hatchtime not logical')
-                        return (raidFound, False, False, False)
+                    #if hatchTime > unixnow + (int(args.raid_time) * 60) or hatchTime < unixnow:
+                        #log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidTime: Hatchtime not logical')
+                        #return (raidFound, False, False, False)
                     #raidstart = getHatchTime(self, raidtimer) - self.timezone * (self.timezone*60*60)
                     raidstart = hatchTime #- (self.timezone * 60 * 60)
                     raidend = hatchTime + (int(args.raid_time) * 60) #- (self.timezone * 60 * 60)
