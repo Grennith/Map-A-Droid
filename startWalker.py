@@ -92,6 +92,11 @@ lastScreenHashCount = 0
 
 redErrorCount = 0
 
+if not os.path.exists(args.temp_Path):
+    log.info('Temp directory created')
+    os.makedirs(self.tempPath)
+
+
 dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname,
                       args.timezone)
 
