@@ -92,7 +92,7 @@ lastScreenHashCount = 0
 
 redErrorCount = 0
 
-if not os.path.exists(args.temp_Path):
+if not os.path.exists(args.temp_path):
     log.info('Temp directory created')
     os.makedirs(self.tempPath)
 

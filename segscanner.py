@@ -123,10 +123,6 @@ class Scanner:
         raidEndFound = len(raidtimer) > 0
 
         if raidEndFound:
-            if raidtimer.count(':') < 2 :
-                if len(raidtimer) == 7:
-                    raidtimer = '0:' + str(raidtimer[2:4]) + ':' + str(raidtimer[5:7])
-                    log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Try to repair Endtime: %s' % str(raidtimer))
             if ':' in raidtimer:
                 now = datetime.datetime.now()
                 log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: found raidendtimer %s' % raidtimer)
