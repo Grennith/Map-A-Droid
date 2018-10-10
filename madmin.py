@@ -361,7 +361,7 @@ def get_mons():
 def get_screens():
     screens = []
 
-    for file in glob.glob("screenshots/raidscreen_*.png"):
+    for file in glob.glob(str(args.raidscreen_path) + " /raidscreen_*.png"):
         creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
 
         if args.madmin_time == "12":
