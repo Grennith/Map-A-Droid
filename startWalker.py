@@ -94,7 +94,7 @@ redErrorCount = 0
 
 if not os.path.exists(args.temp_path):
     log.info('Temp directory created')
-    os.makedirs(self.tempPath)
+    os.makedirs(args.temp_path)
 
 
 dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname,
