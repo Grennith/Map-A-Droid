@@ -20,6 +20,7 @@ CMD ["./startWalker.py"]
 # Install required system packages
 RUN apt-get update && apt-get install -y --no-install-recommends libgeos-dev build-essential
 RUN apt-get update && apt-get -y install libglib2.0-0
+RUN apt-get update && apt-get -y install tesseract-ocr libtesseract-dev
 RUN apt-get -y install tk
 RUN apt-get update
 
