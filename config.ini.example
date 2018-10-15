@@ -53,8 +53,9 @@
 #post_teleport_delay:        # Delay in seconds after a teleport. Default: 4.0. Do mind the ".0". 500ms = 0.5s ;)
 #post_walk_delay:            # Delay in seconds after reaching destination with the speed given. Default: 2.0
 #post_screenshot_delay:      # Delay in seconds after a screenshot has been taken and about to be saved. Default: 0.2
-#restart_pogo:               # Restart pogo every N location-changes. Default: 80. 0 for never
-#post_turn_screen_on_delay:       # Delay in seconds after sending the turn screen on command. Default: 7.0
+#restart_pogo:               # Restart Pogo every N location-changes. Default: 80. 0 for never
+#initial_restart:            # Initial Pogo restart when scanner starts. Default: true
+#post_turn_screen_on_delay:  # Delay in seconds after sending the turn screen on command. Default: 7.0
 #post_pogo_start_delay:      # Delay in seconds to wait after starting pogo. Default: 60.0
 #delay_after_hatch:          # Delay to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. Default: 3.5 Minutes
 
@@ -69,7 +70,7 @@
 # path settings
 ######################
 
-pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
+#pogoasset:                  # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
 #temp_path:                  # Path for generated files while detecting raids (default: temp/)
 #raidscreen_path:            # Path for taken screenshots (default: screenshots/)
 #unknown_path:               # Path for not automaticly detected gyms or mons (default: unknown/)
@@ -89,7 +90,6 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #position_file:              # Filename for the bot's current position (Default: current)
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
-#no_initial_restart          # Disable automatic PoGo restart when walker initially starts. NOT recommended.
 
 # MADmin
 ######################
@@ -102,7 +102,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 # timezone settings
 ######################
 
-timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Germany) - Needed for Rocketmap Database
+#timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Germany) - Needed for Rocketmap Database
 
 #sleeptimer settings
 ######################
