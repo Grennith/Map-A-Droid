@@ -89,6 +89,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #position_file:              # Filename for the bot's current position (Default: current)
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
+#no_initial_restart          # Disable automatic PoGo restart when walker initially starts. NOT recommended.
 
 # MADmin
 ######################
