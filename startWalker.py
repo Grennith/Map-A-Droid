@@ -152,6 +152,10 @@ def main():
             log.fatal("Missing raids.last_updated column and couldn't create it")
             sys.exit(1)
 
+        if not os.path.isfile('gym_info.json'):
+            log.fatal("Missing gym_info.json. Ensure you have run -> downloadGymImages.py")
+            sys.exit(1)
+
         dbWrapper.createHashDatabaseIfNotExists()
 
         log.info('Starting OCR Thread....')
