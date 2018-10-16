@@ -28,6 +28,11 @@ class RmWrapper:
         self.uniqueHash = uniqueHash
 
     def auto_hatch_eggs(self):
+        
+        now = (datetime.datetime.now())
+        now_timezone = int(time.mktime(now.timetuple()))  - (self.timezone * 60 * 60) 
+       
+        
         try:
             connection = mysql.connector.connect(host=self.host,
                                                  user=self.user, port=self.port, passwd=self.password,
@@ -43,15 +48,16 @@ class RmWrapper:
                      'so it will mark them as zero so they will remain unhatched...')
 
         cursor = connection.cursor()
-        db_time_to_check = datetime.datetime.now() - datetime.timedelta(hours=self.timezone)
-        log.debug("Time used to find eggs " + str(db_time_to_check))
 
-        query_for_count = "SELECT gym_id, start, end from raid " \
+        log.debug("Time used to find eggs: " + str(now))
+        timecheck = now_timezone
+
+        query_for_count = "SELECT gym_id, UNIX_TIMESTAMP(start), UNIX_TIMESTAMP(end) from raid " \
                           "WHERE start <= FROM_UNIXTIME({0}) " \
                           "AND end >= FROM_UNIXTIME({0}) " \
                           "AND level = 5 " \
                           "AND IFNULL(pokemon_id,0) = 0" \
-            .format(self.dbTimeStringToUnixTimestamp(str(db_time_to_check)))
+            .format(timecheck)
 
 
         log.debug(query_for_count)
@@ -71,13 +77,11 @@ class RmWrapper:
                 connection.commit()
                 if affected_rows == 1:
                     counter = counter + 1
-                    log.debug('Sending auto hatched raid for raid id {0}'.format(row[0]))
-                    send_raid_webhook(row[0],
-                                 'MON',
-                                      self.dbTimeStringToUnixTimestamp(row[1]),
-                                      self.dbTimeStringToUnixTimestamp(row[2]),
-                                      5,
-                                      mon_id)
+                    if args.webhook:
+                        log.debug('Sending auto hatched raid for raid id {0}'.format(row[0]))
+                        send_raid_webhook(row[0], 'MON',row[1],row[2], 5,mon_id)
+                    else:
+                        log.debug('Sending Webhook is disabled')
                 elif affected_rows > 1:
                     log.error('Something is wrong with the indexing on your table you raids on this id {0}'
                               .format(row[0]))
@@ -102,7 +106,7 @@ class RmWrapper:
         except ValueError:
             dt = datetime.datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S')
         unixtime = (dt - datetime.datetime(1970, 1, 1)).total_seconds()
-        return unixtime
+        return unixtime 
 
     def getNextRaidHatches(self, delayAfterHatch):
         try:

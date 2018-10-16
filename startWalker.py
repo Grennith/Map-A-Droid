@@ -92,6 +92,11 @@ lastScreenHashCount = 0
 
 redErrorCount = 0
 
+if not os.path.exists(args.temp_path):
+    log.info('Temp directory created')
+    os.makedirs(args.temp_path)
+
+
 dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname,
                       args.timezone)
 
@@ -147,18 +152,30 @@ def main():
             log.fatal("Missing raids.last_updated column and couldn't create it")
             sys.exit(1)
 
+        if not os.path.isfile('gym_info.json'):
+            log.fatal("Missing gym_info.json. Ensure you have run -> downloadGymImages.py")
+            sys.exit(1)
+
         dbWrapper.createHashDatabaseIfNotExists()
 
         log.info('Starting OCR Thread....')
         t_observ = Thread(name='observer', target=observer(args.raidscreen_path, args.screen_width, args.screen_height))
         t_observ.daemon = True
         t_observ.start()
+        
+        if args.auto_hatch:
+            log.info('Starting Auto Hatch....')
+            t_auto_hatch = Thread(name='level_5_auto_hatch', target=level_5_auto_hatch)
+            t_auto_hatch.daemon = True
+            t_auto_hatch.start()
 
         log.info('Starting Cleanup Thread....')
-        t_observ = Thread(name='cleanupraidscreen',
+        t_cleanup = Thread(name='cleanupraidscreen',
                           target=deleteOldScreens(args.raidscreen_path, args.successsave_path, args.cleanup_age))
-        t_observ.daemon = True
-        t_observ.start()  
+        t_cleanup.join()
+        t_cleanup.daemon = True
+        t_cleanup.start()  
+        
             
     if args.sleeptimer:
         log.info('Starting Sleeptimer....')
@@ -166,12 +183,6 @@ def main():
                               target=sleeptimer)
         t_sleeptimer.daemon = True
         t_sleeptimer.start()
-
-    if args.auto_hatch:
-        log.info('Starting Auto Hatch....')
-        t_auto_hatch = Thread(name='level_5_auto_hatch', target=level_5_auto_hatch)
-        t_auto_hatch.daemon = True
-        t_auto_hatch.start()
 
     while True:
         time.sleep(10)
@@ -572,7 +583,7 @@ def main_thread():
     log.info("main: Checking if screen is on and pogo is running")
 
     if not sleep:
-        if args.no_initial_restart is False:
+        if args.initial_restart is False:
             turnScreenOnAndStartPogo()
         else:
             startPogo()

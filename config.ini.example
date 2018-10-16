@@ -8,13 +8,13 @@
 # Screen Capture Mode
 ######################
 
-#screen_method               # Screen method to be used. 0 = RGC only, 1 = VNC only (default: 1)
+#screen_method               # Screen method to be used. 0 = RGC only, 1 = VNC only (Default: 0)
 
 # VNC Settings
 ######################
 
 #vnc_ip:                     # IP address or hostname of the VNC server (needed for scanning mode)
-#vncscreen:                  # Number of screen (default: None)
+#vncscreen:                  # Number of screen (Default: None)
 #vnc_port:                   # Port of the VNC server  (needed for scanning mode)
 #vnc_password:               # VNC password  (needed for scanning mode)
 
@@ -28,7 +28,7 @@
 #dbusername:                 # Username of database (needed for ocr mode)
 #dbpassword:                 # Password of database (needed for ocr mode)
 #dbname:                     # Name of the database (needed for ocr mode)
-#dbport:                     # Port of the database (default: 3306)
+#dbport:                     # Port of the database (Default: 3306)
 
 # Telnet Settings
 ######################
@@ -45,18 +45,19 @@
 # Walk Settings
 ######################
 
-#speed:                      # running speed (defaul: 50 km/h)
+#speed:                      # running speed in km/h (Default: 50)
 #max_distance:               # Max. walking distance - otherwise teleport
 
-#gym_distance:               # Distance to sum up gyms within this range (meters). Default: 490.0
-#max_count_gym_sum_up_around_gym:               # maximum amount of gyms around a given gym to be summed up. Default: 5
-#post_teleport_delay:        # Delay in seconds after a teleport. Default: 4.0. Do mind the ".0". 500ms = 0.5s ;)
-#post_walk_delay:            # Delay in seconds after reaching destination with the speed given. Default: 2.0
-#post_screenshot_delay:      # Delay in seconds after a screenshot has been taken and about to be saved. Default: 0.2
-#restart_pogo:               # Restart pogo every N location-changes. Default: 80. 0 for never
-#post_turn_screen_on_delay:       # Delay in seconds after sending the turn screen on command. Default: 7.0
-#post_pogo_start_delay:      # Delay in seconds to wait after starting pogo. Default: 60.0
-#delay_after_hatch:          # Delay to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. Default: 3.5 Minutes
+#gym_distance:               # Distance to sum up gyms within this range (meters). (Default: 490.0)
+#max_count_gym_sum_up_around_gym:               # maximum amount of gyms around a given gym to be summed up. (Default: 5)
+#post_teleport_delay:        # Delay in seconds after a teleport. (Default: 4.0. Do mind the ".0". 500ms = 0.5s)
+#post_walk_delay:            # Delay in seconds after reaching destination with the speed given. (Default: 2.0)
+#post_screenshot_delay:      # Delay in seconds after a screenshot has been taken and about to be saved.( Default: 0.2)
+#restart_pogo:               # Restart Pogo every N location-changes. (Default: 80. 0 for never)
+#initial_restart:            # Initial Pogo restart when scanner starts. (Default: true)
+#post_turn_screen_on_delay:  # Delay in seconds after sending the turn screen on command. (Default: 7.0)
+#post_pogo_start_delay:      # Delay in seconds to wait after starting pogo. (Default: 60.0)
+#delay_after_hatch:          # Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)
 
 # Runtype settings
 ######################
@@ -65,25 +66,24 @@
 #only_ocr                    # running this instance in ocr mode without Scanning
 #ocr_multitask               # running OCR as multiprocessing task
 
-
 # path settings
 ######################
 
 pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
-#temp_path:                  # Path for generated files while detecting raids (default: temp/)
-#raidscreen_path:            # Path for taken screenshots (default: screenshots/)
-#unknown_path:               # Path for not automaticly detected gyms or mons (default: unknown/)
-#successsave_path:           # Path for successful submitted crops (default: success/)
+#temp_path:                  # Path for generated files while detecting raids (Default: temp/)
+#raidscreen_path:            # Path for taken screenshots (Default: screenshots/)
+#unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
+#successsave_path:           # Path for successful submitted crops (Default: success/)
 
 # other settings
 ######################
 
-#cleanup_age:                # Delete Screenshots older than X minutes. Default: 1440 - 0 to disable
+#cleanup_age:                # Delete Screenshots older than X minutes (Default: 1440. 0 to disable)
 #save_success                # Save successful submitted crops to successsave_path
 #last_scanned                # Submit last scanned locations to RM database (if your fork support this!)
-#npValue:                    # Matching Zoom - Max Value (default: 0.5 (for width = 720px )- or: 1.5 (for width = 1080px ))
-#npFrom:                     # Matching Zoom - Start Value (default: 0.2 (for width = 720px )- or: 0.5 (for width = 1080px ))
-#gym_scan_distance:          # Distance of scanned Gyms (Default: 6km(!!)) - reduce if you scan an area with many gyms at one place
+#npValue:                    # Matching Zoom - Max Value (Default: 0.5 [for width = 720px]. 1.5 for width = 1080px)
+#npFrom:                     # Matching Zoom - Start Value (Default: 0.2 [for width = 720px]. 0.5 for width = 1080px)
+#gym_scan_distance:          # Distance of scanned Gyms (Default: 6) - reduce if you scan an area with many gyms at one place
 #weather                     # Detect weather from captured Image and post to database - if your frontend support this!
 #route_file:                 # Filename for Route Cache without extension (Default: route)
 #position_file:              # Filename for the bot's current position (Default: current)
@@ -96,23 +96,24 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #madmin_port:                # MADmin web port (Default: 5000)
 #madmin_time:                # MADmin clock format (12/24) (Default: 24)
 #madmin_noresponsive         # MADmin deactivate responsive tables
+#unknown_gym_distance:       # MADmin show matchable gyms with this radius (Default: 10)
 
 # timezone settings
 ######################
 
-timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Germany) - Needed for Rocketmap Database
+#timezone:                   # Time difference from UTC (f.e "+2" for Berlin/Germany) - Needed for Rocketmap Database
 
 #sleeptimer settings
 ######################
 
 #sleeptimer                  # Sleep time for the phone
-#sleepinterval:              # f.e. [21:00, 05:00] to disable pk and device from 21 to 5 o'clock ( 9PM to 5 AM )
+#sleepinterval:              # f.e. [21:00, 05:00] to disable pk and device from 21 to 5 o'clock (9 pm to 5 am)
 
 # params for downloadDBCords.py (generate coordfile from param file)
 ######################
 
-#geofence-file:                 # Geofence file to define outer borders of the scan area.
-#geofence-excluded-file:        # File to define forbidden areas inside scan area. Regarded this as inverted geofence. Can be combined with geofence-file.
+#geofence-file:              # Geofence file to define outer borders of the scan area.
+#geofence-excluded-file:     # File to define forbidden areas inside scan area. Regarded this as inverted geofence. Can be combined with geofence-file.
 #latlngleft:                 # download gym cords from this param f.e. [47.1, 47.2]
 #latlngright:                # download gym cords to this param  f.e. [9.1, 9.5]
 
@@ -125,5 +126,5 @@ timezone:                    # Time difference from UTC+-0 (f.e +2 for Berlin/Ge
 
 # Auto Hatch
 ######################
-# auto_hatch                 # Active auto hatch of level 5 eggs
-# auto_hatch_number          # Auto hatch of level 5 Pokemon ID
+#auto_hatch                  # Active auto hatch of level 5 eggs
+#auto_hatch_number           # Auto hatch of level 5 Pokemon ID

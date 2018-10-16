@@ -137,7 +137,7 @@ def near_gym():
         lat = args.home_lat
         lon = args.home_lng
     else:
-        distance = int(args.gym_scan_distance)+5
+        distance = int(args.unknown_gym_distance)
     
     if not lat or not lon:
         return 'Missing Argument...'
@@ -361,7 +361,7 @@ def get_mons():
 def get_screens():
     screens = []
 
-    for file in glob.glob("screenshots/raidscreen_*.png"):
+    for file in glob.glob(str(args.raidscreen_path) + "/raidscreen_*.png"):
         creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
 
         if args.madmin_time == "12":
@@ -450,7 +450,7 @@ def pushHashes(path):
 
 @app.route('/screenshots/<path:path>', methods=['GET'])
 def pushScreens(path):
-    return send_from_directory('screenshots', path)
+    return send_from_directory(args.raidscreen_path, path)
 
 @app.route('/match_unknows', methods=['GET'])
 def match_unknows():

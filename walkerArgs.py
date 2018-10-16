@@ -33,7 +33,7 @@ def parseArgs():
     parser.add_argument('-cf', '--config',
                         is_config_file=True, help='Set configuration file')
 
-    parser.add_argument('-sm', '--screen_method', required=False, default=1, type=int,
+    parser.add_argument('-sm', '--screen_method', required=False, default=0, type=int,
                         help='Screen method to be used. 0 = RGC only, 1 = VNC only')
 
     # VNC
@@ -103,6 +103,8 @@ def parseArgs():
                             'round. Default: 0.2'))
     parser.add_argument('-rp', '--restart_pogo', required=False, type=int, default=80,
                         help='The amount of location-changes/scan-locations inbetween pogo restarts. Default: 80')
+    parser.add_argument('--initial_restart', default=True,
+                        help='Option to enable/disable the initial Pogo restart when scanner starts')
     parser.add_argument('-ptsod', '--post_turn_screen_on_delay', required=False, type=float, default=7.0,
                         help='The delay in seconds to wait after sending the turn screen on command. Default: 7.0')
     parser.add_argument('-ppsd', '--post_pogo_start_delay', required=False, type=float, default=60.0,
@@ -234,6 +236,9 @@ def parseArgs():
 
     parser.add_argument('-pfile', '--position_file', default='current',
                         help='Filename for bot\'s current position (Default: current)')
+                        
+    parser.add_argument('-ugd', '--unknown_gym_distance', default='10',
+                        help='Show matchable gyms for unknwon with this radius (in km!) (Default: 10)')
 
     # Geofences
     parser.add_argument('-gf', '--geofence-file',
@@ -275,9 +280,6 @@ def parseArgs():
 
     parser.add_argument('-ahn', '--auto_hatch_number', type=int, default=0,
                         help='Auto hatch of level 5 Pokemon ID')
-
-    parser.add_argument('--no_initial_restart', default=False,
-                        help='Disable automatic PoGo restart when walker initially starts. NOT recommended.')
 
     verbose = parser.add_mutually_exclusive_group()
     verbose.add_argument('-v',
