@@ -105,8 +105,12 @@ def main():
         if len(line) < 5:
             continue
         # strict regex...
-        values = re.search(r'"(.*)"\s*,\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*,\s*"(.*)"\s*', line).groups()
-        updateEntry(values[0], float(values[1]), float(values[2]), values[3])
+        print("Checking line: %s" % line)
+        try:
+            values = re.search(r'"(.*)"\s*,\s*(-?\d+\.\d+)\s*,\s*(-?\d+\.\d+)\s*,\s*"(.*)"\s*', line).groups()
+            updateEntry(values[0], float(values[1]), float(values[2]), values[3])
+        except AttributeError:
+            print("Did not add `%s` to the database due to regex failure" % line)
 
     connection.close()
     sys.exit(0)
