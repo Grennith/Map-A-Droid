@@ -20,7 +20,7 @@ The Raid Mapper is a Raid scanner for Pokemon GO, based on Android devices and O
 
 ## Current limitations
 * The only supported aspect ratio is 16:9. If you have a softkey bar, disable it for PoGO.
-  * To do this for phones without the option run the following in a terminal on the phone
+  * To do this for phones without the option run the following in a terminal on the phone<p>
     `settings put global policy_control immersive.navigation=*`
   * You can do this using `adb shell` commands.
 * It takes time to load when you teleport between different locations. So faster phones may handle the loading better. We are testing on low end specs like [Redmi 5A](https://www.mi.com/in/redmi-5a/) for $75. A parameter to adjust the delays in between teleports and screenshots will most likely be added.
