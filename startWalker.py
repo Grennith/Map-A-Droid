@@ -372,6 +372,12 @@ def startPogo():
     pogoTopmost = telnMore.isPogoTopmost()
     if pogoTopmost:
         return True
+        
+    if not telnMore.isScreenOn():
+        telnMore.startApp("de.grennith.rgc.remotegpscontroller")
+        log.warning("Turning screen on")
+        telnMore.turnScreenOn()
+        time.sleep(args.post_turn_screen_on_delay)
 
     curTime = time.time()
     startResult = False
