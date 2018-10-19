@@ -200,6 +200,8 @@ class Scanner:
 
         imgray = cv2.cvtColor(raidlevel, cv2.COLOR_BGR2GRAY)
         imgray = cv2.GaussianBlur(imgray, (9, 9), 2)
+        kernel = np.ones((5,5),np.uint8)
+        imgray = cv2.morphologyEx(imgray, cv2.MORPH_CLOSE, kernel)
         ret, thresh = cv2.threshold(imgray, 220, 255,0)
         (_, contours, _) = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
         
@@ -433,7 +435,6 @@ class Scanner:
         #get (raidstart, raidend, raidtimer) as (timestamp, timestamp, human-readable hatch)
         raidtimer = self.detectRaidTime(img, hash, raidNo, radius)
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Got raidtime %s' % (str(raidtimer)))
-        
 
         #first item in tuple stands for raid present in crop or not
         if (not raidtimer[0]):
@@ -538,6 +539,8 @@ class Scanner:
             #gymId is either None for Gym not found or contains the gymId as String
             
         if gymId == 'dummy':
+            os.remove(raidhashPic)
+            os.remove(filenameOfCrop)
             log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: determine dummy pic, aborting analysis')
             return True
 
@@ -546,7 +549,7 @@ class Scanner:
             log.warning('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Could not determine gym, aborting analysis')
             os.remove(filenameOfCrop)
             os.remove(raidhashPic)
-            log.debug("start_detect[crop %s]: finished" % str(raidNo))
+            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: finished')
             return True #return true since a raid is present, we just couldn't find the correct gym
 
         if eggfound:
