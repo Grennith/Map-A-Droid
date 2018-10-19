@@ -623,6 +623,7 @@ class MonocleWrapper:
                  ' ) AS distance ' +
                  ' FROM forts ' +
                  ' HAVING distance <= ' + str(dist) + ' ' +
+                 ' or distance is NULL' +
                  ' ORDER BY distance')
 
         cursor.execute(query)

@@ -612,6 +612,7 @@ class RmWrapper:
                  ' ) AS distance ' +
                  ' FROM gym ' +
                  ' HAVING distance <= ' + str(dist) + ' ' +
+                 ' or distance is NULL' +
                  ' ORDER BY distance')
 
         cursor.execute(query)
