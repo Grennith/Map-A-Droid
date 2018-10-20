@@ -10,7 +10,7 @@ done
 echo "Alright, let's start. Grab a coffee, take a long nap, go to work. This will take its time!"
 sudo apt-get -y update && sudo apt-get -y upgrade
 sudo apt-get install -y python-pip git cython libjpeg-dev zlib1g-dev libopenblas-base libopenblas-dev python-dev gcc gfortran tesseract-ocr
-cd /opt && sudo git clone -b detectraidswithoutjson --single-branch https://github.com/Grennith/Map-A-Droid.git && sudo chown -R $USER:$USER Map-A-Droid && cd Map-A-Droid/
+cd /opt && sudo git clone --single-branch https://github.com/Grennith/Map-A-Droid.git && sudo chown -R $USER:$USER Map-A-Droid && cd Map-A-Droid/
 sudo -H pip install numpy
 
 # increase swap
