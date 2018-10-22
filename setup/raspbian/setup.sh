@@ -1,6 +1,6 @@
 #/bin/bash
 while true; do
-    read -p "Have you run raspi-config and set your timezone?" yn
+    read -p "Have you run raspi-config and set your timezone? (Y/N)" yn
     case $yn in
         [Yy]* ) break;;
         [Nn]* ) exit 1;;
