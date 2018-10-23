@@ -1,8 +1,8 @@
-vncdotool
 pytesseract
 watchdog
 colorlog
 imutils
+imageutils
 configargparse
 image
 scikit-image
@@ -12,4 +12,5 @@ gpxdata
 flask
 requests
 s2sphere
+Imagehash
 mysql
