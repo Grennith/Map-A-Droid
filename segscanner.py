@@ -200,8 +200,8 @@ class Scanner:
 
         imgray = cv2.cvtColor(raidlevel, cv2.COLOR_BGR2GRAY)
         imgray = cv2.GaussianBlur(imgray, (9, 9), 2)
-        kernel = np.ones((5,5),np.uint8)
-        imgray = cv2.morphologyEx(imgray, cv2.MORPH_CLOSE, kernel)
+        #kernel = np.ones((5,5),np.uint8)
+        #imgray = cv2.morphologyEx(imgray, cv2.MORPH_CLOSE, kernel)
         ret, thresh = cv2.threshold(imgray, 220, 255,0)
         (_, contours, _) = cv2.findContours(thresh,cv2.RETR_TREE,cv2.CHAIN_APPROX_SIMPLE)
         
