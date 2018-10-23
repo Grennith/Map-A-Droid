@@ -19,8 +19,8 @@ The Raid Mapper is a Raid scanner for Pokemon GO, based on Android devices and O
 * [Remote GPS Controller](https://github.com/Grennith/Map-A-Droid/blob/master/APKs/RemoteGpsController.apk)
 
 ## Current limitations
-* It takes time to load when you teleport between different locations. So faster phones may handle the loading better. We are testing on low end specs like [Redmi 5A](https://www.mi.com/in/redmi-5a/) for $75. A parameter to adjust the delays in between teleports and screenshots will most likely be added.
-* Sometimes the Raids won't get reported to the DB and we are in the process of debugging it. A potential help is removing the files inside the hash-folder.
+* It takes time to load when you teleport between different locations. So faster phones may handle the loading better. We are testing on low end specs like [Redmi 5A](https://www.mi.com/in/redmi-5a/) for $75. A parameter to adjust the delays in between teleports and screenshots is presented. Check the help of startWalker.py
+* OCR won't be 100% correct, you can use MADmin to correct any faulty scans.
 * RemoteGPSController (RGC) is know to sometimes crash follow the below options:
   * Disable Battery Optimization in Settings-> Apps -> RGC -> Battery
   * Go to RGC-Settings (within RGC) and enable OOM Overwrite
