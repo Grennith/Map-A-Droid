@@ -6002,6 +6002,18 @@
       }
     ]
   },
+  "487": {
+    "types": [
+      {
+      "type": "Ghost",
+      "color": "#705898"
+      }
+    ],
+    "name": "Giratina",
+    "rarity":"Ultra Rare",
+    "level": 5,
+    "cp": 51000
+  },
   "488":{
     "name": "Cresselia",
     "rarity":"",
