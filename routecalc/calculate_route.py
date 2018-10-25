@@ -14,6 +14,10 @@ Location = collections.namedtuple('Location', ['lat', 'lng'])
 ShortestDistance = collections.namedtuple('ShortestDistance', ['index', 'distance'])
 GymInfoDistance =  collections.namedtuple('GymInfoDistance', ['distance', 'location'])
 
+
+Relation = collections.namedtuple('Relation', ['otherCoord', 'distance'])
+
+
 def __midPoint(lat1, lon1, lat2, lon2):
 
     dLon = math.radians(lon2 - lon1)
@@ -74,188 +78,202 @@ def __lessCoordsMiddle(coordinates):
             break
     return np.array(less)
 
-def __getDistanceRelationsInRange(coordinates, gymDistance):
-    #each field holds a tuple of (Location, Array of GymInfoDistance)
-    #GymInfoDistance is a namedtuple of distance, location of gym
-    relations = []
+# returns a map of coords and all their closest neighbours based on a given radius * 2 (hence circles...)
+def __getRelationsInRange(coordinates, rangeRadiusMeter):
+    relations = {}
     for coord in coordinates:
-        #array of GymInfoDistance
-        closest = []
-        coordsToBeInspected = coordinates.copy()
-        #copied the coordinates, remove one by one and get the closest gyms and remove those within gymDistance
-        while coordsToBeInspected.size > 0:
-            if (coordsToBeInspected.size == 0):
-                #we already cut down all the gyms...
-                #TODO: add the gym to the returning set somewhere
-                break
-            shortestDistance = __getShortestDistanceOfPointLessMax(coord, coordsToBeInspected, gymDistance)
-
-            if (shortestDistance.index == -1):
-                #no (more) gym found in range
-                #TODO: add the gym and it's closest neighbours to set
-                break;
-            closest.append(GymInfoDistance(shortestDistance.distance,
-                Location(coordsToBeInspected[shortestDistance.index][0].item(),
-                    coordsToBeInspected[shortestDistance.index][1].item())))
-            coordsToBeInspected = np.delete(coordsToBeInspected, shortestDistance.index, 0)
-        relations.append( (Location(coord[0].item(), coord[1].item()), closest) )
-    #log.error("__getDistanceRelations: got %s" % str(relations))
+        for otherCoord in coordinates:
+            if coord.lat == otherCoord.lat and coord.lng == otherCoord.lng:
+                continue
+            distance = getDistanceOfTwoPointsInMeters(coord.lat, coord.lng, otherCoord.lat, otherCoord.lng)
+            if 0 <= distance <= rangeRadiusMeter * 2:
+                if coord not in relations:
+                    relations[coord] = []
+                relations[coord].append(Relation(otherCoord, distance))
     return relations
 
-#return a list of locations to be scanned based on relations
-def __getLessWithRelations(relations, maxAmountOfGymsToSumUpWithGym):
-    #select point farthest in northeast of relations and get a set with at most maxGyms (smallest circle so to speak)
-    #get the most west point
-    if relations is None or len(relations) == 0:
-        log.error("__getMaxSetInGivenSet: relations none or empty")
-        return [] #TODO: return useful data...
+def __countOfGymsInCircle(middle, radius, relations):
+    count = 1 # the origin of our relations is assumed to be in the circle anyway...
+    for relation in relations:
+        distance = getDistanceOfTwoPointsInMeters(middle.lat, middle.lng, relation.otherCoord.lat, relation.otherCoord.lng)
+        if distance <= radius:
+            count += 1
+    return count
 
-    #log.debug("__getLessWithRelations: Relations: %s" % str(relations))
-    coordsToReturn = []
-    while len(relations) > 0:
-        relationToBeInspected = None
-        mostWest = relations[0]
-        #log.error("Most west init: %s" % str(mostWest))
-        mostWestRelations = []
-        for relation in relations:
-            if relation[0].lat < mostWest[0].lat:
-                mostWest = relation
-                mostWestRelations = []
-            elif relation[0].lat == mostWest[0].lat:
-                mostWestRelations.append(relation)
-        #we found the most west relation...
-        if len(mostWestRelations) > 0:
-            relationToBeInspected = mostWestRelations[0]
-            while len(mostWestRelations) > 0:
-                #well, got more than one relation farthest west select the farthest north
-                if mostWestRelations[0][0].lng > relationToBeInspected[0].lng:
-                    relationToBeInspected = mostWestRelations[0]
-                mostWestRelations.remove(mostWestRelations[0])
+# adapted from https://stackoverflow.com/questions/6671183/calculate-the-center-point-of-multiple-latitude-longitude-coordinate-pairs
+def __getMiddleOfCoordList(listOfCoords):
+    if len(listOfCoords) == 1:
+        return listOfCoords[0]
+
+    x = 0
+    y = 0
+    z = 0
+
+    for coord in listOfCoords:
+        # transform to radians...
+        latRad = math.radians(coord.lat)
+        lngRad = math.radians(coord.lng)
+
+        x += math.cos(latRad) * math.cos(lngRad)
+        y += math.cos(latRad) * math.sin(lngRad)
+        z += math.sin(latRad)
+
+    amountOfCoords = len(listOfCoords)
+    x = x / amountOfCoords
+    y = y / amountOfCoords
+    z = z / amountOfCoords
+    centralLng = math.atan2(y, x)
+    centralSquareRoot = math.sqrt(x * x + y * y)
+    centralLat = math.atan2(z, centralSquareRoot)
+
+    return Location(math.degrees(centralLat), math.degrees(centralLng))
+
+def __getCircle(coord, relations, maxCount):
+    includedInCircle = [coord]
+
+    toBeInspected = relations[coord]
+    if len(toBeInspected) == 0:
+        # coord is alone at its position...
+        return coord, []
+    elif len(toBeInspected) == 1:
+        return coord, includedInCircle
+    elif len(toBeInspected) == 2:
+        for relation in toBeInspected:
+            includedInCircle.append(relation.otherCoord)
+        middle = __midPoint(coord.lat, coord.lng, relation.otherCoord.lat, relation.otherCoord.lng)
+        return middle, includedInCircle
+
+    # print toBeInspected
+    while len(toBeInspected) > 1:
+        # print "Checking circle in " + str()
+        # print toBeInspected
+        mostNorthernInRelations = __getMostNorthernInRelation(coord, toBeInspected)
+        # we have at least 3 coords...
+        # get the union of the coord and the farthest away one, then take the middle of the coords, the most northern point HAS TO BE inside the circle, otherwise remove the farthest away and continue
+        farthestAway, distanceToFarthest = __getFarthestInRelation(toBeInspected)
+        unionOfFarthest = __getUnionOfRelations(toBeInspected, relations[farthestAway])
+
+        # now get the middle of the points. If all the coords fit in and < maxCount, we found a perfect circle
+
+        allCoordsWithinRange = [coord, farthestAway]
+        for locationInUnion in unionOfFarthest:
+            allCoordsWithinRange.append(locationInUnion)
+        middle = __getMiddleOfCoordList(allCoordsWithinRange)
+        # print middle
+        maxToBeConsidered = 0
+        for coordToConsider in allCoordsWithinRange:
+            distance = getDistanceOfTwoPointsInMeters(middle.lat, middle.lng, coordToConsider.lat, coordToConsider.lng)
+            if distance > maxToBeConsidered:
+                maxToBeConsidered = distance
+        # print maxToBeConsidered
+        #maxToBeConsidered = getDistanceOfTwoPointsInMeters(middle.lat, middle.lng, coord.lat, coord.lng)
+        countInside, coordsInCircle = __getCountAndCoordsInCircle(middle, relations, maxToBeConsidered)
+        # print __listOfCoordsContainsCoord(coordsInCircle, mostNorthernInRelations)
+        # print "Count in circle: " + str(countInside) + " max count: " + str(maxCount)
+        # print countInside <= maxCount
+        if countInside <= maxCount and __listOfCoordsContainsCoord(coordsInCircle, mostNorthernInRelations):
+            # we found a fitting circle right away, let's return the circle...
+            return middle, coordsInCircle
         else:
-            relationToBeInspected = mostWest
-        if relationToBeInspected is None:
-            #we cannot find any more relations apparently, wtf
-            #log.error("relationToBeInspected is None")
-            return coordsToReturn
+            toBeInspected = [toKeep for toKeep in toBeInspected if not (toKeep.otherCoord.lat == farthestAway.lat
+                                                                        and toKeep.otherCoord.lng == farthestAway.lng)]
+            #toBeInspected.remove(farthestAway)
+    # print "NOTHING FOUND"
+    return coord, []
+    # else: we need to split up... remove farthest away and repeat...
 
-        #log.error("Relation to be inspected: %s" % str(relationToBeInspected))
-        #get the coords relevant for the relation :)
-        circleOfRelation = __getCirclePositionInRelation(relationToBeInspected,
-            maxAmountOfGymsToSumUpWithGym)
-        coordsToReturn.append(circleOfRelation[0])
-        #we added the middle of the circle, let's remove all related coords
-        #from the relations themselves as well as all distance relations
-        #let's first retrieve all the relations to be removed
-        coordsToDelete = circleOfRelation[1]
-        for coord in coordsToDelete:
-            for relation in relations:
-                if coord.lat == relation[0].lat and coord.lng == relation[0].lng:
-                    #found relation, remove it...
-                    #log.error("Found %s in relations reflection coord. %s" % (str(relation), str(relations)))
-                    relations.remove(relation)
-                    #log.error("New relations: %s" % str(relations))
-                    break
-            #now also remove all occurences in subsets...
-            for relation in relations:
-                nearbyLocations = relation[1]
-                for loc in nearbyLocations:
-                    if (coord.lat == loc.location.lat and
-                        coord.lng == loc.location.lng):
-                        #found an occurence..
-                        relation[1].remove(loc)
-                        break;
+def __listOfCoordsContainsCoord(listOfCoords, coord):
+    # print "List to be searched: " + str(listOfCoords)
+    # print "Coord to be searched for: " + str(coord)
+    for coordOfList in listOfCoords:
+        if coord.lat == coordOfList.lat and coord.lng == coordOfList.lng:
+            return True
+    return False
 
-        #okay, we now updated relations as required...
+def __getMostNorthernInRelation(coord, relation):
+    mostNorthern = coord
+    for coordInRel in relation:
+        if coordInRel.otherCoord.lat >= mostNorthern.lat:
+            mostNorthern = coordInRel.otherCoord
+    return mostNorthern
 
-    return coordsToReturn
+def __getMostWestAmongstRelations(relations):
+    selected = relations.keys()[0]
+    # print selected
+    for relation in relations:
+        if relation.lng < selected.lng:
+            selected = relation
+            # print selected
+        elif relation.lng == selected.lng and relation.lat > selected.lat:
+            selected = relation
+            # print selected
+    return selected
 
+def __getFarthestInRelation(relation):
+    distance = -1
+    farthest = None
+    for location in relation:
+        if location.distance > distance:
+            distance = location.distance
+            farthest = location.otherCoord
+    return farthest, distance
 
-#return tuple of (coord, coords). First coord being the middle of the circle
-#coords being the coords inside it (array)
-def __getCirclePositionInRelation(relation, maxAmountOfGymsToSumUpWithGym):
-    #relation consists of (Location, [ GymInfoDistance ] )
-    #log.error("Relation given:  %s " % str(relation))
-    locationToSpanFrom = relation[0]
-    coordsInCircle = []
-    coordsInCircle.append(locationToSpanFrom)
-    distanceLocations = relation[1]
-    #log.error(relation)
-    if len(distanceLocations) == 0:
-        #no point in range, stop right there and return
-        return (locationToSpanFrom, coordsInCircle)
-    while len(distanceLocations) > 0:
-        #log.error("Distance locations: %s" % str(distanceLocations))
-        selected = distanceLocations[0] #get the first element
-        #get the farthest point
-        for loc in distanceLocations:
-            if loc.distance > selected.distance:
-                selected = loc
+# only returns the union, not the points of origins of the two relations!
+def __getUnionOfRelations(relationsOne, relationsTwo):
+    listToReturn = []
+    for relation in relationsOne:
+        for otherRelation in relationsTwo:
+            if (otherRelation.otherCoord.lat == relation.otherCoord.lat
+                and otherRelation.otherCoord.lng == relation.otherCoord.lng):
+                listToReturn.append(otherRelation.otherCoord)
+    return listToReturn
 
-        #remove the selected coord from the set
-        distanceLocations.remove(selected)
+def __getCountAndCoordsInCircle(middle, relations, maxRadius):
+    insideCircle = []
+    for locationSource in relations:
+        distance = getDistanceOfTwoPointsInMeters(middle.lat, middle.lng, locationSource.lat, locationSource.lng)
+        if 0 <= distance <= maxRadius:
+            insideCircle.append(locationSource)
+    return len(insideCircle), insideCircle
 
-        tempCircle = [] # Location[]
-        #we got the point farthest from our locationToSpanFrom, get the middle
-        #and check the amount of gyms that are in that circle with the given range
-        middle = __midPoint(selected.location.lat, selected.location.lng,
-            locationToSpanFrom.lat, locationToSpanFrom.lng)
-        tempCircle.append(selected.location)
-        tempCircle.append(locationToSpanFrom)
-        #we now have the middle, take selected.distance / 2 as radius and check the amount of raids
-        #we only need to inspect the coords in our distanceLocations set
-        for distLoc in distanceLocations:
-            dist = getDistanceOfTwoPointsInMeters(distLoc.location.lat,
-                distLoc.location.lng, middle.lat, middle.lng)
-            if dist <= selected.distance / 2:
-                #we found a gym in our circle...
-                #add it to our tempCircle
-                tempCircle.append(distLoc.location)
-        if len(tempCircle) - 1 <= maxAmountOfGymsToSumUpWithGym:
-            #well, we found a matching circle
-            #return tuple of (midpointCircle, coordsInCircle)
-            return ( middle, tempCircle )
-    #seems we haven't found a circle properly, just return the point itself...
-    return ( locationToSpanFrom, [] )
+def __sumUpRelations(relations, maxCountPerCircle):
+    finalSet = []
 
+    while len(relations) > 0:
+        # get the most western north point in relations
+        next = __getMostWestAmongstRelations(relations)
+        # get a circle with "next" in it...
+        middle, coordsToBeRemoved = __getCircle(next, relations, maxCountPerCircle)
+        coordsToBeRemoved.append(next)
+        # remove the coords covered by the circle...
+        finalSet.append(middle)
+        relations = __removeCoordsFromRelations(relations, coordsToBeRemoved)
+    return finalSet
 
+def __removeCoordsFromRelations(relations, listOfCoords):
+    for sourceLocation, distanceRelations in relations.items():
+        # iterate relations, remove anything matching listOfCoords
+        for coord in listOfCoords:
+            if coord.lat == sourceLocation.lat and coord.lng == sourceLocation.lng:
+                # entire relation matches the coord, remove it
+                relations.pop(sourceLocation)
+                break
+            # iterate through the entire distance relations...
+            for distRel in distanceRelations:
+                if distRel.otherCoord.lat == coord.lat and distRel.otherCoord.lng == coord.lng:
+                    distanceRelations.remove(distRel)
+    return relations
 
-def __lessCoords(coordinates, gymDistance, maxAmountOfGymsToSumUpWithGym):
-    less = []
-    #log.debug("Summing up gyms...")
-    while coordinates.size > 0:
-        coord = coordinates[0]
-        #log.debug("Summing up up to 5 gyms around %s" % str(coord))
-        less.append(coord)
+def getLessCoords(npCoordinates, maxRadius, maxCountPerCircle):
+    coordinates = []
+    for coord in npCoordinates:
+        coordinates.append(Location(coord[0].item(), coord[1].item()))
 
-        coordinates = np.delete(coordinates, 0, 0)
-        for x in range(maxAmountOfGymsToSumUpWithGym - 1):
-            if (coordinates.size == 0):
-                #we already cut down all the gyms...
-                return np.array(less)
-            shortestDistance = __getShortestDistanceOfPointLessMax(coord, coordinates, gymDistance)
+    relations = __getRelationsInRange(coordinates, maxRadius)
+    summedUp = __sumUpRelations(relations, maxCountPerCircle)
+    print "Done summing up: " + str(summedUp) + " that's just " + str(len(summedUp))
+    return summedUp
 
-            if (shortestDistance.index == -1):
-                #no (more) gym found in range
-                break;
-            #log.debug("%s is %sm close to gym %s" % (str(coordinates[shortestDistance.index]), str(shortestDistance), str(coord)))
-            coordinates = np.delete(coordinates, shortestDistance.index, 0)
-    return np.array(less)
-
-def __getShortestDistanceOfPointLessMax(point, coordinates, maxDistance):
-    index = -1
-    shortestDistance = maxDistance #we only summarize gyms that are less then n meters apart
-    for coord in coordinates:
-        if (point[0] == coord[0] and point[1] == coord[1]):
-            continue
-        distanceToCoord = getDistanceOfTwoPointsInMeters(point[0], point[1], coord[0], coord[1])
-
-        if distanceToCoord < shortestDistance:
-            #index = np.where(coordinates == coord)
-            index = np.nonzero(coordinates == coord)[0][0]
-
-            shortestDistance = distanceToCoord
-
-    return ShortestDistance(index, shortestDistance)
 
 def getJsonRoute(filePath, gymDistance, maxAmountOfGymsToSumUpWithGym, routefile):
     export_data = []
@@ -275,8 +293,9 @@ def getJsonRoute(filePath, gymDistance, maxAmountOfGymsToSumUpWithGym, routefile
     if (csvCoordinates.size > 1 and gymDistance and maxAmountOfGymsToSumUpWithGym):
         #TODO: consider randomizing coords and trying a couple times to get "best" result
         log.info("Calculating...")
-        relations = __getDistanceRelationsInRange(csvCoordinates, gymDistance * 2)
-        newCoords = __getLessWithRelations(relations, maxAmountOfGymsToSumUpWithGym)
+        # relations = __getDistanceRelationsInRange(csvCoordinates, gymDistance * 2)
+        # newCoords = __getLessWithRelations(relations, maxAmountOfGymsToSumUpWithGym)
+        newCoords = getLessCoords(csvCoordinates, gymDistance, maxAmountOfGymsToSumUpWithGym)
         lessCoordinates = np.zeros(shape=(len(newCoords) , 2))
         for i in range(len(lessCoordinates)):
             lessCoordinates[i][0] = newCoords[i][0]
