@@ -1,19 +1,19 @@
 # Map'A'Droid
-![Python 2.7](https://img.shields.io/badge/python-2.7-blue.svg)
+![Python 2.7](https://img.shields.io/badge/python-2.7-blue.svg)  
 
 ![MAD-Banner](examples/banner_small_web.png)
 
-The Raid Mapper is a Raid scanner for Pokemon GO, based on Android devices and OCR.
+The Raid Mapper is a Raid scanner for Pokemon GO, based on Android devices and OCR.  
 
 <img src="https://raw.githubusercontent.com/Grennith/Map-A-Droid/master/examples/example_map.PNG" width="500" height="500">
 
 ## Information
-*  [Discord](https://discord.gg/MC3vAH9) - For general support
-*  [Github Issues](https://github.com/Grennith/Map-A-Droid/issues) - For reporting bugs (not for support!)
+*  [Discord](https://discord.gg/MC3vAH9) - For general support  
+*  [Github Issues](https://github.com/Grennith/Map-A-Droid/issues) - For reporting bugs (not for support!)  
 
-## Requirements
-* [PogoAssets](https://github.com/ZeChrales/PogoAssets)
-* Google or PTC account with minimum level 5 and no Raid-bosses in the dex
+## Requirements  
+* [PogoAssets](https://github.com/ZeChrales/PogoAssets)  
+* Google or PTC account with minimum level 5 and no Raid-bosses in the dex  
 * Mobile with Android 6 or higher
 * Root privileges [Magisk](https://forum.xda-developers.com/apps/magisk/official-magisk-v7-universal-systemless-t3473445)
 * [Remote GPS Controller](https://github.com/Grennith/Map-A-Droid/blob/master/APKs/RemoteGpsController.apk)
@@ -155,7 +155,6 @@ The command will look like this:
 * Write tests
 * Improve scans
 * Improve error handling
-* Support more/all resolutions
 
 License
 ----
