@@ -91,8 +91,15 @@ def __getRelationsInRange(coordinates, rangeRadiusMeter):
             if 0 <= distance <= rangeRadiusMeter * 2:
                 if coord not in relations:
                     relations[coord] = []
-                relations[coord].append(Relation(otherCoord, distance))
+                # we need to avoid duplicates...
+                alreadyPresent = False
+                for relation in relations[coord]:
+                    if relation.otherCoord.lat == otherCoord.lat and relation.otherCoord.lng == otherCoord.lng:
+                        alreadyPresent = True
+                if not alreadyPresent:
+                    relations[coord].append(Relation(otherCoord, distance))
     print "Got " + str(len(relations)) + " relations"
+    print relations
     return relations
 
 def __countOfGymsInCircle(middle, radius, relations):
@@ -131,25 +138,25 @@ def __getMiddleOfCoordList(listOfCoords):
 
     return Location(math.degrees(centralLat), math.degrees(centralLng))
 
-def __getCircle(coord, relations, maxCount, maxDistance):
+def __getCircle(coord, toBeInspected, relations, maxCount, maxDistance):
     print "Next Circle with coord " + str(coord)
     # print "Relations: \n" + str(relations)
     #includedInCircle = [coord]
     includedInCircle = []
-    toBeInspected = relations[coord]
+    #toBeInspected = relations[coord]
     if len(toBeInspected) == 0:
         # coord is alone at its position...
         return coord, []
     elif len(toBeInspected) == 1:
         print "Just one coord, returning it as the middle: " + str(coord)
         return coord, [coord]
-    elif len(toBeInspected) == 2:
-        for relation in toBeInspected:
-            includedInCircle.append(relation.otherCoord)
-        print "just two coords, returning the middle of " + str(coord) + " and " + str(relation.otherCoord)
-        middle = __getMiddleOfCoordList(includedInCircle)
-        print "Returning middle: " + str(middle) + " included in the circle: " + str(includedInCircle)
-        return middle, includedInCircle
+    # elif len(toBeInspected) == 2:
+    #     for relation in toBeInspected:
+    #         includedInCircle.append(relation.otherCoord)
+    #     print "just two coords, returning the middle of " + str(coord) + " and " + str(relation.otherCoord)
+    #     middle = __getMiddleOfCoordList(includedInCircle)
+    #     print "Returning middle: " + str(middle) + " included in the circle: " + str(includedInCircle)
+    #     return middle, includedInCircle
 
     # check if middle of the two farthest away already holds everything needed
     farthestAway, distanceToFarthest = __getFarthestInRelation(toBeInspected)
@@ -165,6 +172,11 @@ def __getCircle(coord, relations, maxCount, maxDistance):
     if countInside <= maxCount and len(coordsInCircle) == len(toBeInspected):
         print "Returning middle " + str(middle) + " and telling to remove " + str(coordsInCircle)
         return middle, coordsInCircle
+    elif countInside > maxCount:
+        toBeInspected = [toKeep for toKeep in toBeInspected if
+                         not (toKeep.otherCoord.lat == farthestAway.lat
+                              and toKeep.otherCoord.lng == farthestAway.lng)]
+        return __getCircle(coord, toBeInspected, relations, maxCount, distanceToFarthest)
     else:
         return middle, coordsInCircle
         # TODO: calculate the entire stuff distributed by degrees north/south to coord
@@ -238,7 +250,7 @@ def __sumUpRelations(relations, maxCountPerCircle, maxDistance):
         # get the most western north point in relations
         next = __getMostWestAmongstRelations(relations)
         # get a circle with "next" in it...
-        middle, coordsToBeRemoved = __getCircle(next, relations, maxCountPerCircle, maxDistance)
+        middle, coordsToBeRemoved = __getCircle(next, relations[next], relations, maxCountPerCircle, maxDistance)
         print "Removing: " + str(coordsToBeRemoved) + " Center of circle: " + str(middle)
         # remove the coords covered by the circle...
         finalSet.append(middle)
