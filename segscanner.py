@@ -764,16 +764,20 @@ class Scanner:
 
         if am_found:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getHatchTime: Found AM')
-            return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
+            zero = datetime.datetime.now().replace(hour=int(hour_min[0]),minute=int(hour_min[1]),second=0,microsecond=0)
+            return time.mktime(zero.timetuple())
         elif pm_found:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getHatchTime: Found PM')
             if hour_min[0] == '12':
-                return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
+                zero = datetime.datetime.now().replace(hour=int(hour_min[0]),minute=int(hour_min[1]),second=0,microsecond=0)
+                return time.mktime(zero.timetuple())
             else:
-                return int(unix_zero)+(int(hour_min[0])+12)*3600+int(hour_min[1])*60
+                zero = datetime.datetime.now().replace(hour=int(hour_min[0])+12,minute=int(hour_min[1]),second=0,microsecond=0)
+                return time.mktime(zero.timetuple())
         else:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getHatchTime: Found EU Time')
-            return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
+            zero = datetime.datetime.now().replace(hour=int(hour_min[0]),minute=int(hour_min[1]),second=0,microsecond=0)
+            return time.mktime(zero.timetuple())
 
     def getEndTime(self, data, raidNo):
         zero = datetime.datetime.now()
