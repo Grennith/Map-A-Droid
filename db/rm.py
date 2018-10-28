@@ -335,7 +335,7 @@ class RmWrapper:
             # submit mon without egginfo -> we have an endtime
             start = end - (int(args.raid_time) * 60)
             log.info("Updating mon without egg")
-            setStr = 'SET level = %s, spawn = FROM_UNIXTIME(%s), start = \'%s\', end = \'%s\', ' \
+            setStr = 'SET level = %s, spawn = FROM_UNIXTIME(%s), start = %s, end = %s, ' \
                      'pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, move_1 = %s, move_2 = %s '
             data = (lvl, captureTime, start, end, pkm, int(time.time()), '999', '1', '1')
 
@@ -360,14 +360,14 @@ class RmWrapper:
         else:
             log.info("Updating everything")
             # we have start and end, mon is either with egg or we're submitting an egg
-            setStr = 'SET level = %s, spawn = FROM_UNIXTIME(%s), start = \'%s\', end = \'%s\', ' \
+            setStr = 'SET level = %s, spawn = FROM_UNIXTIME(%s), start = %s, end = %s, ' \
                      'pokemon_id = %s, ' \
                      'last_scanned = FROM_UNIXTIME(%s), cp = %s, move_1 = %s, move_2 = %s '
             data = (lvl, captureTime, start, end, pkm, int(time.time()), '999', '1', '1')
 
             wh_send = True
-            wh_start = dbTimeStringToUnixTimestamp(start)
-            wh_end = dbTimeStringToUnixTimestamp(end)
+            wh_start = self.dbTimeStringToUnixTimestamp(start)
+            wh_end = self.dbTimeStringToUnixTimestamp(end)
 
         query = updateStr + setStr + whereStr
         log.debug(query % data)
@@ -384,7 +384,7 @@ class RmWrapper:
                 start = end - (int(args.raid_time) * 60)
                 query = (
                     'INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, move_1, move_2) '
-                    'VALUES (%s, %s, FROM_UNIXTIME(%s), \'%s\', \'%s\', %s, FROM_UNIXTIME(%s), 999, 1, 1)')
+                    'VALUES (%s, %s, FROM_UNIXTIME(%s), %s, %s, %s, FROM_UNIXTIME(%s), 999, 1, 1)')
                 data = (gym, lvl, captureTime, start, end, pkm, int(time.time()))
             elif end is None or start is None:
                 log.info("Inserting without end or start")
@@ -407,9 +407,9 @@ class RmWrapper:
 
             wh_send = True
             if MonWithNoEgg:
-                wh_start = dbTimeStringToUnixTimestamp(end) - 2700
+                wh_start = self.dbTimeStringToUnixTimestamp(end) - 2700
             else:
-                wh_start = dbTimeStringToUnixTimestamp(start)
+                wh_start = self.dbTimeStringToUnixTimestamp(start)
             wh_end = end
             if pkm is None:
                 pkm = 0
@@ -875,3 +875,4 @@ class RmWrapper:
         cursor.close()
         connection.close()
         return True
+    
