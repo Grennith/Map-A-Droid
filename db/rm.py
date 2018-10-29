@@ -342,7 +342,7 @@ class RmWrapper:
 
             # send out a webhook - this case should only occur once...
             wh_send = True
-            wh_start = tsstart
+            wh_start = tsend - 2700
             wh_end = tsend
         elif end is None or start is None:
             # no end or start time given, just update anything there is
