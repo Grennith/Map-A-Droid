@@ -26,7 +26,7 @@ raid_webhook_payload = """[{{
         "raid_end": {end},
         "gym_id": "{ext_id}",
         "name": "{name_id}",
-        "gym_url": "{url}",
+        "url": "{url}",
         "sponsor": "{sponsor}",
         "weather": "{weather}",
         "park": "{park}"
@@ -45,7 +45,7 @@ egg_webhook_payload = """[{{
         "raid_end": {end},
         "gym_id": "{ext_id}",
         "name": "{name_id}",
-        "gym_url": "{url}",
+        "url": "{url}",
         "sponsor": "{sponsor}",
         "weather": "{weather}",
         "park": "{park}"
