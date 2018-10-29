@@ -397,7 +397,7 @@ class RmWrapper:
                 log.info("Inserting everything")
                 query = (
                     'INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, move_1, move_2) '
-                    'VALUES (%s, %s, FROM_UNIXTIME(%s), \'%s\', \'%s\', %s, FROM_UNIXTIME(%s), 999, 1, 1)')
+                    'VALUES (%s, %s, FROM_UNIXTIME(%s), %s, %s, %s, FROM_UNIXTIME(%s), 999, 1, 1)')
                 data = (gym, lvl, captureTime, start, end, pkm, int(time.time()))
 
             cursorIns = connection.cursor()
