@@ -382,7 +382,7 @@ class RmWrapper:
             if MonWithNoEgg:
                 # submit mon without egg info -> we have an endtime
                 log.info("Inserting mon without egg")
-                start = tsend - (int(args.raid_time) * 60)
+                start = datetime.datetime.utcfromtimestamp(int(tsend) - (int(args.raid_time) * 60)).strftime('%Y-%m-%d %H:%M:%S')
                 query = (
                     'INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, move_1, move_2) '
                     'VALUES (%s, %s, FROM_UNIXTIME(%s), %s, %s, %s, FROM_UNIXTIME(%s), 999, 1, 1)')
