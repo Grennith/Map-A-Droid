@@ -342,7 +342,7 @@ class RmWrapper:
 
             # send out a webhook - this case should only occur once...
             wh_send = True
-            wh_start = tsend - 2700
+            wh_start = tsend - (int(args.raid_time) * 60)
             wh_end = tsend
         elif end is None or start is None:
             # no end or start time given, just update anything there is
@@ -353,7 +353,7 @@ class RmWrapper:
             foundEndTime, EndTime = self.getRaidEndtime(gym, raidNo)
             if foundEndTime:
                 wh_send = True
-                wh_start = int(EndTime) - 2700
+                wh_start = int(EndTime) - (int(args.raid_time) * 60)
                 wh_end = EndTime
                 eggHatched = True
             else:
@@ -382,7 +382,7 @@ class RmWrapper:
             if MonWithNoEgg:
                 # submit mon without egg info -> we have an endtime
                 log.info("Inserting mon without egg")
-                start = end - (int(args.raid_time) * 60)
+                start = tsend - (int(args.raid_time) * 60)
                 query = (
                     'INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, move_1, move_2) '
                     'VALUES (%s, %s, FROM_UNIXTIME(%s), %s, %s, %s, FROM_UNIXTIME(%s), 999, 1, 1)')
@@ -408,7 +408,7 @@ class RmWrapper:
 
             wh_send = True
             if MonWithNoEgg:
-                wh_start = tsend - 2700
+                wh_start = tsend - (int(args.raid_time) * 60)
             else:
                 wh_start = tsstart
             wh_end = tsend
