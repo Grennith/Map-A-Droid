@@ -342,8 +342,8 @@ class RmWrapper:
 
             # send out a webhook - this case should only occur once...
             wh_send = True
-            wh_start = start
-            wh_end = end
+            wh_start = tsstart
+            wh_end = tsend
         elif end is None or start is None:
             # no end or start time given, just update anything there is
             log.info("Updating without end- or starttime - we should've seen the egg before")
@@ -367,8 +367,8 @@ class RmWrapper:
             data = (lvl, captureTime, start, end, pkm, int(time.time()), '999', '1', '1')
 
             wh_send = True
-            wh_start = self.dbTimeStringToUnixTimestamp(start)
-            wh_end = self.dbTimeStringToUnixTimestamp(end)
+            wh_start = tsstart
+            wh_end = tsend
 
         query = updateStr + setStr + whereStr
         log.debug(query % data)
@@ -408,10 +408,10 @@ class RmWrapper:
 
             wh_send = True
             if MonWithNoEgg:
-                wh_start = self.dbTimeStringToUnixTimestamp(end) - 2700
+                wh_start = tsend - 2700
             else:
-                wh_start = self.dbTimeStringToUnixTimestamp(start)
-            wh_end = end
+                wh_start = tsstart
+            wh_end = tsend
             if pkm is None:
                 pkm = 0
 
