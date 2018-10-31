@@ -6,6 +6,9 @@ import sys
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 from threading import Thread, Event, Lock
 
+TEXT = 0x1
+BINARY = 0x2
+
 log = logging.getLogger()
 
 idMutex = Lock()
@@ -56,13 +59,15 @@ clients = []
 class SimpleEcho(WebSocket):
 
     def handleMessage(self):
-        splitup = self.data.split(";")
-        id = int(splitup[0])
-        response = splitup[1]
-        setResponse(id, response)
-        if not setEvent(id):
-            # remove the response again - though that is kinda stupid
-            popResponse(id)
+        if self.opcode == TEXT:
+            log.debug("Receiving message...")
+            splitup = self.data.split(";")
+            id = int(splitup[0])
+            response = splitup[1]
+            setResponse(id, response)
+            if not setEvent(id):
+                # remove the response again - though that is kinda stupid
+                popResponse(id)
 
     def handleConnected(self):
         clients.append(self)

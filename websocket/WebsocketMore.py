@@ -76,7 +76,7 @@ class WebsocketMore:
 
     def __connectImageSocket(self, s):
         try:
-            log.error("Retrieving screenshot from: %s:%s" % (str(self.__ip), str(self.__port)))
+            log.debug("Retrieving screenshot from: %s:%s" % (str(self.__ip), str(self.__port)))
             s.connect((self.__ip, self.__port))
             s.setblocking(1)
             s.settimeout(self.__socketTimeout)
