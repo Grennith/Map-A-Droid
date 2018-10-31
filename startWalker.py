@@ -16,8 +16,9 @@ import heapq
 from multiprocessing import Process
 
 from routecalc.calculate_route import getJsonRoute, getDistanceOfTwoPointsInMeters
-from telnet.telnetGeo import TelnetGeo
-from telnet.telnetMore import TelnetMore
+from websocket.websocketGeo import WebsocketGeo
+from websocket.WebsocketMore import WebsocketMore
+from websocket.websocketServer import *
 from db.dbWrapper import DbWrapper
 from screenWrapper import ScreenWrapper
 from ocr.pogoWindows import PogoWindows
@@ -80,7 +81,8 @@ log = logging.getLogger()
 log.addHandler(stdout_hdlr)
 log.addHandler(stderr_hdlr)
 
-telnMore = None
+websocketServerUsed = None
+websocketMoreUsed = None
 pogoWindowManager = None
 screenWrapper = None
 runWarningThreadEvent = Event()
@@ -101,12 +103,12 @@ dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbu
                       args.timezone)
 
 if not args.only_ocr and not args.with_madmin:
-    log.info("Starting Telnet MORE Client")
-    telnMore = TelnetMore(str(args.tel_ip), args.tel_port, str(args.tel_password), args.tel_timeout_command,
-                          args.tel_timeout_socket)
+    log.info("Starting websocket MORE")
+    websocketServerUsed = WebsocketServer(args.ws_ip, args.ws_port)
+    websocketMoreUsed = WebsocketMore(websocketServerUsed, args.websocket_command_timeout, args.screenshot_ip,
+                                      args.screenshot_port, 30)
     log.info("Starting ScreenWrapper")
-    screenWrapper = ScreenWrapper(args.screen_method, telnMore, str(args.vnc_ip), args.vnc_port, args.vnc_password,
-                                  args.vncscreen)
+    screenWrapper = ScreenWrapper(websocketMoreUsed)
 
     log.info("Starting pogo window manager")
     pogoWindowManager = PogoWindows(screenWrapper, args.screen_width, args.screen_height, args.temp_path)
@@ -137,7 +139,7 @@ def main():
 
     if args.with_madmin:
         log.info('Starting Madmin on Port: %s' % str(args.madmin_port))
-        t_flask = Thread(name='madmin', target=start_madnin())
+        t_flask = Thread(name='madmin', target=start_madmin)
         t_flask.daemon = False
         t_flask.start()
 
@@ -187,7 +189,7 @@ def main():
     while True:
         time.sleep(10)
 
-def start_madnin():
+def start_madmin():
     import madmin
     madmin.app.run(host='0.0.0.0', port=int(args.madmin_port), threaded=True, use_reloader=False)
     sys.exit(0)
@@ -243,7 +245,7 @@ def deleteOldScreens(folderscreen, foldersuccess, minutes):
 def sleeptimer():
     sleeptime = args.sleepinterval
     global sleep
-    global telnMore
+    global websocketMoreUsed
     sts1 = sleeptime[0].split(':')
     sts2 = sleeptime[1].split(':')
     while True:
@@ -261,9 +263,9 @@ def sleeptimer():
         if tmNow >= tmFrom and tmNow < tmTil:
             log.info('Going to sleep - bye bye')
             # Stopping pogo...
-            if telnMore:
-                telnMore.stopApp("com.nianticlabs.pokemongo")
-                telnMore.clearAppCache("com.nianticlabs.pokemongo")
+            if websocketMoreUsed:
+                websocketMoreUsed.stopApp("com.nianticlabs.pokemongo")
+                websocketMoreUsed.clearAppCache("com.nianticlabs.pokemongo")
             sleep = True
 
             while sleep:
@@ -275,9 +277,9 @@ def sleeptimer():
                 log.info('Still sleeping, current time... %s' % str(tmNow.strftime("%H:%M")))
                 if tmNow >= tmTil:
                     log.warning('sleeptimer: Wakeup - here we go ...')
-                    if telnMore:
-                        telnMore.turnScreenOn()
-                        telnMore.startApp("sleeptimer: com.nianticlabs.pokemongo")
+                    if websocketMoreUsed:
+                        websocketMoreUsed.turnScreenOn()
+                        websocketMoreUsed.startApp("sleeptimer: com.nianticlabs.pokemongo")
                     sleep = False
                     break
                 time.sleep(300)
@@ -339,7 +341,7 @@ def restartPogo():
     log.debug("restartPogo: stop pogo resulted in %s" % str(successfulStop))
     redErrorCount = 0
     if successfulStop:
-        telnMore.clearAppCache("com.nianticlabs.pokemongo")
+        websocketMoreUsed.clearAppCache("com.nianticlabs.pokemongo")
         time.sleep(1)
         return startPogo()
         # TODO: handle login screen... ?
@@ -348,43 +350,43 @@ def restartPogo():
 
 
 def tabOutAndInPogo():
-    global telnMore
-    telnMore.startApp("de.grennith.rgc.remotegpscontroller")
+    global websocketMoreUsed
+    websocketMoreUsed.startApp("de.grennith.rgc.remotegpscontroller")
     time.sleep(7)
-    telnMore.startApp("com.nianticlabs.pokemongo")
+    websocketMoreUsed.startApp("com.nianticlabs.pokemongo")
     time.sleep(2)
 
 
 def stopPogo():
-    global telnMore
-    stopResult = telnMore.stopApp("com.nianticlabs.pokemongo")
-    pogoTopmost = telnMore.isPogoTopmost()
+    global websocketMoreUsed
+    stopResult = websocketMoreUsed.stopApp("com.nianticlabs.pokemongo")
+    pogoTopmost = websocketMoreUsed.isPogoTopmost()
     while pogoTopmost:
-        stopResult = telnMore.stopApp("com.nianticlabs.pokemongo")
+        stopResult = websocketMoreUsed.stopApp("com.nianticlabs.pokemongo")
         time.sleep(1)
-        pogoTopmost = telnMore.isPogoTopmost()
+        pogoTopmost = websocketMoreUsed.isPogoTopmost()
     return stopResult
 
 
 def startPogo():
-    global telnMore
+    global websocketMoreUsed
     global lastPogoRestart
-    pogoTopmost = telnMore.isPogoTopmost()
+    pogoTopmost = websocketMoreUsed.isPogoTopmost()
     if pogoTopmost:
         return True
         
-    if not telnMore.isScreenOn():
-        telnMore.startApp("de.grennith.rgc.remotegpscontroller")
+    if not websocketMoreUsed.isScreenOn():
+        websocketMoreUsed.startApp("de.grennith.rgc.remotegpscontroller")
         log.warning("Turning screen on")
-        telnMore.turnScreenOn()
+        websocketMoreUsed.turnScreenOn()
         time.sleep(args.post_turn_screen_on_delay)
 
     curTime = time.time()
     startResult = False
     while not pogoTopmost:
-        startResult = telnMore.startApp("com.nianticlabs.pokemongo")
+        startResult = websocketMoreUsed.startApp("com.nianticlabs.pokemongo")
         time.sleep(1)
-        pogoTopmost = telnMore.isPogoTopmost()
+        pogoTopmost = websocketMoreUsed.isPogoTopmost()
     reachedRaidtab = False
     if startResult:
         log.warning("startPogo: Starting pogo...")
@@ -403,7 +405,7 @@ def getToRaidscreen(maxAttempts, again=False):
     global redErrorCount
 
     log.debug("getToRaidscreen: Trying to get to the raidscreen with %s max attempts..." % str(maxAttempts))
-    pogoTopmost = telnMore.isPogoTopmost()
+    pogoTopmost = websocketMoreUsed.isPogoTopmost()
     if not pogoTopmost:
         return False
 
@@ -466,11 +468,11 @@ def getToRaidscreen(maxAttempts, again=False):
 
 
 def turnScreenOnAndStartPogo():
-    global telnMore
-    if not telnMore.isScreenOn():
-        telnMore.startApp("de.grennith.rgc.remotegpscontroller")
+    global websocketMoreUsed
+    if not websocketMoreUsed.isScreenOn():
+        websocketMoreUsed.startApp("de.grennith.rgc.remotegpscontroller")
         log.warning("Turning screen on")
-        telnMore.turnScreenOn()
+        websocketMoreUsed.turnScreenOn()
         time.sleep(args.post_turn_screen_on_delay)
     # check if pogo is running and start it if necessary
     log.warning("turnScreenOnAndStartPogo: (Re-)Starting Pogo")
@@ -531,7 +533,7 @@ def checkSpeedWeatherWarningThread():
     global sleep
     global runWarningThreadEvent
     global windowLock
-    global telnMore
+    global websocketMoreUsed
     while True:
         while sleep:
             time.sleep(0.5)
@@ -540,7 +542,7 @@ def checkSpeedWeatherWarningThread():
         log.debug("checkSpeedWeatherWarningThread: lock acquired")
 
         log.debug("checkSpeedWeatherWarningThread: Checking if pogo is running...")
-        if not telnMore.isPogoTopmost():
+        if not websocketMoreUsed.isPogoTopmost():
             log.warning("checkSpeedWeatherWarningThread: Starting Pogo")
             restartPogo()
 
@@ -559,7 +561,7 @@ def checkSpeedWeatherWarningThread():
 def main_thread():
     global nextRaidQueue
     global lastPogoRestart
-    global telnMore
+    global websocketMoreUsed
     global pogoWindowManager
     global sleep
     global runWarningThreadEvent
@@ -568,10 +570,10 @@ def main_thread():
     global lastScreenshotTaken
     global lastScreenHash
     global lastScreenHashCount
+    global websocketServerUsed
 
-    log.info("main: Starting TelnetGeo Client")
-    telnGeo = TelnetGeo(str(args.tel_ip), args.tel_port, str(args.tel_password), args.tel_timeout_command,
-                        args.tel_timeout_socket)
+    log.info("main: Starting websocketGeo")
+    websocketGeoUsed = WebsocketGeo(websocketServerUsed, args.websocket_command_timeout)
 
     log.info("main: Starting dbWrapper")
     dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword,
@@ -678,7 +680,7 @@ def main_thread():
                     (args.max_distance and 0 < args.max_distance < distance)
                     or (lastLat == 0.0 and lastLng == 0.0)):
                 log.info("main: Teleporting...")
-                telnGeo.setLocation(curLat, curLng, 0)
+                websocketGeoUsed.setLocation(curLat, curLng, 0)
                 delayUsed = args.post_teleport_delay
                 # Test for cooldown / teleported distance
                 if args.cool_down_sleep:
@@ -694,14 +696,14 @@ def main_thread():
                     toWalk = getDistanceOfTwoPointsInMeters(float(curLat), float(curLng), float(curLat) + 0.0001, float(curLng) + 0.0001)
                     log.error("Walking a bit: %s" % str(toWalk))
                     time.sleep(0.3)
-                    telnGeo.walkFromTo(curLat, curLng, curLat + 0.0001, curLng + 0.0001, 11)
+                    websocketGeoUsed.walkFromTo(curLat, curLng, curLat + 0.0001, curLng + 0.0001, 11)
                     log.debug("Walking back")
                     time.sleep(0.3)
-                    telnGeo.walkFromTo(curLat + 0.0001, curLng + 0.0001, curLat, curLng, 11)
+                    websocketGeoUsed.walkFromTo(curLat + 0.0001, curLng + 0.0001, curLat, curLng, 11)
                     log.debug("Done walking")
             else:
                 log.info("main: Walking...")
-                telnGeo.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
+                websocketGeoUsed.walkFromTo(lastLat, lastLng, curLat, curLng, args.speed)
                 delayUsed = args.post_walk_delay
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(delayUsed)

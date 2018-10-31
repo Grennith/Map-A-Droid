@@ -1,4 +1,4 @@
-from telnetClient import *
+from websocketServer import *
 import gpxdata
 import datetime
 import time
@@ -6,17 +6,17 @@ import logging
 log = logging.getLogger()
 
 
-class TelnetGeo:
+class WebsocketGeo:
     UPDATE_INTERVAL = 0.4
 
-    def __init__(self, ip, port, password, commandTimeout, socketTimeout):
+    def __init__(self, websocketServer, commandTimeout):
         # Throws ValueError if unable to connect!
         # catch in code using this class
-        self.telnetClient = TelnetClient(ip, port, password, socketTimeout)
+        self.websocketServer = websocketServer
         self.__commandTimeout = commandTimeout
 
     def setLocation(self, lat, lng, alt):
-        return self.telnetClient.sendCommand("geo fix %s %s %s\r\n" % (lat, lng, alt), self.__commandTimeout)
+        return self.websocketServer.sendCommand("geo fix %s %s %s\r\n" % (lat, lng, alt), self.__commandTimeout)
 
     # coords need to be float values
     # speed integer with km/h
@@ -43,20 +43,20 @@ class TelnetGeo:
         distance = start.distance(dest)
         travel_time = distance / speed
 
-        if travel_time <= TelnetGeo.UPDATE_INTERVAL:
+        if travel_time <= WebsocketGeo.UPDATE_INTERVAL:
             log.debug("__walkTrackSpeed: travel_time is <= UPDATE_INTERVAL")
             time.sleep(travel_time)
 
         log.debug("__walkTrackSpeed: starting to walk")
-        while travel_time > TelnetGeo.UPDATE_INTERVAL:
-            log.debug("__walkTrackSpeed: sleeping for %s" % str(TelnetGeo.UPDATE_INTERVAL))
-            time.sleep(TelnetGeo.UPDATE_INTERVAL)
+        while travel_time > WebsocketGeo.UPDATE_INTERVAL:
+            log.debug("__walkTrackSpeed: sleeping for %s" % str(WebsocketGeo.UPDATE_INTERVAL))
+            time.sleep(WebsocketGeo.UPDATE_INTERVAL)
             log.debug("__walkTrackSpeed: Next round")
-            travel_time -= TelnetGeo.UPDATE_INTERVAL
+            travel_time -= WebsocketGeo.UPDATE_INTERVAL
             # move GEOFIX_UPDATE_INTERVAL*speed meters
             # in straight line between last_point and point
             course = start.course(dest)
-            distance = TelnetGeo.UPDATE_INTERVAL * speed
+            distance = WebsocketGeo.UPDATE_INTERVAL * speed
             start = start + gpxdata.CourseDistance(course, distance)
             startLat = start.lat
             startLng = start.lon

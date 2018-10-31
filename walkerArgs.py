@@ -36,16 +36,6 @@ def parseArgs():
     parser.add_argument('-sm', '--screen_method', required=False, default=0, type=int,
                         help='Screen method to be used. 0 = RGC only, 1 = VNC only')
 
-    # VNC
-    parser.add_argument('-vncip', '--vnc_ip', required=False,
-                        help='IP Address of VNC Server on Device.')
-    parser.add_argument('-vncscr', '--vncscreen', type=int, default=None, required=False,
-                        help='Screen Number of VNC Server on Device.')
-    parser.add_argument('-vncport', '--vnc_port', type=int, required=False,
-                        help='Port of VNC Server on Device.')
-    parser.add_argument('-vncpassword', '--vnc_password', required=False,
-                        help='Password of VNC Server on Device.')
-
     # MySQL
     parser.add_argument('-dbm', '--db_method', required=False,
                         help='DB scheme to be used. Either "monocle" or "rm".')
@@ -60,16 +50,20 @@ def parseArgs():
     parser.add_argument('-dbport', '--dbport', type=int, default=3306,
                         help='Port of MySql Server.')
 
-    # TELNET
-    parser.add_argument('-telip', '--tel_ip', required=False,
-                        help='IP of the telnet server. String!')
-    parser.add_argument('-telport', '--tel_port', required=False, type=int,
-                        help='Port of the telnet server. Integer!')
+    # WEBSOCKET
+    parser.add_argument('-wsip', '--ws_ip', required=False, default="",
+                        help='IP for websockt to listen on, empty to listen on all interfaces. String!')
+    parser.add_argument('-wsport', '--ws_port', required=False, type=int, default=8080,
+                        help='Port of the websocket to listen on. Integer!')
     parser.add_argument('-telpassword', '--tel_password', required=False,
                         help='Password of the telnet server. String!')
-    parser.add_argument('-ts', '--tel_timeout_socket', required=False, type=int, default=30,
-                        help='The telnet socket\'s timeout. Int seconds.')
-    parser.add_argument('-tc', '--tel_timeout_command', required=False, type=int, default=15,
+    parser.add_argument('-sst', '--screenshot_socket_timeout', required=False, type=int, default=30,
+                        help='The screenshot socket\'s timeout. Int seconds.')
+    parser.add_argument('-ssip', '--screenshot_ip', required=False, default="",
+                        help='IP to get screenshots from (mobile). String!')
+    parser.add_argument('-ssport', '--screenshot_port', required=False, type=int,
+                        help='Port to get screenshots from (mobile). Integer!')
+    parser.add_argument('-wsct', '--websocket_command_timeout', required=False, type=int, default=15,
                         help='The max time to wait for a command to return. Int seconds.')
 
     # Device specifics

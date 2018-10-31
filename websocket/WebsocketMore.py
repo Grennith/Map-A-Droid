@@ -1,4 +1,3 @@
-from telnetClient import *
 import struct
 import sys
 import socket
@@ -8,20 +7,20 @@ import logging
 
 log = logging.getLogger()
 
-class TelnetMore:
-    def __init__(self, ip, port, password, commandTimeout, socketTimeout):
+class WebsocketMore:
+    def __init__(self, websocketServer, commandTimeout, screenshotIp, screenshotPort, screenshotTimeout):
         # Throws ValueError if unable to connect!
         # catch in code using this class
 
-        self.telnetClient = TelnetClient(ip, port, password, socketTimeout)
+        self.websocketServer = websocketServer
         self.__commandTimeout = commandTimeout
-        self.__ip = ip
-        self.__port = port
-        self.__socketTimeout = socketTimeout
+        self.__ip = screenshotIp
+        self.__port = screenshotPort
+        self.__socketTimeout = screenshotTimeout
         self.__commandTimeout = commandTimeout
 
     def __runAndOk(self, command, timeout):
-        result = self.telnetClient.sendCommand(command, timeout)
+        result = self.websocketServer.sendCommand(command, timeout)
         return result is not None and "OK" in result
 
     def startApp(self, packageName):
@@ -77,7 +76,8 @@ class TelnetMore:
 
     def __connectImageSocket(self, s):
         try:
-            s.connect((self.__ip, self.__port + 1))
+            log.error("Retrieving screenshot from: %s:%s" % (str(self.__ip), str(self.__port)))
+            s.connect((self.__ip, self.__port))
             s.setblocking(1)
             s.settimeout(self.__socketTimeout)
             return True
@@ -86,7 +86,7 @@ class TelnetMore:
             return False
 
     def getScreenshot(self, path):
-        encoded = self.telnetClient.sendCommand("screen capture\r\n", self.__commandTimeout)
+        encoded = self.websocketServer.sendCommand("screen capture\r\n", self.__commandTimeout)
         if encoded is None:
             return False
         elif len(encoded) < 500 and "KO: " in encoded:
@@ -139,13 +139,13 @@ class TelnetMore:
         return self.__runAndOk("screen back\r\n", self.__commandTimeout)
 
     def isScreenOn(self):
-        state = self.telnetClient.sendCommand("more state screen\r\n", self.__commandTimeout)
+        state = self.websocketServer.sendCommand("more state screen\r\n", self.__commandTimeout)
         if state is None:
             return False
         return "on" in state
 
     def isPogoTopmost(self):
-        topmost = self.telnetClient.sendCommand("more topmost app\r\n", self.__commandTimeout)
+        topmost = self.websocketServer.sendCommand("more topmost app\r\n", self.__commandTimeout)
         if topmost is None:
             return False
         return "com.nianticlabs.pokemongo" in topmost
