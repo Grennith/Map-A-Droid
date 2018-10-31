@@ -1,4 +1,3 @@
-import struct
 import sys
 import socket
 import select

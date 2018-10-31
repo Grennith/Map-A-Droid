@@ -102,7 +102,7 @@ if not os.path.exists(args.temp_path):
 dbWrapper = DbWrapper(str(args.db_method), str(args.dbip), args.dbport, args.dbusername, args.dbpassword, args.dbname,
                       args.timezone)
 
-if not args.only_ocr and not args.with_madmin:
+if args.only_scan:
     log.info("Starting websocket MORE")
     websocketServerUsed = WebsocketServer(args.ws_ip, args.ws_port)
     websocketMoreUsed = WebsocketMore(websocketServerUsed, args.websocket_command_timeout, args.screenshot_ip,
@@ -143,13 +143,13 @@ def main():
         t_flask.daemon = False
         t_flask.start()
 
-    if not args.only_ocr:
+    if args.only_scan:
         log.info('Processing Pokemon Matching....')
         t = Thread(target=main_thread, name='main')
         t.daemon = True
         t.start()
 
-    if not args.only_scan:
+    if args.only_ocr:
         if not dbWrapper.ensureLastUpdatedColumn():
             log.fatal("Missing raids.last_updated column and couldn't create it")
             sys.exit(1)
@@ -777,8 +777,8 @@ def dhash(image, hash_size=8):
     pixels = list(image.getdata())
     # Compare adjacent pixels.
     difference = []
-    for row in xrange(hash_size):
-        for col in xrange(hash_size):
+    for row in range(hash_size):
+        for col in range(hash_size):
             pixel_left = image.getpixel((col, row))
             pixel_right = image.getpixel((col + 1, row))
             difference.append(pixel_left > pixel_right)

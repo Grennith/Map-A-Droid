@@ -1,4 +1,4 @@
-from websocketServer import *
+from .websocketServer import *
 import gpxdata
 import datetime
 import time

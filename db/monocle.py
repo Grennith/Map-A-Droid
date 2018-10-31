@@ -1,7 +1,8 @@
+import sys
+sys.path.append("..") # Adds higher directory to python modules path.
 import logging
 import mysql
 import mysql.connector
-import datetime
 import collections
 import datetime
 import time
@@ -9,9 +10,9 @@ from webhook import send_raid_webhook, send_weather_webhook
 from walkerArgs import parseArgs
 import requests
 import shutil
-import sys
 import os
-from s2Helper import S2Helper
+from .s2Helper import S2Helper
+
 
 log = logging.getLogger(__name__)
 
@@ -160,7 +161,7 @@ class MonocleWrapper:
         # print(query)
         # data = (datetime.datetime.now())
         cursor.execute(query)
-        from geofenceHelper import GeofenceHelper
+        from .geofenceHelper import GeofenceHelper
         geofenceHelper = GeofenceHelper()
         data = []
         log.debug("Result of raidQ query: %s" % str(query))
@@ -711,7 +712,7 @@ class MonocleWrapper:
         except:
             log.error("Could not connect to the SQL database")
             return False
-        from geofenceHelper import GeofenceHelper
+        from .geofenceHelper import GeofenceHelper
         log.info('Downloading coords')
         lll = args.latlngleft
         llr = args.latlngright
@@ -813,8 +814,8 @@ class MonocleWrapper:
         cursor.close()
         connection.close()
         with io.open('gym_info.json', 'w', encoding='UTF-8') as outfile:
-            outfile.write(unicode(json.dumps(gyminfo, indent=4, sort_keys=True)))
-        print 'Finished...'
+            outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True), 'utf-8'))
+        print('Finished...')
         return True
     
     def clearHashGyms(self, mons):

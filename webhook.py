@@ -1,4 +1,6 @@
 import logging
+from imp import reload
+
 from walkerArgs import parseArgs
 import requests
 import json
@@ -6,8 +8,6 @@ import sys
 from s2sphere import Cell, CellId, LatLng
 
 reload(sys)
-
-sys.setdefaultencoding('utf8')
 
 log = logging.getLogger(__name__)
 args = parseArgs()
@@ -232,4 +232,4 @@ def send_weather_webhook(s2cellId, weatherId, severe, warn, day, time):
 
 
 if __name__ == '__main__':
-    send_raid_webhook('33578092c5554275a589bd1e144bbbcc.16', 'EGG', '1534163280', '1534165980', '5', 004)
+    send_raid_webhook('33578092c5554275a589bd1e144bbbcc.16', 'EGG', '1534163280', '1534165980', '5', 0o04)

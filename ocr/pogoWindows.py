@@ -1,27 +1,23 @@
 # -*- coding: utf-8 -*-
+from imp import reload
 
 import cv2
 import numpy as np
 import logging
 from PIL import Image
-# import pytesseract
-from pytesseract import image_to_string
-from resolutionCalculator import *
+from .resolutionCalculator import *
 import os
 import os.path
 import sys
 
 sys.path.insert(0, '../')
-from screenWrapper import ScreenWrapper
 import collections
-import re
 import time
 import math
 
 import sys
 
 reload(sys)
-sys.setdefaultencoding('utf8')
 
 Coordinate = collections.namedtuple("Coordinate", ['x', 'y'])
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
@@ -89,7 +85,7 @@ class PogoWindows:
         
         width, height,_ = col.shape    
         
-        gpsError = col[0:height/7,0:width]
+        gpsError = col[0:int(math.floor(height/7)), 0:width]
 
         tempPathColoured = self.tempDirPath + "/" + str(hash) + "_gpsError.png"
         cv2.imwrite(tempPathColoured, gpsError)
@@ -124,7 +120,7 @@ class PogoWindows:
         height, width, _ = screenshotRead.shape
         
         if crop:
-            screenshotRead = screenshotRead[int(height)-int(height/4.5):int(height),int(width)/2-int(width)/8:int(width)/2+int(width)/8]
+            screenshotRead = screenshotRead[int(height)-int(round(height/4.5)):int(height), round(int(width)/2)-round(int(width)/8):round(int(width)/2)+round(int(width)/8)]
 
         log.debug("__readCircleCount: Determined screenshot scale: " + str(height) + " x " + str(width))
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)

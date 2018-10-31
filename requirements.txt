@@ -13,3 +13,4 @@ flask
 requests
 s2sphere
 imagehash
+git+https://github.com/dpallot/simple-websocket-server.git

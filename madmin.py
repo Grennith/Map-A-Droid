@@ -13,14 +13,10 @@ import json
 import os, glob, platform
 import re
 import datetime
-from time import gmtime, strftime
 from shutil import copyfile
 from math import ceil, floor
-import mysql
-import mysql.connector
 
 app = Flask(__name__)
-sys.setdefaultencoding('utf8')
 
 log = logging.getLogger(__name__)
 
@@ -239,7 +235,7 @@ def get_gyms():
             gyms.append(gymJson)
 
         else:
-            print "File: " + str(file) + " not found in Database"
+            print("File: " + str(file) + " not found in Database")
             os.remove(str(file))
             continue
 
@@ -316,7 +312,7 @@ def get_raids():
             raidJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file, 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify,  'level': lvl, 'mon': mon, 'type': type, 'eggPic': eggPic, 'monPic': monPic, 'monname': monName })
             raids.append(raidJson)
         else:
-            print "File: " + str(file) + " not found in Database"
+            print("File: " + str(file) + " not found in Database")
             os.remove(str(file))
             continue
 

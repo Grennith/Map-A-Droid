@@ -1,5 +1,5 @@
-from monocle import MonocleWrapper
-from rm import RmWrapper
+from .monocle import MonocleWrapper
+from .rm import RmWrapper
 import logging
 
 log = logging.getLogger(__name__)

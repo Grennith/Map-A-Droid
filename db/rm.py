@@ -1,4 +1,6 @@
 import logging
+import sys
+sys.path.append("..") # Adds higher directory to python modules path.
 import mysql
 import mysql.connector
 import datetime
@@ -9,7 +11,7 @@ from webhook import send_raid_webhook, send_weather_webhook
 from walkerArgs import parseArgs
 import requests
 import shutil
-from s2Helper import S2Helper
+from .s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
 
@@ -128,7 +130,7 @@ class RmWrapper:
         # print(query)
         # data = (datetime.datetime.now())
         cursor.execute(query)
-        from geofenceHelper import GeofenceHelper
+        from .geofenceHelper import GeofenceHelper
         geofenceHelper = GeofenceHelper()
         data = []
         log.debug("Result of raidQ query: %s" % str(query))
@@ -836,8 +838,8 @@ class RmWrapper:
         cursor.close()
         connection.close()
         with io.open('gym_info.json', 'w', encoding='UTF-8') as outfile:
-            outfile.write(unicode(json.dumps(gyminfo, indent=4, sort_keys=True)))
-        print 'Finished...'
+            outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True), 'utf-8'))
+        print('Finished...')
         return True
         
     def clearHashGyms(self, mons):

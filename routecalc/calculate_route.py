@@ -2,8 +2,8 @@
 import numpy as np
 import json
 import math
-from util import *
-from args import *
+from .util import *
+from .args import *
 import collections
 import logging
 import glob, os
@@ -204,7 +204,7 @@ def __getMostNorthernInRelation(coord, relation):
     return mostNorthern
 
 def __getMostWestAmongstRelations(relations):
-    selected = relations.keys()[0]
+    selected = list(relations.keys())[0]
     # print selected
     for relation in relations:
         if relation.lng < selected.lng:
@@ -258,7 +258,7 @@ def __sumUpRelations(relations, maxCountPerCircle, maxDistance):
     return finalSet
 
 def __removeCoordsFromRelations(relations, listOfCoords):
-    for sourceLocation, distanceRelations in relations.items():
+    for sourceLocation, distanceRelations in list(relations.items()):
         # iterate relations, remove anything matching listOfCoords
         for coord in listOfCoords:
             #print "Coord: " + str(coord) + " sourceLocation: " + str(sourceLocation)

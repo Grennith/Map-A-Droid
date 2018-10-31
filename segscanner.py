@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+from imp import reload
 
 import cv2
 import numpy as np
@@ -22,7 +23,6 @@ import imagehash
 
 import sys
 reload(sys)
-sys.setdefaultencoding('utf8')
 
 log = logging.getLogger(__name__)
 args = parseArgs()
@@ -396,7 +396,7 @@ class Scanner:
         gray=cv2.GaussianBlur(gray, (7, 7), 2)
         output = image.copy()
         height, width, channel = output.shape
-        output = output[0:height*2/3,0:width]
+        output = output[0:round(height*2/3), 0:width]
         image_cols, image_rows, _ = image.shape
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50,param2=30, minRadius=radius, maxRadius=radius)
         if circles is not None:
@@ -723,18 +723,22 @@ class Scanner:
             return str(imageHash)
 
     def checkHourMin(self, hour_min):
-        hour_min[0] = unicode(hour_min[0].replace('O','0').replace('o','0').replace('A','4'))
-        hour_min[1] = unicode(hour_min[1].replace('O','0').replace('o','0').replace('A','4'))
+        hour_min[0] = hour_min[0].replace('O', '0').replace('o', '0').replace('A', '4')
+        hour_min[1] = hour_min[1].replace('O', '0').replace('o', '0').replace('A', '4')
         if (hour_min[0]).isnumeric()==True and (hour_min[1]).isnumeric()==True:
             return True, hour_min
         else:
             return False, hour_min
 
-    def checkHourMinSec(self, hour_min_sec):
-        hour_min_sec[0] = unicode(hour_min_sec[0].replace('O','0').replace('o','0').replace('A','4'))
-        hour_min_sec[1] = unicode(hour_min_sec[1].replace('O','0').replace('o','0').replace('A','4'))
-        hour_min_sec[2] = unicode(hour_min_sec[2].replace('O','0').replace('o','0').replace('A','4'))
-        if (hour_min_sec[0]).isnumeric()==True and (hour_min_sec[1]).isnumeric()==True and (hour_min_sec[2]).isnumeric()==True:
+    @staticmethod
+    def checkHourMinSec(hour_min_sec):
+        if hour_min_sec is None:
+            return False, None
+        hour_min_sec[0] = hour_min_sec[0].replace('O', '0').replace('o', '0').replace('A', '4')
+        hour_min_sec[1] = hour_min_sec[1].replace('O', '0').replace('o', '0').replace('A', '4')
+        hour_min_sec[2] = hour_min_sec[2].replace('O', '0').replace('o', '0').replace('A', '4')
+        if (hour_min_sec[0]).isnumeric() and (hour_min_sec[1]).isnumeric() \
+                and (hour_min_sec[2]).isnumeric():
             return True, hour_min_sec
         else:
             return False, hour_min_sec
@@ -748,9 +752,9 @@ class Scanner:
             return False
 
         #TODO: think about only one big fat regex noone wants to read lateron
-        am_found = re.search(r'[a|A]\w+', data)
-        pm_found = re.search(r'[p|P]\w+', data)
-        hour_min = re.search(r'([\d]{1,2}:[\d]{1,2})', data)
+        am_found = re.search(r"[a|A]\w+", data)
+        pm_found = re.search(r"[p|P]\w+", data)
+        hour_min = re.search(r"([\d]{1,2}:[\d]{1,2})", data)
 
         if hour_min is None:
             log.fatal('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ]' + 'getHatchTime: Could not locate a HH:MM')
@@ -797,4 +801,4 @@ class Scanner:
 if __name__ == '__main__':
     scanner = Scanner(args.dbip, args.dbport, args.dbusername, args.dbpassword, args.dbname, args.temp_path, args.unknown_path, args.timezone)
     test = scanner.start_detect('crop2_new.png', '123123123', 1)
-    print test
+    print(str(test))
