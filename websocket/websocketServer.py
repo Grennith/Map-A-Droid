@@ -114,6 +114,8 @@ class WebsocketServer:
         messageEvent = Event()
         messageEvent.clear()
         setRequest(messageId, messageEvent)
+        while len(clients) == 0:
+            time.sleep(0.5)
         for client in clients:
             client.sendMessage(u"%s;%s" % (str(messageId), str(command)))
 
