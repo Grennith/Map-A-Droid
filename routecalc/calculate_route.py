@@ -80,7 +80,7 @@ def __lessCoordsMiddle(coordinates):
 
 # returns a map of coords and all their closest neighbours based on a given radius * 2 (hence circles...)
 def __getRelationsInRange(coordinates, rangeRadiusMeter):
-    print "Got " + str(len(coordinates)) + " coordinates and will build relations with radius " + str(rangeRadiusMeter)
+    # print "Got " + str(len(coordinates)) + " coordinates and will build relations with radius " + str(rangeRadiusMeter)
     relations = {}
     for coord in coordinates:
         for otherCoord in coordinates:
@@ -98,8 +98,8 @@ def __getRelationsInRange(coordinates, rangeRadiusMeter):
                         alreadyPresent = True
                 if not alreadyPresent:
                     relations[coord].append(Relation(otherCoord, distance))
-    print "Got " + str(len(relations)) + " relations"
-    print relations
+    # print "Got " + str(len(relations)) + " relations"
+    # print relations
     return relations
 
 def __countOfGymsInCircle(middle, radius, relations):
@@ -139,7 +139,7 @@ def __getMiddleOfCoordList(listOfCoords):
     return Location(math.degrees(centralLat), math.degrees(centralLng))
 
 def __getCircle(coord, toBeInspected, relations, maxCount, maxDistance):
-    print "Next Circle with coord " + str(coord)
+    # print "Next Circle with coord " + str(coord)
     # print "Relations: \n" + str(relations)
     #includedInCircle = [coord]
     includedInCircle = []
@@ -148,7 +148,7 @@ def __getCircle(coord, toBeInspected, relations, maxCount, maxDistance):
         # coord is alone at its position...
         return coord, []
     elif len(toBeInspected) == 1:
-        print "Just one coord, returning it as the middle: " + str(coord)
+        # print "Just one coord, returning it as the middle: " + str(coord)
         return coord, [coord]
     # elif len(toBeInspected) == 2:
     #     for relation in toBeInspected:
@@ -165,12 +165,12 @@ def __getCircle(coord, toBeInspected, relations, maxCount, maxDistance):
     #     allCoordsWithinRange.append(locationInUnion)
     middle = __getMiddleOfCoordList(allCoordsWithinRange)
     countInside, coordsInCircle = __getCountAndCoordsInCircle(middle, relations, maxDistance)
-    print "Coords in circle basic middle: " + str(coordsInCircle) + " middle at: " + str(middle)
-    print "Relation inspected: " + str(toBeInspected)
-    print (len(coordsInCircle) == len(toBeInspected))
-    print "Count inside circle: " + str(countInside) + " maxCount: " + str(maxCount)
+    # print "Coords in circle basic middle: " + str(coordsInCircle) + " middle at: " + str(middle)
+    # print "Relation inspected: " + str(toBeInspected)
+    # print (len(coordsInCircle) == len(toBeInspected))
+    # print "Count inside circle: " + str(countInside) + " maxCount: " + str(maxCount)
     if countInside <= maxCount and len(coordsInCircle) == len(toBeInspected):
-        print "Returning middle " + str(middle) + " and telling to remove " + str(coordsInCircle)
+        # print "Returning middle " + str(middle) + " and telling to remove " + str(coordsInCircle)
         return middle, coordsInCircle
     elif countInside > maxCount:
         toBeInspected = [toKeep for toKeep in toBeInspected if
@@ -235,7 +235,7 @@ def __getUnionOfRelations(relationsOne, relationsTwo):
     return listToReturn
 
 def __getCountAndCoordsInCircle(middle, relations, maxRadius):
-    print "looking for gyms from " + str(middle) + " with a range of " + str(maxRadius) +  " in " + str(len(relations)) + " relations"
+    # print "looking for gyms from " + str(middle) + " with a range of " + str(maxRadius) +  " in " + str(len(relations)) + " relations"
     insideCircle = []
     for locationSource in relations:
         distance = getDistanceOfTwoPointsInMeters(middle.lat, middle.lng, locationSource.lat, locationSource.lng)
@@ -251,7 +251,7 @@ def __sumUpRelations(relations, maxCountPerCircle, maxDistance):
         next = __getMostWestAmongstRelations(relations)
         # get a circle with "next" in it...
         middle, coordsToBeRemoved = __getCircle(next, relations[next], relations, maxCountPerCircle, maxDistance)
-        print "Removing: " + str(coordsToBeRemoved) + " Center of circle: " + str(middle)
+        # print "Removing: " + str(coordsToBeRemoved) + " Center of circle: " + str(middle)
         # remove the coords covered by the circle...
         finalSet.append(middle)
         relations = __removeCoordsFromRelations(relations, coordsToBeRemoved)
@@ -279,7 +279,7 @@ def getLessCoords(npCoordinates, maxRadius, maxCountPerCircle):
 
     relations = __getRelationsInRange(coordinates, maxRadius)
     summedUp = __sumUpRelations(relations, maxCountPerCircle, maxRadius)
-    print "Done summing up: " + str(summedUp) + " that's just " + str(len(summedUp))
+    # print "Done summing up: " + str(summedUp) + " that's just " + str(len(summedUp))
     return summedUp
 
 
@@ -363,7 +363,7 @@ def getJsonRoute(filePath, gymDistance, maxAmountOfGymsToSumUpWithGym, routefile
             elif choice == TRANSPOSE:
                 sol_new = transpose(sol_new)
             else:
-                print("ERROR: new solution method %d is not defined" % choice)
+                # print("ERROR: new solution method %d is not defined" % choice)
                 exit(2);
             # Get the total distance of new route
             cost_new = sum_distmat(sol_new, distmat)
