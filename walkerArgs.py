@@ -63,7 +63,7 @@ def parseArgs():
                         help='IP to get screenshots from (mobile). String!')
     parser.add_argument('-ssport', '--screenshot_port', required=False, type=int,
                         help='Port to get screenshots from (mobile). Integer!')
-    parser.add_argument('-wsct', '--websocket_command_timeout', required=False, type=int, default=15,
+    parser.add_argument('-wsct', '--websocket_command_timeout', required=False, type=int, default=30,
                         help='The max time to wait for a command to return. Int seconds.')
 
     # Device specifics

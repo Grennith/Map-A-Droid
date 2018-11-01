@@ -594,7 +594,9 @@ def main_thread():
         if args.initial_restart is False:
             turnScreenOnAndStartPogo()
         else:
-            startPogo()
+            if not startPogo():
+                while not restartPogo():
+                    log.warning("failed starting pogo")
 
     log.info('Starting speedweatherWarning Thread....')
     w = Thread(target=checkSpeedWeatherWarningThread, name='speedWeatherCheck')

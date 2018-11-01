@@ -1,5 +1,3 @@
-import socket
-import select
 import time
 import logging
 import sys
@@ -60,7 +58,7 @@ class SimpleEcho(WebSocket):
 
     def handleMessage(self):
         if self.opcode == TEXT:
-            log.debug("Receiving message...")
+            log.debug("Receiving message: %s" % str(self.data))
             splitup = self.data.split(";")
             id = int(splitup[0])
             response = splitup[1]
@@ -71,11 +69,11 @@ class SimpleEcho(WebSocket):
 
     def handleConnected(self):
         clients.append(self)
-        print(self.address, 'connected')
+        log.warning('%s connected' % str(self.address))
 
     def handleClose(self):
         clients.remove(self)
-        print(self.address, 'closed')
+        log.warning('%s closed' % str(self.address))
 
 server = None
 def setupWebsocket(websocketInterface, websocketPort):
@@ -114,12 +112,14 @@ class WebsocketServer:
         messageEvent = Event()
         messageEvent.clear()
         setRequest(messageId, messageEvent)
+
         while len(clients) == 0:
             time.sleep(0.5)
         for client in clients:
             client.sendMessage(u"%s;%s" % (str(messageId), str(command)))
 
         result = None
+        log.debug("Timeout: " + str(timeout))
         if messageEvent.wait(timeout):
             # okay, we can get the response..
             result = popResponse(messageId)
