@@ -5,19 +5,6 @@
 # A different config-files can be included directly in processes by "--config-file" or "-cf" and path
 # Value without # are needed for this script
 
-# Screen Capture Mode
-######################
-
-#screen_method               # Screen method to be used. 0 = RGC only, 1 = VNC only (Default: 0)
-
-# VNC Settings
-######################
-
-#vnc_ip:                     # IP address or hostname of the VNC server (needed for scanning mode)
-#vncscreen:                  # Number of screen (Default: None)
-#vnc_port:                   # Port of the VNC server  (needed for scanning mode)
-#vnc_password:               # VNC password  (needed for scanning mode)
-
 # MySql Settings
 ######################
 
@@ -30,12 +17,13 @@
 #dbname:                     # Name of the database (needed for ocr mode)
 #dbport:                     # Port of the database (Default: 3306)
 
-# Telnet Settings
+# Websocket Settings
 ######################
 
-#tel_ip:                     # IP address or hostname of the telnet server  (needed for scanning mode)
-#tel_port:                   # Port of the telnet server  (needed for scanning mode)
-#tel_password:               # Telnet password  (needed for scanning mode)
+#websocket_ip:                     # IP address to listen on (this host)
+#websocket_port:                   # Port of the websocket to listen on (this host)
+#screenshot_ip:              # IP of the mobile device
+#screenshot_port:           # Port that RGC publishes screenshots on (as configured in RGC settings)
 
 # Coords CSV
 ######################

@@ -33,9 +33,6 @@ def parseArgs():
     parser.add_argument('-cf', '--config',
                         is_config_file=True, help='Set configuration file')
 
-    parser.add_argument('-sm', '--screen_method', required=False, default=0, type=int,
-                        help='Screen method to be used. 0 = RGC only, 1 = VNC only')
-
     # MySQL
     parser.add_argument('-dbm', '--db_method', required=False,
                         help='DB scheme to be used. Either "monocle" or "rm".')
@@ -55,8 +52,6 @@ def parseArgs():
                         help='IP for websockt to listen on, empty to listen on all interfaces. String!')
     parser.add_argument('-wsport', '--ws_port', required=False, type=int, default=8080,
                         help='Port of the websocket to listen on. Integer!')
-    parser.add_argument('-telpassword', '--tel_password', required=False,
-                        help='Password of the telnet server. String!')
     parser.add_argument('-sst', '--screenshot_socket_timeout', required=False, type=int, default=30,
                         help='The screenshot socket\'s timeout. Int seconds.')
     parser.add_argument('-ssip', '--screenshot_ip', required=False, default="",
