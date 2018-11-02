@@ -116,17 +116,20 @@ class WebsocketServer:
         messageEvent = Event()
         messageEvent.clear()
         setRequest(messageId, messageEvent)
-
+        log.debug("Waiting for at least one client")
         while len(clients) == 0:
             time.sleep(0.5)
+        log.debug("Client connected, sending command")
         for client in clients:
             client.sendMessage(u"%s;%s" % (str(messageId), str(command)))
 
         result = None
         log.debug("Timeout: " + str(timeout))
         if messageEvent.wait(timeout):
+            log.debug("Received an answer")
             # okay, we can get the response..
             result = popResponse(messageId)
+            log.debug("Answer: %s" % result)
         else:
             # timeout reached
             log.warning("Timeout reached while waiting for a response...")
