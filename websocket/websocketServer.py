@@ -16,11 +16,13 @@ responseMutex = Lock()
 requests = {} # map with IDs as keys and events as messages
 responses = {} # Map with IDs as keys, values are the messages
 
+
 def setRequest(id, event):
     global requests, requestMutex
     requestMutex.acquire()
     requests[id] = event
     requestMutex.release()
+
 
 def setEvent(id):
     global requests
@@ -35,17 +37,20 @@ def setEvent(id):
     requestMutex.release()
     return result
 
+
 def removeRequest(id):
     global requests, requestMutex
     requestMutex.acquire()
     requests.pop(id)
     requestMutex.release()
 
+
 def setResponse(id, message):
     global responses, responseMutex
     responseMutex.acquire()
     responses[id] = message
     responseMutex.release()
+
 
 def popResponse(id):
     global responses, responseMutex
@@ -54,7 +59,10 @@ def popResponse(id):
     responseMutex.release()
     return message
 
+
 clients = []
+
+
 class SimpleEcho(WebSocket):
 
     def handleMessage(self):
@@ -76,7 +84,10 @@ class SimpleEcho(WebSocket):
         clients.remove(self)
         log.warning('%s closed' % str(self.address))
 
+
 server = None
+
+
 def setupWebsocket(websocketInterface, websocketPort):
     global server
     server = SimpleWebSocketServer(websocketInterface, websocketPort, SimpleEcho)
