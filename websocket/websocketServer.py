@@ -1,5 +1,6 @@
 import time
 import logging
+import math
 import sys
 from SimpleWebSocketServer import SimpleWebSocketServer, WebSocket
 from threading import Thread, Event, Lock
@@ -101,6 +102,9 @@ class WebsocketServer:
         global idMutex
         idMutex.acquire()
         self.__initialId += 1
+        self.__initialId = int(math.fmod(self.__initialId, 10000))
+        if self.__initialId == 10000:
+            self.__initialId = 1
         toBeReturned = self.__initialId
         idMutex.release()
         return toBeReturned

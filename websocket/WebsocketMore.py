@@ -26,7 +26,11 @@ class WebsocketMore:
         return self.__runAndOk("more start %s\r\n" % (packageName), self.__commandTimeout)
 
     def stopApp(self, packageName):
-        return self.__runAndOk("more stop %s\r\n" % (packageName), self.__commandTimeout)
+        if not self.__runAndOk("more stop %s\r\n" % (packageName), self.__commandTimeout):
+            log.error("Failed stopping %s, please check if SU has been granted" % packageName)
+            return False
+        else:
+            return True
 
     def restartApp(self, packageName):
         return self.__runAndOk("more restart %s\r\n" % (packageName), self.__commandTimeout)

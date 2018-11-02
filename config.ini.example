@@ -20,8 +20,8 @@
 # Websocket Settings
 ######################
 
-#websocket_ip:                     # IP address to listen on (this host)
-#websocket_port:                   # Port of the websocket to listen on (this host)
+#ws_ip:                     # IP address to listen on (this host)
+#ws_port:                   # Port of the websocket to listen on (this host)
 #screenshot_ip:              # IP of the mobile device
 #screenshot_port:           # Port that RGC publishes screenshots on (as configured in RGC settings)
 
