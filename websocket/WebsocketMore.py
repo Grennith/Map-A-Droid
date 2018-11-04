@@ -45,7 +45,7 @@ class WebsocketMore:
         return self.__runAndOk("more screen on\r\n", self.__commandTimeout)
 
     def click(self, x, y):
-        return self.__runAndOk("screen click %s %s\r\n" % (str(x), str(y)), self.__commandTimeout)
+        return self.__runAndOk("screen click %s %s\r\n" % (str(int(round(x))), str(int(round(y)))), self.__commandTimeout)
 
     def __close_socket(self, connection):
         try:
