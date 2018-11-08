@@ -67,9 +67,42 @@ brew install imagemagick
 brew install tesseract --all-languages
 ```
 
-#### Windows
+#### Windows (Tested on Windows 10 x64)
 ```bash
-// TODO
+Install Python 2.7 
+https://www.python.org/downloads/release/python-2710/
+Make sure to add Python to PATH during the setup.
+
+Git  Windows:
+https://git-for-windows.github.io/
+
+Microsoft Visual C++ Compiler  Python 2.7
+https://www.microsoft.com/en-us/download/details.aspx?id=44266
+
+Node.js  Windows
+https://nodejs.org/en/download
+
+Tesseract
+https://github.com/UB-Mannheim/tesseract/wiki 
+
+x32b: https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w32-setup-v4.0.0-rc4.20181024.exe
+x64b: https://digi.bib.uni-mannheim.de/tesseract/tesseract-ocr-w64-setup-v4.0.0-rc4.20181024.exe
+
+Clone this repository:
+git clone https://github.com/Grennith/Map-A-Droid.git
+
+Make sure you are on the directory of Map-A-Droid and run:
+pip install -r requirements.txt
+Fix error about opencv "No matching distribution found for opencv-python (from -r requirements.txt )"
+pip install --upgrade pip
+pip install opencv-python
+pip install opencv-contrib-python
+pip install opencv-python-headless
+pip install tesseract-ocr python-opencv
+pip install -r requirements.txt
+
+Dont forget to restart your pc  and enjoy :)
+
 ```
 ### Prerequisites - Mobile
 1. Ensure your phone has an unlocked bootloader and it able to support root. Lineage OS is a good place to start for a custom ROM and they have good installation instruction for each device.
