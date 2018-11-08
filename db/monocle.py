@@ -744,7 +744,7 @@ class MonocleWrapper:
 
         if park != "unknown":
             gymJson['park'] = park
-        if sponsor is not 0:
+        if sponsor is not 0 and sponsor is not None:
             gymJson['sponsor'] = sponsor
 
         log.debug(gymJson)
