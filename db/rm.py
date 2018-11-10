@@ -838,7 +838,7 @@ class RmWrapper:
         cursor.close()
         connection.close()
         with io.open('gym_info.json', 'w', encoding='UTF-8') as outfile:
-            outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True), 'utf-8'))
+            outfile.write((json.dumps(gyminfo, indent=4, sort_keys=True))
         print('Finished...')
         return True
         
