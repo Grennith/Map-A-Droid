@@ -69,15 +69,15 @@ brew install tesseract --all-languages
 
 #### Windows (Tested on Windows 10 x64)
 ```bash
-Install Python 2.7 
-https://www.python.org/downloads/release/python-2710/
+Install Python 3.6 
+https://www.python.org/ftp/python/3.6.0/python-3.6.0-amd64.exe
 Make sure to add Python to PATH during the setup.
 
 Git  Windows:
 https://git-for-windows.github.io/
 
-Microsoft Visual C++ Compiler  Python 2.7
-https://www.microsoft.com/en-us/download/details.aspx?id=44266
+Microsoft Visual C++ Compiler  Python 3.6
+https://wiki.python.org/moin/WindowsCompilers
 
 Node.js  Windows
 https://nodejs.org/en/download
@@ -93,6 +93,16 @@ git clone https://github.com/Grennith/Map-A-Droid.git
 
 Make sure you are on the directory of Map-A-Droid and run:
 pip install -r requirements.txt
+Fix error about twisted error:
+https://www.lfd.uci.edu/~gohlke/pythonlibs/#twisted
+https://download.lfd.uci.edu/pythonlibs/h2ufg7oq/Twisted-18.9.0-cp37-cp37m-win_amd64.whl
+I'd recommend saving that wheel file in the directory where you've installed Python i.e somewhere in Local Disk C
+Then visit the folder where the wheel file exists and run pip install Twisted18.9.0-cp37-cp37m-win_amd64.whl
+pip install setuptools
+python3 -m pip install -U pip setuptools
+Run pip install -r requirements.txt
+
+
 Fix error about opencv "No matching distribution found for opencv-python (from -r requirements.txt )"
 pip install --upgrade pip
 pip install opencv-python
