@@ -392,7 +392,7 @@ class PogoWindows:
         image = image[int(height / 2 - (height / 3)):int(height / 2 + (height / 3)), 0:int(width)]
         cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), image)
 
-        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), hash, 18.95) > 0:
+        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), hash, 18) > 0:
             log.info("readAmountOfRaidsCircle: Raidcircle found, assuming raids nearby")
             os.remove(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'))
             return True
