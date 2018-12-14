@@ -362,7 +362,7 @@ class PogoWindows:
                     # Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2)) return False
                 else:
                     if y1 == y2 and (x2 - x1 <= maxLineLength) and (
-                            x2 - x1 >= minLineLength) and ((x1 < width / 2 and x2 < width / 2) or (x1 < width / 2 and x2 > width)) and y1 < (height / 2):
+                            x2 - x1 >= minLineLength) and ((x1 < width / 2 and x2 < width / 2) or (x1 < width / 2 and x2 > width / 2)) and y1 < (height / 2):
                         log.debug("__checkRaidLine: Nearby is active - but not Raid-Tab")
                         if clickinvers:
                             xRaidTab = int(width - (x2-x1))
