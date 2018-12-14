@@ -339,7 +339,7 @@ class PogoWindows:
         edges = cv2.Canny(gray, 50, 150, apertureSize=3)
         maxLineLength = width / 6.35 + width * 0.03
         log.debug("__checkRaidLine: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / 3.35 - width * 0.03
+        minLineLength = width / 6.35 - width * 0.03
         log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
         maxLineGap = 50
         
