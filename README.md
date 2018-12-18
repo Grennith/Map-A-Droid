@@ -1,3 +1,7 @@
+# Project has been moved
+[New MAD repo](https://github.com/Map-A-Droid/MAD)
+
+
 # Map'A'Droid
 ![Python 2.7](https://img.shields.io/badge/python-2.7-blue.svg)
 
